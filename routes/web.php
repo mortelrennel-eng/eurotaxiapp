@@ -16,6 +16,8 @@ use App\Http\Controllers\LiveTrackingController;
 use App\Http\Controllers\UnitProfitabilityController;
 use App\Http\Controllers\DecisionManagementController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\GitHubAuthController;
+use App\Http\Controllers\GitHubIntegrationController;
 
 // ─── Auth Routes ───────────────────────────────────────
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -23,6 +25,11 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// ─── GitHub OAuth Routes ───────────────────────────────
+Route::get('/auth/github', [GitHubAuthController::class, 'redirectToGitHub'])->name('auth.github');
+Route::get('/auth/github/callback', [GitHubAuthController::class, 'handleGitHubCallback'])->name('auth.github.callback');
+
 // Real-time dashboard data
 Route::get('/api/dashboard/realtime', [DashboardController::class, 'getRealTimeData'])->middleware('auth');
 Route::get('/api/revenue-trend', [DashboardController::class, 'getRevenueTrend'])->middleware('auth');
@@ -101,4 +108,15 @@ Route::middleware('auth')->group(function () {
 
     // Notifications (AJAX)
     Route::post('/notifications/dismiss', [NotificationController::class, 'dismissAlert'])->name('notifications.dismiss');
+
+    // ─── GitHub Integration Routes ─────────────────────
+    Route::get('/github', [GitHubIntegrationController::class, 'index'])->name('github.index');
+    Route::get('/api/github/stats', [GitHubIntegrationController::class, 'getStats'])->name('github.stats');
+    Route::get('/api/github/commits', [GitHubIntegrationController::class, 'getCommits'])->name('github.commits');
+    Route::get('/api/github/pulls', [GitHubIntegrationController::class, 'getPullRequests'])->name('github.pulls');
+    Route::get('/api/github/issues', [GitHubIntegrationController::class, 'getIssues'])->name('github.issues');
+    Route::post('/api/github/issue', [GitHubIntegrationController::class, 'createIssue'])->name('github.create-issue');
+    Route::get('/api/github/contributors', [GitHubIntegrationController::class, 'getContributors'])->name('github.contributors');
+    Route::get('/api/github/workflow/{workflowId}', [GitHubIntegrationController::class, 'getWorkflowStatus'])->name('github.workflow-status');
+    Route::post('/api/github/workflow/trigger', [GitHubIntegrationController::class, 'triggerWorkflow'])->name('github.trigger-workflow');
 });
