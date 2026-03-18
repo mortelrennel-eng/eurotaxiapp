@@ -23,6 +23,9 @@ class User extends Authenticatable
         'is_active',
         'phone',
         'address',
+        'github_id',
+        'github_token',
+        'github_refresh_token',
     ];
 
     protected $hidden = [
