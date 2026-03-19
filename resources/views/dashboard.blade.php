@@ -219,8 +219,8 @@
 
     <!-- Units Overview Modal -->
     <div id="unitsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full mx-4 max-h-[85vh] overflow-hidden flex flex-col">
-            <div class="p-6 border-b bg-gradient-to-r from-yellow-50 to-orange-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-7xl w-full mx-4 h-[90vh] flex flex-col">
+            <div class="p-6 border-b bg-gradient-to-r from-yellow-50 to-orange-50 flex-shrink-0">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-yellow-600 rounded-lg">
@@ -237,9 +237,9 @@
                 </div>
             </div>
             
-            <div class="flex-1 overflow-hidden">
+            <div class="flex-1 overflow-hidden flex flex-col">
                 <!-- Summary Stats -->
-                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b flex-shrink-0">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="text-center">
                             <div class="text-2xl font-bold text-blue-600" id="totalUnitsCount">0</div>
@@ -261,13 +261,15 @@
                 </div>
 
                 <!-- Units Grid -->
-                <div class="p-6 overflow-y-auto flex-1" id="unitsGrid">
-                    <!-- Loading State -->
-                    <div class="col-span-full text-center py-12">
-                        <div class="inline-flex flex-col items-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-4 border-yellow-600 border-t-transparent mb-4"></div>
-                            <span class="text-lg text-gray-500 font-medium">Loading units data...</span>
-                            <p class="text-sm text-gray-400 mt-2">Please wait while we fetch your fleet information</p>
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="unitsGrid">
+                        <!-- Loading State -->
+                        <div class="col-span-full text-center py-12">
+                            <div class="inline-flex flex-col items-center">
+                                <div class="animate-spin rounded-full h-12 w-12 border-4 border-yellow-600 border-t-transparent mb-4"></div>
+                                <span class="text-lg text-gray-500 font-medium">Loading units data...</span>
+                                <p class="text-sm text-gray-400 mt-2">Please wait while we fetch your fleet information</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -540,35 +542,35 @@
             };
             
             grid.innerHTML = units.map(unit => `
-                <div class="bg-white rounded shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-l-4 ${statusColors[unit.status] || 'border-gray-200'} hover:scale-102">
-                    <div class="p-5">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <h4 class="text-xl font-bold text-gray-900">${unit.unit_number}</h4>
-                                    <span class="px-3 py-1 text-sm font-semibold rounded-full ${statusColors[unit.status] || 'bg-gray-100'} flex items-center gap-1">
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 ${statusColors[unit.status] || 'border-gray-200'} hover:scale-102">
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h4 class="text-lg font-bold text-gray-900 truncate">${unit.unit_number}</h4>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColors[unit.status] || 'bg-gray-100'} flex items-center gap-1 flex-shrink-0">
                                         ${statusIcons[unit.status] || ''}
-                                        <span>${unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}</span>
+                                        <span class="truncate">${unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}</span>
                                     </span>
                                 </div>
-                                <div class="grid grid-cols-1 gap-3 text-sm">
+                                <div class="grid grid-cols-2 gap-3 text-sm">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-gray-600 font-medium">Daily Rate:</span>
+                                        <span class="text-gray-600 font-medium text-xs">Daily:</span>
                                         <span class="text-gray-900 font-bold">₱${unit.boundary_rate ? unit.boundary_rate.toLocaleString() : '0'}</span>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="text-gray-600 font-medium">Total Collected:</span>
+                                        <span class="text-gray-600 font-medium text-xs">Total:</span>
                                         <span class="text-green-600 font-bold">₱${unit.total_boundary ? unit.total_boundary.toLocaleString() : '0'}</span>
                                     </div>
                                     ${unit.purchase_cost ? `
                                         <div class="flex items-center gap-2">
-                                            <span class="text-gray-600 font-medium">Purchase Cost:</span>
+                                            <span class="text-gray-600 font-medium text-xs">Cost:</span>
                                             <span class="text-gray-900 font-bold">₱${unit.purchase_cost.toLocaleString()}</span>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <span class="text-gray-600 font-medium">ROI Status:</span>
-                                            <div class="flex-1">
-                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                            <span class="text-gray-600 font-medium text-xs">ROI:</span>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                                     <div class="h-full bg-gradient-to-r ${statusGradients[unit.status]} rounded-full transition-all duration-700 ease-out" style="width: ${Math.min(100, unit.roi_percentage)}%"></div>
                                                 </div>
                                             </div>
@@ -577,30 +579,26 @@
                                     ` : ''}
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="inline-flex flex-col items-center text-sm">
-                                    <div class="flex items-center gap-2 mb-2 text-gray-500">
+                            <div class="text-right flex-shrink-0 ml-3">
+                                <div class="flex flex-col items-center text-sm">
+                                    <div class="flex items-center gap-1 text-gray-500 mb-1">
                                         ${statusIcons[unit.status] || ''}
-                                        <span class="font-medium">${unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}</span>
+                                        <span class="font-medium text-xs">${unit.status.charAt(0).toUpperCase() + unit.status.slice(1)}</span>
                                     </div>
                                     <div class="text-xs text-gray-400">
-                                        <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
-                                        Unit performance metrics
+                                        <i data-lucide="trending-up" class="w-3 h-3 inline mr-1"></i>
+                                        ${unit.roi_percentage >= 100 ? 'ROI Achieved' : unit.roi_percentage >= 75 ? 'Excellent' : unit.roi_percentage >= 50 ? 'Good' : 'Growing'}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         ${unit.purchase_cost ? `
-                            <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="mt-3 pt-3 border-t border-gray-100">
                                 <div class="flex items-center justify-between text-xs text-gray-500">
                                     <span class="flex items-center gap-1">
-                                        <i data-lucide="trending-up" class="w-3 h-3"></i>
-                                        Performance: ${unit.roi_percentage >= 100 ? 'Excellent' : unit.roi_percentage >= 75 ? 'Good' : unit.roi_percentage >= 50 ? 'Average' : 'Needs Improvement'}
-                                    </span>
-                                    <span class="flex items-center gap-1">
                                         <i data-lucide="calendar" class="w-3 h-3"></i>
-                                        ROI achieved in ${unit.roi_percentage >= 100 ? 'Completed' : Math.ceil((100 - unit.roi_percentage) / 100 * 30) + ' days'}
+                                        ${unit.roi_percentage >= 100 ? 'Investment Recovered' : Math.ceil((100 - unit.roi_percentage) / 100 * 30) + ' days to ROI'}
                                     </span>
                                 </div>
                             </div>

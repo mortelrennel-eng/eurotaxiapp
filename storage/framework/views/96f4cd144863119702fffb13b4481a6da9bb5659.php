@@ -5,9 +5,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    
+    <!-- Cache control headers to prevent back button caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <title>Eurotaxisystem - Login &amp; Register</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        // Prevent back button caching
+        (function() {
+            window.onpageshow = function(event) {
+                if (event.persisted) {
+                    window.location.reload();
+                }
+            };
+            
+            // Clear history when coming from authenticated pages
+            if (performance.navigation.type === 2) {
+                window.location.replace(window.location.href);
+            }
+        })();
+    </script>
     <style>
         body {
             margin: 0;
@@ -557,6 +579,22 @@
                                 <?php if($errors->any()): ?>
                                     <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                                         <?php echo e($errors->first()); ?>
+
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if(session('info')): ?>
+                                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm animate-pulse">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        <?php echo e(session('info')); ?>
+
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if(session('success')): ?>
+                                    <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        <?php echo e(session('success')); ?>
 
                                     </div>
                                 <?php endif; ?>
