@@ -742,9 +742,15 @@
             document.getElementById('roiUnitsCount').textContent = stats.roi_units || 0;
             document.getElementById('avgRoiCount').textContent = stats.avg_roi ? stats.avg_roi.toFixed(1) + '%' : '0%';
             
-            // Add data source indicator
+            // Remove any existing data source indicator
+            const existingIndicator = grid.parentNode.querySelector('.data-source-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // Add single data source indicator
             const dataSourceIndicator = document.createElement('div');
-            dataSourceIndicator.className = 'text-xs text-gray-400 text-center mb-2';
+            dataSourceIndicator.className = 'data-source-indicator text-xs text-gray-400 text-center mb-2';
             dataSourceIndicator.innerHTML = `
                 <i data-lucide="database" class="w-3 h-3 inline mr-1"></i>
                 Real Database Data • Last Updated: ${data.last_updated || 'Unknown'}
