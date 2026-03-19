@@ -896,148 +896,162 @@
     <script src="{{ asset('js/realtime-dashboard.js') }}"></script>
     <script>
         // Weekly Financial Chart
-        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
         const weeklyData = @json($weekly_data);
-        window.weeklyChart = new Chart(weeklyCtx, {
-            type: 'line',
-            data: {
-                labels: weeklyData.map(d => d.day),
-                datasets: [
-                    { label: 'Boundary', data: weeklyData.map(d => d.boundary), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', borderWidth: 2, tension: 0.4 },
-                    { label: 'Expenses', data: weeklyData.map(d => d.expenses), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 2, tension: 0.4 },
-                    { label: 'Net Income', data: weeklyData.map(d => d.net), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
+        const weeklyCanvas = document.getElementById('weeklyChart');
+        if (weeklyCanvas && window.Chart) {
+            const weeklyCtx = weeklyCanvas.getContext('2d');
+            window.weeklyChart = new Chart(weeklyCtx, {
+                type: 'line',
+                data: {
+                    labels: weeklyData.map(d => d.day),
+                    datasets: [
+                        { label: 'Boundary', data: weeklyData.map(d => d.boundary), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', borderWidth: 2, tension: 0.4 },
+                        { label: 'Expenses', data: weeklyData.map(d => d.expenses), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 2, tension: 0.4 },
+                        { label: 'Net Income', data: weeklyData.map(d => d.net), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
+                    }
                 }
-            }
-        });
+            });
+        }
 
         // Unit Status Chart
-        const unitStatusCtx = document.getElementById('unitStatusChart').getContext('2d');
         const unitStatusData = @json($unit_status_data);
-        window.unitStatusChart = new Chart(unitStatusCtx, {
-            type: 'bar',
-            data: {
-                labels: unitStatusData.map(d => d.status),
-                datasets: [{ label: 'Units', data: unitStatusData.map(d => d.count), backgroundColor: '#eab308', borderColor: '#ca8a04', borderWidth: 1 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-            }
-        });
+        const unitStatusCanvas = document.getElementById('unitStatusChart');
+        if (unitStatusCanvas && window.Chart) {
+            const unitStatusCtx = unitStatusCanvas.getContext('2d');
+            window.unitStatusChart = new Chart(unitStatusCtx, {
+                type: 'bar',
+                data: {
+                    labels: unitStatusData.map(d => d.status),
+                    datasets: [{ label: 'Units', data: unitStatusData.map(d => d.count), backgroundColor: '#eab308', borderColor: '#ca8a04', borderWidth: 1 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
 
         // Revenue Trend Chart
-        const revenueTrendCtx = document.getElementById('revenueTrendChart').getContext('2d');
         const revenueTrendData = @json($revenue_trend);
-        window.revenueTrendChart = new Chart(revenueTrendCtx, {
-            type: 'line',
-            data: {
-                labels: revenueTrendData.map(d => d.date),
-                datasets: [{
-                    label: 'Daily Revenue',
-                    data: revenueTrendData.map(d => d.revenue),
-                    borderColor: '#22c55e',
-                    backgroundColor: 'rgba(34,197,94,0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+        const revenueTrendCanvas = document.getElementById('revenueTrendChart');
+        if (revenueTrendCanvas && window.Chart) {
+            const revenueTrendCtx = revenueTrendCanvas.getContext('2d');
+            window.revenueTrendChart = new Chart(revenueTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: revenueTrendData.map(d => d.date),
+                    datasets: [{
+                        label: 'Daily Revenue',
+                        data: revenueTrendData.map(d => d.revenue),
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34,197,94,0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Unit Performance Chart
-        const unitPerformanceCtx = document.getElementById('unitPerformanceChart').getContext('2d');
         const unitPerformanceData = @json($unit_performance);
-        window.unitPerformanceChart = new Chart(unitPerformanceCtx, {
-            type: 'bar',
-            data: {
-                labels: unitPerformanceData.map(d => d.unit),
-                datasets: [
-                    {
-                        label: 'Actual Performance',
-                        data: unitPerformanceData.map(d => d.performance),
-                        backgroundColor: '#3b82f6',
-                        borderColor: '#2563eb',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Target',
-                        data: unitPerformanceData.map(d => d.target),
-                        backgroundColor: '#ef4444',
-                        borderColor: '#dc2626',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { 
-                        beginAtZero: true,
-                        ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+        const unitPerformanceCanvas = document.getElementById('unitPerformanceChart');
+        if (unitPerformanceCanvas && window.Chart) {
+            const unitPerformanceCtx = unitPerformanceCanvas.getContext('2d');
+            window.unitPerformanceChart = new Chart(unitPerformanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: unitPerformanceData.map(d => d.unit),
+                    datasets: [
+                        {
+                            label: 'Actual Performance',
+                            data: unitPerformanceData.map(d => d.performance),
+                            backgroundColor: '#3b82f6',
+                            borderColor: '#2563eb',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Target',
+                            data: unitPerformanceData.map(d => d.target),
+                            backgroundColor: '#ef4444',
+                            borderColor: '#dc2626',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Expense Breakdown Chart
-        const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart').getContext('2d');
+        const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart');
         const expenseBreakdownData = @json($expense_breakdown);
-        window.expenseBreakdownChart = new Chart(expenseBreakdownCtx, {
-            type: 'doughnut',
-            data: {
-                labels: expenseBreakdownData.map(d => d.category),
-                datasets: [{
-                    data: expenseBreakdownData.map(d => d.amount),
-                    backgroundColor: [
-                        '#ef4444',
-                        '#f59e0b',
-                        '#10b981',
-                        '#3b82f6',
-                        '#8b5cf6',
-                        '#ec4899'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed || 0;
-                                return label + ': ₱' + value.toLocaleString();
+        if (expenseBreakdownCtx && window.Chart) {
+            window.expenseBreakdownChart = new Chart(expenseBreakdownCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: expenseBreakdownData.map(d => d.category),
+                    datasets: [{
+                        data: expenseBreakdownData.map(d => d.amount),
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#10b981',
+                            '#3b82f6',
+                            '#8b5cf6',
+                            '#ec4899'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ₱' + value.toLocaleString();
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // Revenue Trend Period Selection
         function updateRevenueTrend(period) {

@@ -779,20 +779,20 @@ class DashboardController extends Controller
                     $startDate = data_get($unit, 'start_date');
                     $endDate = data_get($unit, 'end_date');
                     return [
-                        'id' => data_get($unit, 'id'),
-                        'unit_number' => data_get($unit, 'unit_number'),
-                        'plate_number' => data_get($unit, 'plate_number'),
-                        'status' => data_get($unit, 'status'),
-                        'driver_name' => data_get($unit, 'driver_name'),
-                        'maintenance_type' => data_get($unit, 'maintenance_type') ?: 'Maintenance',
-                        'description' => data_get($unit, 'description') ?: 'No description available',
+                        'id' => $unit->id,
+                        'unit_number' => $unit->unit_number,
+                        'plate_number' => $unit->plate_number,
+                        'status' => $unit->status,
+                        'driver_name' => $unit->driver_name,
+                        'maintenance_type' => $unit->maintenance_type ?: 'Maintenance',
+                        'description' => $unit->description ?: 'No description available',
                         'start_date' => $startDate,
                         'end_date' => $endDate,
                         'estimated_completion' => $endDate ?: 'Not specified',
-                        'maintenance_status' => data_get($unit, 'maintenance_status') ?: 'Ongoing',
-                        'maintenance_cost' => (float) (data_get($unit, 'maintenance_cost') ?? 0),
-                        'purchase_cost' => (float) (data_get($unit, 'purchase_cost') ?? 0),
-                        'boundary_rate' => (float) (data_get($unit, 'boundary_rate') ?? 0)
+                        'maintenance_status' => $unit->maintenance_status ?: 'Ongoing',
+                        'maintenance_cost' => (float) ($unit->maintenance_cost ?? 0),
+                        'purchase_cost' => (float) ($unit->purchase_cost ?? 0),
+                        'boundary_rate' => (float) ($unit->boundary_rate ?? 0)
                     ];
                 });
 
@@ -1014,20 +1014,20 @@ class DashboardController extends Controller
                     $startDate = data_get($unit, 'start_date');
                     $endDate = data_get($unit, 'end_date');
                     return [
-                        'id' => data_get($unit, 'id'),
-                        'unit_number' => data_get($unit, 'unit_number'),
-                        'plate_number' => data_get($unit, 'plate_number'),
-                        'status' => data_get($unit, 'status'),
-                        'driver_name' => data_get($unit, 'driver_name'),
-                        'coding_type' => data_get($unit, 'coding_type') ?: 'Coding',
-                        'description' => data_get($unit, 'description') ?: 'No description available',
+                        'id' => $unit->id,
+                        'unit_number' => $unit->unit_number,
+                        'plate_number' => $unit->plate_number,
+                        'status' => $unit->status,
+                        'driver_name' => $unit->driver_name,
+                        'coding_type' => $unit->coding_type ?: 'Coding',
+                        'description' => $unit->description ?: 'No description available',
                         'start_date' => $startDate,
                         'end_date' => $endDate,
                         'estimated_completion' => $endDate ?: 'Not specified',
-                        'coding_status' => data_get($unit, 'coding_status') ?: 'Ongoing',
-                        'coding_cost' => (float) (data_get($unit, 'coding_cost') ?? 0),
-                        'purchase_cost' => (float) (data_get($unit, 'purchase_cost') ?? 0),
-                        'boundary_rate' => (float) (data_get($unit, 'boundary_rate') ?? 0)
+                        'coding_status' => $unit->coding_status ?: 'Ongoing',
+                        'coding_cost' => (float) ($unit->coding_cost ?? 0),
+                        'purchase_cost' => (float) ($unit->purchase_cost ?? 0),
+                        'boundary_rate' => (float) ($unit->boundary_rate ?? 0)
                     ];
                 });
 
