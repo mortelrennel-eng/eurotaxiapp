@@ -323,6 +323,19 @@ class UnitController extends Controller
             'boundary_history' => $boundary_history,
             'maintenance_records' => $maintenance_records,
             'coding_day' => $coding_day,
+            'location_info' => [
+                'current_location' => 'Not Available',
+                'last_location_update' => 'Never',
+                'gps_enabled' => false,
+                'coordinates' => null,
+            ],
+            'dashcam_info' => [
+                'dashcam_enabled' => false,
+                'dashcam_status' => 'Offline',
+                'last_recording' => 'Never',
+                'storage_used' => 0,
+                'storage_total' => 32,
+            ],
         ]);
     }
 
