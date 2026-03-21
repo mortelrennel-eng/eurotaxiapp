@@ -225,7 +225,9 @@
                                      data-name="<?php echo e($unit['unit_number']); ?>"
                                      data-plate="<?php echo e($unit['plate_number']); ?>"
                                      data-model="<?php echo e($unit['make_model'] ?? ''); ?>"
-                                     data-rate="<?php echo e($unit['boundary_rate'] ?? 0); ?>">
+                                     data-rate="<?php echo e($unit['boundary_rate'] ?? 0); ?>"
+                                     data-primary-driver="<?php echo e($unit['driver_id']); ?>"
+                                     data-secondary-driver="<?php echo e($unit['secondary_driver_id']); ?>">
                                     <div class="font-medium text-xs"><?php echo e($unit['unit_number']); ?></div>
                                     <div class="text-xs text-gray-500"><?php echo e($unit['plate_number']); ?> - <?php echo e($unit['make_model'] ?? 'N/A'); ?></div>
                                 </div>
@@ -256,48 +258,21 @@
                                 <div class="font-medium text-xs">All Drivers</div>
                                 <div class="text-xs text-gray-500">Show all available drivers</div>
                             </div>
-                            <!-- Unit-specific drivers -->
-                            <?php $__currentLoopData = $unit_drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unit_id => $drivers): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <div class="unit-drivers-group" data-unit-id="<?php echo e($unit_id); ?>" style="display: none;">
-                                    <?php $__currentLoopData = $drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <div class="driver-option px-2 py-1 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                             data-id="<?php echo e($driver['id']); ?>"
-                                             data-name="<?php echo e($driver['name']); ?>"
-                                             data-unit="<?php echo e($driver['current_unit']); ?>"
-                                             data-plate="<?php echo e($driver['current_plate']); ?>">
-                                            <div class="font-medium text-xs"><?php echo e($driver['name']); ?></div>
-                                            <div class="text-xs text-gray-500"><?php echo e($driver['current_plate']); ?> - <?php echo e($driver['current_unit']); ?></div>
-                                        </div>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </div>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            <!-- All drivers list -->
+                            <!-- Unit-specific drivers block removed -->
                             <div class="all-drivers-list">
-                                <?php $__currentLoopData = $drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php $__currentLoopData = $all_drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="driver-option px-2 py-1 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                                          data-id="<?php echo e($driver['id']); ?>"
+                                         data-user-id="<?php echo e($driver['user_id']); ?>"
                                          data-name="<?php echo e($driver['name']); ?>"
                                          data-unit="<?php echo e($driver['current_unit']); ?>"
                                          data-plate="<?php echo e($driver['current_plate']); ?>">
+                                        <div class="font-medium text-xs"><?php echo e($driver['name']); ?></div>
+                                        <div class="text-xs text-gray-500"><?php echo e($driver['current_plate']); ?> - <?php echo e($driver['current_unit']); ?></div>
                                     </div>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
-                            <!-- Hidden data for unit-specific drivers -->
-                            <div id="unitDriversData" style="display: none;">
-                                <?php $__currentLoopData = $unit_drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $unit_id => $drivers): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <div class="unit-drivers" 
-                                         data-unit-id="<?php echo e($unit_id); ?>">
-                                        <?php $__currentLoopData = $drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <div class="unit-driver" 
-                                                 data-id="<?php echo e($driver['id']); ?>"
-                                                 data-name="<?php echo e($driver['name']); ?>"
-                                                 data-unit="<?php echo e($driver['current_unit']); ?>"
-                                                 data-plate="<?php echo e($driver['current_plate']); ?>">
-                                            </div>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                    </div>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </div>
+                            <!-- Hidden data block removed -->
                         </div>
                     </div>
                 </div>
@@ -383,12 +358,16 @@ document.getElementById('unitId').addEventListener('change', function() {
         document.getElementById('actualBoundary').value = adjustedBoundary;
     }
     
-    // Clear driver search and reset dropdown to show new unit's drivers
-    document.getElementById('driver_search').value = '';
-    document.getElementById('driverId').value = '';
-    
-    // Refresh driver dropdown to show only drivers for selected unit
-    showDriverDropdown();
+    // Clear driver display and reset dropdown to show new unit's drivers
+    const driverDisplay = document.getElementById('driverDisplay');
+    if (driverDisplay) {
+        driverDisplay.value = '';
+        document.getElementById('driverId').value = '';
+        // Refresh driver dropdown to show suggested drivers at top
+        if (typeof filterDrivers === 'function') {
+            filterDrivers('');
+        }
+    }
 });
 
 // Auto-recalculate boundary when date changes
@@ -433,233 +412,7 @@ function calculateAdjustedBoundary(baseRate, codingDay, dateStr) {
     return Math.max(0, adjustedRate);
 }
 
-// Searchable Driver Dropdown Functions
-let driverDropdownTimeout = {};
-
-function initializeDriverDropdown() {
-    populateDriverOptions();
-}
-
-function populateDriverOptions() {
-    const select = document.getElementById('driverId');
-    const dropdown = document.getElementById('driver_dropdown');
-    const options = Array.from(select.options).slice(1); // Skip first empty option
-    
-    let html = '';
-    options.forEach(option => {
-        const name = option.getAttribute('data-name');
-        const unit = option.getAttribute('data-unit');
-        const plate = option.getAttribute('data-plate');
-        const value = option.value;
-        const assigned_units_count = option.getAttribute('data-assigned-count');
-        
-        // Add visual indicators for driver availability
-        const isAvailable = unit === 'No Assignment' || assigned_units_count < 2;
-        const availabilityClass = isAvailable ? '' : 'bg-yellow-50 border-l-2 border-yellow-300';
-        const availabilityText = isAvailable ? '' : `<span class="text-xs text-yellow-600 ml-2">(Occupied: ${assigned_units_count}/2 units)</span>`;
-        
-        html += `
-            <div class="px-4 py-3 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0 driver-option ${availabilityClass}"
-                 onclick="selectDriver('${value}', '${name.replace(/'/g,"\\'").replace(/"/g,"&quot;")}', '${unit}', '${plate}')"
-                 data-value="${value}"
-                 data-name="${name.toLowerCase()}"
-                 data-unit="${unit}"
-                 data-plate="${plate.toLowerCase()}">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="font-medium text-gray-900">${name}</div>
-                        ${availabilityText}
-                    </div>
-                    <div class="text-xs text-gray-500">${plate}</div>
-                </div>
-            </div>
-        `;
-    });
-    
-    dropdown.innerHTML = html;
-}
-
-function showDriverDropdown() {
-    clearTimeout(driverDropdownTimeout);
-    const dropdown = document.getElementById('driver_dropdown');
-    const searchInput = document.getElementById('driver_search');
-    const unitSelect = document.getElementById('unitId');
-    const selectedUnitId = unitSelect.value;
-    
-    // If search is empty, show ONLY drivers assigned to the selected unit
-    if (searchInput.value === '') {
-        showUnitSpecificDrivers(selectedUnitId);
-    } else {
-        // If user is typing, show all drivers filtered by search
-        filterDrivers();
-    }
-    
-    dropdown.classList.remove('hidden');
-}
-
-function showUnitSpecificDrivers(unitId) {
-    const dropdown = document.getElementById('driver_dropdown');
-    const unitDriversData = document.getElementById('unitDriversData');
-    
-    // Find the drivers for the selected unit
-    const unitDriversContainer = unitDriversData.querySelector(`[data-unit-id="${unitId}"]`);
-    
-    let html = '';
-    if (unitDriversContainer) {
-        const unitDrivers = unitDriversContainer.querySelectorAll('.unit-driver');
-        
-        unitDrivers.forEach(driver => {
-            const id = driver.getAttribute('data-id');
-            const name = driver.getAttribute('data-name');
-            const unit = driver.getAttribute('data-unit');
-            const plate = driver.getAttribute('data-plate');
-            
-            // Show drivers assigned to this specific unit
-            html += `
-                <div class="px-4 py-3 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0 driver-option bg-yellow-50 border-l-2 border-yellow-300"
-                     onclick="selectDriver('${id}', '${name.replace(/'/g,"\\'").replace(/"/g,"&quot;")}', '${unit}', '${plate}')"
-                     data-value="${id}"
-                     data-name="${name.toLowerCase()}"
-                     data-unit="${unit}"
-                     data-plate="${plate.toLowerCase()}">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium text-gray-900">${name}</div>
-                            <span class="text-xs text-yellow-600 ml-2">(Current: ${unit})</span>
-                        </div>
-                        <div class="text-xs text-gray-500">${plate}</div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    if (html === '') {
-        html = `
-            <div class="px-4 py-3 text-gray-500 text-center">
-                <i data-lucide="users" class="w-4 h-4 inline mr-2"></i>
-                No drivers currently assigned to this unit
-            </div>
-        `;
-    }
-    
-    dropdown.innerHTML = html;
-}
-
-function hideDriverDropdown() {
-    driverDropdownTimeout = setTimeout(() => {
-        const dropdown = document.getElementById('driver_dropdown');
-        dropdown.classList.add('hidden');
-    }, 300);
-}
-
-function filterDrivers() {
-    const searchInput = document.getElementById('driver_search');
-    const dropdown = document.getElementById('driver_dropdown');
-    const select = document.getElementById('driverId');
-    const searchTerm = searchInput.value.toLowerCase();
-    
-    // Always show dropdown when typing
-    dropdown.classList.remove('hidden');
-    
-    if (searchTerm === '') {
-        showUnitSpecificDrivers(document.getElementById('unitId').value);
-        return;
-    }
-    
-    // When typing, show ALL drivers filtered by search term
-    const options = Array.from(select.options).slice(1); // Skip first empty option
-    let html = '';
-    
-    options.forEach(option => {
-        const nameAttr = option.getAttribute('data-name') || '';
-        const unitAttr = option.getAttribute('data-unit') || '';
-        const plateAttr = option.getAttribute('data-plate') || '';
-        
-        const name = nameAttr.toLowerCase();
-        const unit = unitAttr.toLowerCase();
-        const plate = plateAttr.toLowerCase();
-        const value = option.value;
-        const assignedCount = parseInt(option.getAttribute('data-assigned-count')) || 0;
-        
-        // Check if search term matches name, unit, or plate
-        if (name.includes(searchTerm) || unit.includes(searchTerm) || plate.includes(searchTerm)) {
-            // Highlight matching text
-            const highlightedName = highlightMatch(nameAttr, searchTerm);
-            const highlightedUnit = highlightMatch(unitAttr, searchTerm);
-            const highlightedPlate = highlightMatch(plateAttr, searchTerm);
-            
-            // Add visual indicators for driver availability
-            const isAvailable = unitAttr === 'No Assignment' || assignedCount < 2;
-            const availabilityClass = isAvailable ? '' : 'bg-yellow-50 border-l-2 border-yellow-300';
-            const availabilityText = isAvailable ? '' : `<span class="text-xs text-yellow-600 ml-2">(Occupied: ${assignedCount}/2 units)</span>`;
-            const currentUnitText = unitAttr !== 'No Assignment' ? `<span class="text-xs text-yellow-600 ml-2">(Current: ${unitAttr})</span>` : '';
-            
-            html += `
-                <div class="px-4 py-3 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0 driver-option ${availabilityClass}"
-                     onclick="selectDriver('${value}', '${nameAttr.replace(/'/g,"\\'").replace(/"/g,"&quot;")}', '${unitAttr}', '${plateAttr}')"
-                     data-value="${value}">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium text-gray-900">${highlightedName}</div>
-                            ${availabilityText || currentUnitText}
-                        </div>
-                        <div class="text-xs text-gray-500">${highlightedPlate}</div>
-                    </div>
-                </div>
-            `;
-        }
-    });
-    
-    if (html === '') {
-        html = `
-            <div class="px-4 py-3 text-gray-500 text-center">
-                <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
-                No drivers found matching "${searchTerm}"
-            </div>
-        `;
-    }
-    
-    dropdown.innerHTML = html;
-}
-
-function highlightMatch(text, searchTerm) {
-    if (!searchTerm) return text;
-    
-    const regex = new RegExp(`(${searchTerm})`, 'gi');
-    return text.replace(regex, '<span class="bg-yellow-200 font-semibold">$1</span>');
-}
-
-function selectDriver(value, name, unit, plate) {
-    const select = document.getElementById('driverId');
-    const searchInput = document.getElementById('driver_search');
-    const dropdown = document.getElementById('driver_dropdown');
-    
-    // Update hidden select
-    select.value = value;
-    
-    // Update search input with driver info
-    if (unit !== 'No Assignment' && unit !== '') {
-        searchInput.value = `${name} (${unit} - ${plate})`;
-    } else {
-        searchInput.value = name;
-    }
-    
-    // Hide dropdown
-    dropdown.classList.add('hidden');
-    
-    // Trigger change event for any listeners
-    select.dispatchEvent(new Event('change'));
-}
-
-function clearDriverSelection() {
-    const select = document.getElementById('driverId');
-    const searchInput = document.getElementById('driver_search');
-    
-    select.value = '';
-    searchInput.value = '';
-    searchInput.focus();
-}
+// Old Searchable Driver Dropdown Functions removed
 
 // Initialize driver dropdown when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -717,6 +470,12 @@ function initializeUnitDropdown() {
                 document.getElementById('actualBoundary').value = unitRate.toFixed(2);
                 document.getElementById('actualBoundaryDisplay').textContent = `₱${unitRate.toFixed(2)}`;
                 
+                // Store primary and secondary driver IDs for suggestion
+                const primaryId = this.getAttribute('data-primary-driver');
+                const secondaryId = this.getAttribute('data-secondary-driver');
+                unitDisplay.setAttribute('data-primary-id', primaryId || '');
+                unitDisplay.setAttribute('data-secondary-id', secondaryId || '');
+
                 // Trigger change event
                 document.getElementById('unitId').dispatchEvent(new Event('change'));
             });
@@ -802,15 +561,52 @@ function initializeDriverDropdown() {
 function filterDrivers(searchTerm) {
     const driverOptions = document.querySelectorAll('.driver-option');
     const driverDropdown = document.getElementById('driver_dropdown');
+    const allDriversList = document.querySelector('.all-drivers-list');
+    
+    if (allDriversList) {
+        allDriversList.style.display = 'flex';
+        allDriversList.style.flexDirection = 'column';
+    }
+    
+    const unitDisplay = document.getElementById('unitDisplay');
+    const primaryId = unitDisplay.getAttribute('data-primary-id');
+    const secondaryId = unitDisplay.getAttribute('data-secondary-id');
     
     let hasResults = false;
     driverOptions.forEach(option => {
         const driverName = option.getAttribute('data-name').toLowerCase();
         const driverUnit = (option.getAttribute('data-unit') || '').toLowerCase();
         const driverPlate = (option.getAttribute('data-plate') || '').toLowerCase();
+        const driverUserId = option.getAttribute('data-user-id');
         
         if (driverName.includes(searchTerm) || driverUnit.includes(searchTerm) || driverPlate.includes(searchTerm)) {
             option.style.display = 'block';
+            
+            // Don't modify "All Drivers" styling
+            if (option.getAttribute('data-id') === 'all') {
+                hasResults = true;
+                return;
+            }
+            
+            // Match via primary or secondary driver ID for strict suggestion
+            const isSuggested = driverUserId && (driverUserId == primaryId || driverUserId == secondaryId);
+
+            if (isSuggested) {
+                option.style.order = '-1';
+                option.classList.remove('hover:bg-yellow-50');
+                option.classList.add('bg-green-50', 'border-l-4', 'border-green-500', 'hover:bg-green-100');
+                
+                let nameDiv = option.querySelector('.font-medium');
+                if (nameDiv && !option.querySelector('.suggested-badge')) {
+                    nameDiv.innerHTML += ' <span class="suggested-badge ml-2 px-1.5 py-0.5 bg-green-500 text-white text-[10px] rounded-full shadow-sm font-bold">Recommended</span>';
+                }
+            } else {
+                option.style.order = '0';
+                option.classList.remove('bg-green-50', 'border-l-4', 'border-green-500', 'hover:bg-green-100');
+                option.classList.add('hover:bg-yellow-50');
+                let badge = option.querySelector('.suggested-badge');
+                if (badge) badge.remove();
+            }
             hasResults = true;
         } else {
             option.style.display = 'none';
@@ -836,6 +632,14 @@ function addBoundary() {
     document.getElementById('modalTitle').textContent = 'Add Boundary Record';
     document.getElementById('formAction').value = 'add_boundary';
     document.getElementById('boundaryForm').reset();
+    
+    const unitDisplay = document.getElementById('unitDisplay');
+    if (unitDisplay) {
+        unitDisplay.value = '';
+        unitDisplay.removeAttribute('data-primary-id');
+        unitDisplay.removeAttribute('data-secondary-id');
+    }
+    
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     document.getElementById('boundaryModal').classList.remove('hidden');
     
@@ -859,18 +663,25 @@ function editBoundary(id) {
         document.getElementById('actualBoundary').value = boundary.actual_boundary || '';
         document.getElementById('notes').value = boundary.notes || '';
         
-        // Update driver search input with selected driver name
-        const driverOption = document.querySelector(`#driverId option[value="${boundary.driver_id}"]`);
+        // Find unit data to set primary/secondary driver IDs for suggestion
+        const unitOption = document.querySelector(`.unit-option[data-id="${boundary.unit_id}"]`);
+        const unitDisplay = document.getElementById('unitDisplay');
+        if (unitOption && unitDisplay) {
+            const unitName = unitOption.getAttribute('data-name');
+            const unitPlate = unitOption.getAttribute('data-plate');
+            unitDisplay.value = `${unitName} - ${unitPlate}`;
+            
+            const pId = unitOption.getAttribute('data-primary-driver');
+            const sId = unitOption.getAttribute('data-secondary-driver');
+            unitDisplay.setAttribute('data-primary-id', pId || '');
+            unitDisplay.setAttribute('data-secondary-id', sId || '');
+        }
+
+        // Set driver display name
+        const driverOption = document.querySelector(`.driver-option[data-id="${boundary.driver_id}"]`);
         if (driverOption) {
             const name = driverOption.getAttribute('data-name');
-            const unit = driverOption.getAttribute('data-unit');
-            const plate = driverOption.getAttribute('data-plate');
-            
-            if (unit && unit !== 'No Assignment') {
-                document.getElementById('driver_search').value = `${name} (${unit} - ${plate})`;
-            } else {
-                document.getElementById('driver_search').value = name;
-            }
+            document.getElementById('driverDisplay').value = name;
         }
         
         // Make boundary amount editable for editing

@@ -61,12 +61,14 @@ class BoundaryController extends Controller
 
         // Get units for dropdowns
         $units = DB::table('units')
-            ->where('status', 'active')
-            ->select('id', 'unit_number', 'plate_number', 'boundary_rate', 'coding_day')
+            ->where('status', '!=', 'retired')
+            ->select('id', 'unit_number', 'plate_number', 'make', 'model', 'boundary_rate', 'coding_day', 'driver_id', 'secondary_driver_id')
             ->orderBy('unit_number')
             ->get()
             ->map(function ($unit) {
-                return (array) $unit;
+                $unitArray = (array) $unit;
+                $unitArray['make_model'] = ($unitArray['make'] ?? '') . ' ' . ($unitArray['model'] ?? '');
+                return $unitArray;
             })
             ->toArray();
 
