@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +21,9 @@ class OfficeExpenseController extends Controller
         $query = DB::table('expenses as e')
             ->leftJoin('users as u', 'e.recorded_by', '=', 'u.id')
             ->leftJoin('units as un', 'e.unit_id', '=', 'un.id')
-            ->select('e.*', 'u.full_name as recorded_by_name', 'un.unit_number')
+            ->leftJoin('users as creator', 'e.created_by', '=', 'creator.id')
+            ->leftJoin('users as editor', 'e.updated_by', '=', 'editor.id')
+            ->select('e.*', 'u.full_name as recorded_by_name', 'un.unit_number', 'creator.full_name as creator_name', 'editor.full_name as editor_name')
             ->whereBetween('e.date', [$date_from, $date_to]);
 
         if (!empty($search)) {
@@ -92,7 +95,8 @@ class OfficeExpenseController extends Controller
             'unit_id' => 'nullable|integer',
         ]);
 
-        DB::table('expenses')->insert([
+        // Use Eloquent to trigger TrackChanges trait
+        Expense::create([
             'category' => $request->category,
             'description' => $request->description,
             'amount' => $request->amount,
@@ -100,8 +104,6 @@ class OfficeExpenseController extends Controller
             'reference_number' => $request->reference_number,
             'unit_id' => $request->unit_id ?: null,
             'recorded_by' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense added successfully');
@@ -118,14 +120,15 @@ class OfficeExpenseController extends Controller
             'unit_id' => 'nullable|integer',
         ]);
 
-        DB::table('expenses')->where('id', $id)->update([
+        // Use Eloquent to trigger TrackChanges trait
+        $expense = Expense::findOrFail($id);
+        $expense->update([
             'category' => $request->category,
             'description' => $request->description,
             'amount' => $request->amount,
             'date' => $request->date,
             'reference_number' => $request->reference_number,
             'unit_id' => $request->unit_id ?: null,
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense updated successfully');
@@ -139,11 +142,12 @@ class OfficeExpenseController extends Controller
 
     public function approve(Request $request, $id)
     {
-        DB::table('expenses')->where('id', $id)->update([
+        // Use Eloquent to trigger TrackChanges trait
+        $expense = Expense::findOrFail($id);
+        $expense->update([
             'status' => 'approved',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense approved successfully');
@@ -151,11 +155,12 @@ class OfficeExpenseController extends Controller
 
     public function reject(Request $request, $id)
     {
-        DB::table('expenses')->where('id', $id)->update([
+        // Use Eloquent to trigger TrackChanges trait
+        $expense = Expense::findOrFail($id);
+        $expense->update([
             'status' => 'rejected',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense rejected successfully');

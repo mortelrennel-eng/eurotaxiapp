@@ -25,6 +25,7 @@
 
     <!-- Custom CSS -->
     <link href="{{ asset('assets/app.css') }}" rel="stylesheet">
+    @stack('styles')
 
     <!-- Custom JS -->
     <script src="{{ asset('assets/app.js') }}"></script>
@@ -65,6 +66,12 @@
                             <span>Unit Management</span>
                         </a>
 
+                        <a href="{{ route('driver-management.index') }}"
+                            class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 {{ request()->routeIs('driver-management.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : '' }}">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            <span>Driver Management</span>
+                        </a>
+
                         <a href="{{ route('decision-management.index') }}"
                             class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 {{ request()->routeIs('decision-management.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : '' }}">
                             <i data-lucide="file-text" class="w-5 h-5"></i>
@@ -93,12 +100,6 @@
                             class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 {{ request()->routeIs('driver-behavior.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : '' }}">
                             <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                             <span>Driver Behavior</span>
-                        </a>
-
-                        <a href="{{ route('driver-management.index') }}"
-                            class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 {{ request()->routeIs('driver-management.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : '' }}">
-                            <i data-lucide="users" class="w-5 h-5"></i>
-                            <span>Driver Management</span>
                         </a>
 
                         <a href="{{ route('office-expenses.index') }}"

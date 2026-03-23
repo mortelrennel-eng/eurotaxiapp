@@ -84,7 +84,15 @@
                         </span>
                     </td>
                     <td class="px-4 py-3 text-gray-700 max-w-xs truncate" title="{{ $r->description }}">{{ $r->description }}</td>
-                    <td class="px-4 py-3 text-gray-600">{{ $r->mechanic_name ?? '—' }}</td>
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ $r->mechanic_name ?? '—' }}
+                        <div class="text-[10px] text-gray-400 mt-0.5">
+                            <span title="Input by {{ $r->creator_name ?? 'System' }}">In: {{ $r->creator_name ?? 'System' }}</span>
+                            @if(isset($r->editor_name) && $r->editor_name)
+                                <span class="ml-1" title="Last edit by {{ $r->editor_name }}">Ed: {{ $r->editor_name }}</span>
+                            @endif
+                        </div>
+                    </td>
                     <td class="px-4 py-3 text-gray-600">{{ formatDate($r->date_started) }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $r->date_completed ? formatDate($r->date_completed) : '—' }}</td>
                     <td class="px-4 py-3 font-semibold text-gray-900">{{ formatCurrency($r->cost) }}</td>

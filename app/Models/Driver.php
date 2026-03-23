@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\TrackChanges;
 
 class Driver extends Model
 {
+    use TrackChanges;
     protected $table = 'drivers';
 
     protected $fillable = [
@@ -17,7 +19,11 @@ class Driver extends Model
         'daily_boundary_target',
         'address',
         'emergency_contact',
-        'status',
+        'emergency_phone',
+        'driver_type',
+        'driver_status',
+        'created_by',
+        'updated_by',
     ];
 
     public function user()

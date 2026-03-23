@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Driver;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -19,12 +21,15 @@ class DriverManagementController extends Controller
         // units.driver_id references users.id (not drivers.id)
         $query = DB::table('drivers as d')
             ->join('users as u', 'd.user_id', '=', 'u.id')
+            ->leftJoin('users as creator', 'd.created_by', '=', 'creator.id')
+            ->leftJoin('users as editor', 'd.updated_by', '=', 'editor.id')
             ->select(
                 'd.id', 'd.user_id', 'd.license_number', 'd.license_expiry',
                 'd.contact_number', 'd.hire_date', 'd.daily_boundary_target',
                 'd.driver_type', 'd.driver_status',
                 'd.emergency_contact', 'd.emergency_phone',
                 'u.full_name', 'u.email', 'u.username', 'u.is_active', 'u.phone',
+                'creator.full_name as creator_name', 'editor.full_name as editor_name',
                 DB::raw('(SELECT unit_number FROM units WHERE driver_id = u.id OR secondary_driver_id = u.id LIMIT 1) as unit_number'),
                 DB::raw('(SELECT plate_number FROM units WHERE driver_id = u.id OR secondary_driver_id = u.id LIMIT 1) as plate_number')
             );
@@ -100,20 +105,19 @@ class DriverManagementController extends Controller
             $rawPassword = bin2hex(random_bytes(4)); // 8 hex chars
             $password_hash = Hash::make($rawPassword);
 
-            // Create user account
-            $userId = DB::table('users')->insertGetId([
+            // Create user account using Eloquent
+            $user = User::create([
                 'full_name' => $request->full_name,
                 'email' => $email,
                 'username' => $username,
                 'password' => $password_hash,
                 'role' => 'driver',
                 'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
+            $userId = $user->id;
 
-            // Create driver record
-            DB::table('drivers')->insert([
+            // Create driver record using Eloquent to trigger TrackChanges trait
+            Driver::create([
                 'user_id' => $userId,
                 'license_number' => $request->license_number,
                 'license_expiry' => $request->license_expiry,
@@ -123,8 +127,6 @@ class DriverManagementController extends Controller
                 'emergency_phone' => $request->emergency_phone,
                 'hire_date' => $request->hire_date,
                 'daily_boundary_target' => $request->daily_boundary_target,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
 
             DB::commit();
@@ -159,12 +161,15 @@ class DriverManagementController extends Controller
             'driver_status' => 'nullable|in:available,assigned,on_leave,suspended',
         ]);
 
-        DB::table('users')->where('id', $driver->user_id)->update([
+        // Use Eloquent to trigger TrackChanges trait
+        $driver_instance = Driver::findOrFail($id);
+        
+        $user_instance = User::findOrFail($driver_instance->user_id);
+        $user_instance->update([
             'full_name' => $request->full_name,
-            'updated_at' => now(),
         ]);
 
-        DB::table('drivers')->where('id', $id)->update([
+        $driver_instance->update([
             'license_number' => $request->license_number,
             'license_expiry' => $request->license_expiry,
             'contact_number' => $request->contact_number,
@@ -175,7 +180,6 @@ class DriverManagementController extends Controller
             'daily_boundary_target' => $request->daily_boundary_target,
             'driver_type' => $request->driver_type ?? 'regular',
             'driver_status' => $request->driver_status ?? 'available',
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('driver-management.index')->with('success', 'Driver updated successfully');

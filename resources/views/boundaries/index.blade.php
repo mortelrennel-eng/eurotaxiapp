@@ -94,8 +94,14 @@
                                     <div class="text-sm text-gray-500">{{ $boundary['plate_number'] }}</div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $boundary['driver_name'] ?? 'Unassigned' }}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ $boundary['driver_name'] ?? 'Unassigned' }}</div>
+                                <div class="text-[10px] text-gray-500 mt-1">
+                                    <span title="Input by {{ $boundary['creator_name'] ?? 'System' }}">In: {{ $boundary['creator_name'] ?? 'System' }}</span>
+                                    @if(isset($boundary['editor_name']) && $boundary['editor_name'])
+                                        <span class="ml-2" title="Last edit by {{ $boundary['editor_name'] }}">Ed: {{ $boundary['editor_name'] }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ formatCurrency($boundary['boundary_amount']) }}

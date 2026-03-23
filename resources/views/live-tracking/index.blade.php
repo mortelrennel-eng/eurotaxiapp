@@ -101,8 +101,8 @@
                             class="unit-item p-4 border-b"
                             data-unit-id="{{ $unit->id }}"
                             data-unit-number="{{ $unit->unit_number }}"
-                            data-lat="{{ $unit->latitude ?? 10.72 }}"
-                            data-lng="{{ $unit->longitude ?? 122.56 }}"
+                            data-lat="{{ $unit->latitude ?? (14.5995 + ($loop->index * 0.005)) }}"
+                            data-lng="{{ $unit->longitude ?? (120.9842 + ($loop->index * 0.005)) }}"
                             data-status="{{ $unit->gps_status ?? 'offline' }}"
                             onclick="selectUnit(this)"
                         >
@@ -139,16 +139,38 @@
         </div>
     </div>
 
+    <!-- Unit Details Modal -->
+    <div id="unitDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-[1000] flex items-center justify-center">
+        <div class="relative w-full max-w-md mx-auto my-6 p-6 shadow-xl rounded-xl bg-gray-50 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-3">
+                <p class="text-2xl font-bold">Unit Details</p>
+                <div class="cursor-pointer z-50 rounded-full p-2 hover:bg-gray-200 transition" onclick="closeUnitDetailsModal()">
+                    <i data-lucide="x" class="w-6 h-6 text-gray-500"></i>
+                </div>
+            </div>
+            
+            <div id="unitDetailsModalContent" class="mt-2 min-h-[200px] flex justify-center items-center">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Map initialization
-        const map = L.map('map').setView([10.72, 122.56], 12);
+        // Map initialization (Centered on Metro Manila)
+        const map = L.map('map', {
+            center: [14.5995, 120.9842],
+            zoom: 12,
+            minZoom: 10
+        });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
+
+        // Force full re-render after layout is settled (fixes gray/broken tiles)
+        setTimeout(() => { map.invalidateSize(); }, 250);
 
         const markers = {};
         let autoRefreshEnabled = true;
@@ -180,7 +202,7 @@
                     <div class="text-sm">
                         <strong>${unitNumber}</strong><br/>
                         <span style="color:${status === 'active' ? '#22c55e' : status === 'idle' ? '#ca8a04' : '#ef4444'}">${status.charAt(0).toUpperCase() + status.slice(1)}</span><br/>
-                        <a href="{{ url('units') }}/${id}" style="color:#2563eb;font-size:0.75rem;">View Details</a>
+                        <a href="javascript:void(0)" onclick="viewUnitDetails(${id})" style="color:#2563eb;font-size:0.75rem;">View Details</a>
                     </div>
                 `);
                 markers[id] = marker;
@@ -242,6 +264,45 @@
             }, 30000);
         }
 
+        function viewUnitDetails(id) {
+            // Stop auto-refresh while viewing
+            if (refreshInterval) clearInterval(refreshInterval);
+
+            document.getElementById('unitDetailsModal').classList.remove('hidden');
+            document.getElementById('unitDetailsModalContent').innerHTML = `
+                <div class="flex justify-center py-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                </div>
+            `;
+            
+            fetch(`{{ url('/units/details-html') }}?id=${id}&type=map`)
+                .then(response => {
+                    if (!response.ok) throw Error('Network error');
+                    return response.text();
+                })
+                .then(html => {
+                    document.getElementById('unitDetailsModalContent').innerHTML = html;
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('unitDetailsModalContent').innerHTML = `
+                        <div class="p-4 bg-red-50 text-red-600 rounded-lg text-center">
+                            Failed to load unit details.
+                        </div>
+                    `;
+                    console.error(err);
+                });
+        }
+
+        function closeUnitDetailsModal() {
+            document.getElementById('unitDetailsModal').classList.add('hidden');
+            // Resume auto-refresh
+            if (autoRefreshEnabled) startRefresh();
+        }
+
         startRefresh();
     </script>
+
 @endpush

@@ -3,21 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\TrackChanges;
 
 class Maintenance extends Model
 {
-    protected $table = 'maintenance_records';
-
+    use TrackChanges;
+    protected $table = 'maintenance';
+ 
     protected $fillable = [
         'unit_id',
-        'type',
+        'maintenance_type',
         'description',
-        'maintenance_date',
-        'cost',
-        'mechanic_id',
+        'labor_cost',
+        'odometer_reading',
+        'date_started',
+        'date_completed',
         'status',
-        'notes',
+        'mechanic_name',
+        'parts_list',
+        'cost',
         'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

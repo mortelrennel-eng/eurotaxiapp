@@ -1,21 +1,19 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Driver Management - Euro System'); ?>
+<?php $__env->startSection('page-heading', 'Driver Management'); ?>
+<?php $__env->startSection('page-subheading', 'Centralized driver records, incentives, and performance analytics'); ?>
 
-@section('title', 'Driver Management - Euro System')
-@section('page-heading', 'Driver Management')
-@section('page-subheading', 'Centralized driver records, incentives, and performance analytics')
+<?php $__env->startSection('content'); ?>
 
-@section('content')
-
-    {{-- Search and Filters --}}
+    
     <div class="bg-white rounded-lg shadow p-6 mb-6">
-        <form method="GET" action="{{ route('driver-management.index') }}">
+        <form method="GET" action="<?php echo e(route('driver-management.index')); ?>">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-1">
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i data-lucide="search" class="h-5 w-5 text-gray-400"></i>
                         </div>
-                        <input type="text" name="search" value="{{ $search ?? '' }}"
+                        <input type="text" name="search" value="<?php echo e($search ?? ''); ?>"
                             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:outline-none"
                             placeholder="Search by driver name, email, or license...">
                     </div>
@@ -24,8 +22,8 @@
                 <div class="md:w-48">
                     <select name="status" class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 focus:outline-none">
                         <option value="">All Status</option>
-                        <option value="active" {{ ($status_filter ?? '') === 'active' ? 'selected' : '' }}>Active</option>
-                        <option value="inactive" {{ ($status_filter ?? '') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <option value="active" <?php echo e(($status_filter ?? '') === 'active' ? 'selected' : ''); ?>>Active</option>
+                        <option value="inactive" <?php echo e(($status_filter ?? '') === 'inactive' ? 'selected' : ''); ?>>Inactive</option>
                     </select>
                 </div>
 
@@ -43,7 +41,7 @@
         </form>
     </div>
 
-    {{-- Driver List Table --}}
+    
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 class="text-lg font-semibold text-gray-800">Drivers</h2>
@@ -62,68 +60,74 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($drivers as $driver)
-                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="openEditDriverModal({{ $driver->id }})">
+                    <?php $__empty_1 = true; $__currentLoopData = $drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="openEditDriverModal(<?php echo e($driver->id); ?>)">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $driver->full_name }}</div>
-                                <div class="text-xs text-gray-500">{{ $driver->email }}</div>
+                                <div class="text-sm font-medium text-gray-900"><?php echo e($driver->full_name); ?></div>
+                                <div class="text-xs text-gray-500"><?php echo e($driver->email); ?></div>
                                 <div class="text-[10px] text-gray-400 mt-1">
-                                    <span title="Input by {{ $driver->creator_name ?? 'System' }}">In: {{ $driver->creator_name ?? 'System' }}</span>
-                                    @if(isset($driver->editor_name) && $driver->editor_name)
-                                        <span class="ml-1" title="Last edit by {{ $driver->editor_name }}">Ed: {{ $driver->editor_name }}</span>
-                                    @endif
+                                    <span title="Input by <?php echo e($driver->creator_name ?? 'System'); ?>">In: <?php echo e($driver->creator_name ?? 'System'); ?></span>
+                                    <?php if(isset($driver->editor_name) && $driver->editor_name): ?>
+                                        <span class="ml-1" title="Last edit by <?php echo e($driver->editor_name); ?>">Ed: <?php echo e($driver->editor_name); ?></span>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                @if(!empty($driver->assigned_unit))
-                                    {{ $driver->assigned_unit }}
-                                @else
+                                <?php if(!empty($driver->assigned_unit)): ?>
+                                    <?php echo e($driver->assigned_unit); ?>
+
+                                <?php else: ?>
                                     <span class="text-gray-400">Unassigned</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $driver->license_number ?? 'N/A' }}
+                                <?php echo e($driver->license_number ?? 'N/A'); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $driver->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $driver->is_active ? 'Active' : 'Inactive' }}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?php echo e($driver->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'); ?>">
+                                    <?php echo e($driver->is_active ? 'Active' : 'Inactive'); ?>
+
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ₱{{ number_format($driver->monthly_incentive ?? 0, 2) }}
+                                ₱<?php echo e(number_format($driver->monthly_incentive ?? 0, 2)); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $driver->performance_rating ?? 'Good' }}
+                                <?php echo e($driver->performance_rating ?? 'Good'); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button
                                     type="button"
                                     class="text-blue-600 hover:text-blue-900 mr-3"
-                                    onclick="event.stopPropagation(); openDriverDetails({{ $driver->id }})"
+                                    onclick="event.stopPropagation(); openDriverDetails(<?php echo e($driver->id); ?>)"
                                 >
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="7" class="px-6 py-10 text-center text-gray-500">
                                 <i data-lucide="users" class="w-10 h-10 mx-auto mb-3 text-gray-300"></i>
                                 <p>No drivers found.</p>
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
-        @if(isset($drivers) && method_exists($drivers, 'links'))
+        <?php if(isset($drivers) && method_exists($drivers, 'links')): ?>
         <div class="px-6 py-4 border-t border-gray-200">
-            {{ $drivers->withQueryString()->links() }}
+            <?php echo e($drivers->withQueryString()->links()); ?>
+
         </div>
-        @endif
+        <?php endif; ?>
     </div>
 
-    {{-- Add/Edit Driver Modal --}}
+    
     <div id="addDriverModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden h-full w-full z-50 flex items-center justify-center p-4">
         <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b">
@@ -134,7 +138,7 @@
             </div>
 
             <form id="driverForm" method="POST" class="p-6 space-y-4">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <input type="hidden" name="_method" id="driverFormMethod" value="POST">
                 <input type="hidden" name="driver_id" id="editDriverId" value="">
 
@@ -161,7 +165,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Hire Date</label>
-                        <input type="date" name="hire_date" id="driverHireDate" value="{{ date('Y-m-d') }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                        <input type="date" name="hire_date" id="driverHireDate" value="<?php echo e(date('Y-m-d')); ?>" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
                     </div>
                 </div>
 
@@ -204,7 +208,7 @@
         </div>
     </div>
 
-    {{-- Driver Details Modal with Tabs --}}
+    
     <div id="driverDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden h-full w-full z-50 flex items-center justify-center p-4">
         <div class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center p-6 border-b">
@@ -217,7 +221,7 @@
                 </button>
             </div>
 
-            {{-- Tabs --}}
+            
             <div class="px-6 pt-4 border-b">
                 <nav class="-mb-px flex space-x-4" aria-label="Tabs">
                     <button type="button" class="driver-tab active border-yellow-500 text-yellow-600 whitespace-nowrap py-2 px-3 border-b-2 text-sm font-medium" data-tab="basic">
@@ -238,7 +242,7 @@
                 </nav>
             </div>
 
-            {{-- Tab Panels --}}
+            
             <div class="p-6 space-y-6">
                 <div class="driver-tab-panel" data-tab-panel="basic">
                     <h4 class="text-md font-semibold text-gray-800 mb-4">Personal & Employment Details</h4>
@@ -257,7 +261,7 @@
                         <h5 class="text-sm font-semibold text-gray-800 mb-2">Upload Driver Documents</h5>
                         <p class="text-xs text-gray-500 mb-3">Accepted file types: JPG, PNG, PDF. Uploads replace any existing document for the same type.</p>
                         <form id="driverDocumentsForm" method="POST" enctype="multipart/form-data" class="space-y-3">
-                            @csrf
+                            <?php echo csrf_field(); ?>
                             <input type="hidden" name="_method" value="POST">
                             <input type="hidden" name="driver_id" id="driverDocumentsDriverId" value="">
 
@@ -318,20 +322,20 @@
         </div>
     </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 function openAddDriverModal() {
     document.getElementById('driverModalTitle').textContent = 'Add Driver';
     document.getElementById('driverFormMethod').value = 'POST';
-    document.getElementById('driverForm').action = '{{ route('driver-management.store') }}';
+    document.getElementById('driverForm').action = '<?php echo e(route('driver-management.store')); ?>';
     document.getElementById('editDriverId').value = '';
     document.getElementById('driverFullName').value = '';
     document.getElementById('driverContact').value = '';
     document.getElementById('driverLicense').value = '';
     document.getElementById('driverLicenseExpiry').value = '';
-    document.getElementById('driverHireDate').value = '{{ date('Y-m-d') }}';
+    document.getElementById('driverHireDate').value = '<?php echo e(date('Y-m-d')); ?>';
     document.getElementById('driverAddress').value = '';
     document.getElementById('driverEmergencyContact').value = '';
     document.getElementById('driverEmergencyPhone').value = '';
@@ -343,20 +347,20 @@ function openAddDriverModal() {
 }
 
 function openEditDriverModal(id) {
-    fetch('{{ route('driver-management.index') }}/' + id + '?format=json', {
+    fetch('<?php echo e(route('driver-management.index')); ?>/' + id + '?format=json', {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(r => r.json())
     .then(data => {
         document.getElementById('driverModalTitle').textContent = 'Edit Driver';
         document.getElementById('driverFormMethod').value = 'PUT';
-        document.getElementById('driverForm').action = '{{ url('driver-management') }}/' + id;
+        document.getElementById('driverForm').action = '<?php echo e(url('driver-management')); ?>/' + id;
         document.getElementById('editDriverId').value = id;
         document.getElementById('driverFullName').value = data.full_name || '';
         document.getElementById('driverContact').value = data.contact_number || '';
         document.getElementById('driverLicense').value = data.license_number || '';
         document.getElementById('driverLicenseExpiry').value = data.license_expiry || '';
-        document.getElementById('driverHireDate').value = data.hire_date || '{{ date('Y-m-d') }}';
+        document.getElementById('driverHireDate').value = data.hire_date || '<?php echo e(date('Y-m-d')); ?>';
         document.getElementById('driverAddress').value = data.address || '';
         document.getElementById('driverEmergencyContact').value = data.emergency_contact || '';
         document.getElementById('driverEmergencyPhone').value = data.emergency_phone || '';
@@ -370,7 +374,7 @@ function openEditDriverModal(id) {
         // Fallback: just show empty edit modal
         document.getElementById('driverModalTitle').textContent = 'Edit Driver';
         document.getElementById('driverFormMethod').value = 'PUT';
-        document.getElementById('driverForm').action = '{{ url('driver-management') }}/' + id;
+        document.getElementById('driverForm').action = '<?php echo e(url('driver-management')); ?>/' + id;
         document.getElementById('editDriverId').value = id;
         document.getElementById('deleteDriverButton').classList.remove('hidden');
         document.getElementById('addDriverModal').classList.remove('hidden');
@@ -389,8 +393,8 @@ function confirmDeleteDriver() {
     if (confirm('Are you sure you want to delete ' + name + '?')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ url('driver-management') }}/' + id;
-        form.innerHTML = '@csrf' +
+        form.action = '<?php echo e(url('driver-management')); ?>/' + id;
+        form.innerHTML = '<?php echo csrf_field(); ?>' +
                          '<input type="hidden" name="_method" value="DELETE">';
         document.body.appendChild(form);
         form.submit();
@@ -418,10 +422,10 @@ function openDriverDetails(id) {
     }
 
     document.getElementById('driverDocumentsDriverId').value = id;
-    document.getElementById('driverDocumentsForm').action = '{{ url('driver-management/upload-documents') }}/' + id;
+    document.getElementById('driverDocumentsForm').action = '<?php echo e(url('driver-management/upload-documents')); ?>/' + id;
 
     // Fetch basic details
-    fetch('{{ route('driver-management.index') }}/' + id + '?format=json', {
+    fetch('<?php echo e(route('driver-management.index')); ?>/' + id + '?format=json', {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
     })
     .then(r => r.json())
@@ -490,4 +494,5 @@ document.querySelectorAll('.driver-tab').forEach(tab => {
     });
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\eurotaxisystem\resources\views/driver-management/index.blade.php ENDPATH**/ ?>

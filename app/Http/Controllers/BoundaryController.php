@@ -27,11 +27,15 @@ class BoundaryController extends Controller
             ->leftJoin('units as u', 'b.unit_id', '=', 'u.id')
             ->leftJoin('drivers as d', 'b.driver_id', '=', 'd.id')
             ->leftJoin('users as usr', 'd.user_id', '=', 'usr.id')
+            ->leftJoin('users as creator', 'b.created_by', '=', 'creator.id')
+            ->leftJoin('users as editor', 'b.updated_by', '=', 'editor.id')
             ->select(
                 'b.*',
                 'u.unit_number',
                 'u.plate_number',
-                'usr.full_name as driver_name'
+                'usr.full_name as driver_name',
+                'creator.full_name as creator_name',
+                'editor.full_name as editor_name'
             );
 
         if (!empty($search)) {
@@ -199,14 +203,17 @@ class BoundaryController extends Controller
                 $excess   = max(0, $actual_boundary - $boundary_amount);
                 $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
-                Boundary::where('id', $id)->update([
-                    'boundary_amount' => $boundary_amount,
-                    'actual_boundary' => $actual_boundary,
-                    'shortage'        => $shortage,
-                    'excess'          => $excess,
-                    'status'          => $status,
-                    'notes'           => $notes,
-                ]);
+                $boundary = Boundary::find($id);
+                if ($boundary) {
+                    $boundary->update([
+                        'boundary_amount' => $boundary_amount,
+                        'actual_boundary' => $actual_boundary,
+                        'shortage'        => $shortage,
+                        'excess'          => $excess,
+                        'status'          => $status,
+                        'notes'           => $notes,
+                    ]);
+                }
                 return redirect()->route('boundaries.index')->with('success', 'Boundary record updated successfully');
             } else {
                 return back()->with('error', 'Please fill in all required fields');

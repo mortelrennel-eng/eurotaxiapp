@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Maintenance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,9 @@ class MaintenanceController extends Controller
 
         $query = DB::table('maintenance')
             ->join('units', 'maintenance.unit_id', '=', 'units.id')
-            ->select('maintenance.*', 'units.unit_number', 'units.plate_number');
+            ->leftJoin('users as creator', 'maintenance.created_by', '=', 'creator.id')
+            ->leftJoin('users as editor', 'maintenance.updated_by', '=', 'editor.id')
+            ->select('maintenance.*', 'units.unit_number', 'units.plate_number', 'creator.full_name as creator_name', 'editor.full_name as editor_name');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -98,11 +101,10 @@ class MaintenanceController extends Controller
             DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'maintenance']);
         }
 
-        DB::table('maintenance')->insert(array_merge($data, [
+        // Use Eloquent to trigger TrackChanges trait
+        Maintenance::create(array_merge($data, [
             'cost' => $total_cost,
             'parts_list' => $data['parts_list'] ?? '',
-            'created_at' => now(),
-            'updated_at' => now(),
         ]));
 
         return redirect()->route('maintenance.index')->with('success', 'Maintenance record added successfully');
@@ -127,10 +129,11 @@ class MaintenanceController extends Controller
         $total_cost = $data['total_cost'];
         unset($data['total_cost']);
 
-        DB::table('maintenance')->where('id', $id)->update(array_merge($data, [
+        // Use Eloquent to trigger TrackChanges trait
+        $maintenance = Maintenance::findOrFail($id);
+        $maintenance->update(array_merge($data, [
             'cost' => $total_cost,
             'parts_list' => $data['parts_list'] ?? '',
-            'updated_at' => now(),
         ]));
 
         return redirect()->route('maintenance.index')->with('success', 'Maintenance record updated successfully');

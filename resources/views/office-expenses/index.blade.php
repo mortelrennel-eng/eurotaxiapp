@@ -173,6 +173,12 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $expense->reference_number ?? '-' }}
+                                <div class="text-[10px] text-gray-400 mt-1">
+                                    <span title="Input by {{ $expense->creator_name ?? 'System' }}">In: {{ $expense->creator_name ?? 'System' }}</span>
+                                    @if(isset($expense->editor_name) && $expense->editor_name)
+                                        <span class="ml-1" title="Last edit by {{ $expense->editor_name }}">Ed: {{ $expense->editor_name }}</span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
                                 {{ formatCurrency($expense->amount) }}

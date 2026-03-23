@@ -2,20 +2,22 @@
     <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
         <div class="flex justify-between items-start">
             <div>
-                <h3 class="text-xl font-bold">{{ $unit->unit_number }}</h3>
-                <p class="text-blue-100 text-sm">{{ ($unit->make ?? '') . ' ' . ($unit->model ?? '') . ' (' . ($unit->year ?? '') . ')' }}</p>
-                <p class="text-blue-100 text-sm">Plate: {{ $unit->plate_number }}</p>
+                <h3 class="text-xl font-bold"><?php echo e($unit->unit_number); ?></h3>
+                <p class="text-blue-100 text-sm"><?php echo e(($unit->make ?? '') . ' ' . ($unit->model ?? '') . ' (' . ($unit->year ?? '') . ')'); ?></p>
+                <p class="text-blue-100 text-sm">Plate: <?php echo e($unit->plate_number); ?></p>
                 <div class="flex items-center gap-2 mt-1">
                     <span class="px-2 py-1 bg-white bg-opacity-20 rounded-full text-xs font-medium">
-                        {{ ucfirst($unit->status ?? '') }}
+                        <?php echo e(ucfirst($unit->status ?? '')); ?>
+
                     </span>
                     <span class="px-2 py-1 bg-white bg-opacity-20 rounded-full text-xs font-medium">
-                        {{ ucfirst($unit->unit_type ?? 'Standard') }}
+                        <?php echo e(ucfirst($unit->unit_type ?? 'Standard')); ?>
+
                     </span>
                 </div>
             </div>
             <div class="text-right">
-                <div class="text-xl font-bold">₱{{ number_format((float) ($unit->boundary_rate ?? 0), 2) }}</div>
+                <div class="text-xl font-bold">₱<?php echo e(number_format((float) ($unit->boundary_rate ?? 0), 2)); ?></div>
                 <p class="text-blue-100 text-xs">Daily Boundary Rate</p>
             </div>
         </div>
@@ -60,7 +62,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Drivers</p>
-                            <p class="text-lg font-bold">{{ count($assigned_drivers) }}/2</p>
+                            <p class="text-lg font-bold"><?php echo e(count($assigned_drivers)); ?>/2</p>
                         </div>
                     </div>
                 </div>
@@ -71,7 +73,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Status</p>
-                            <p class="text-lg font-bold">{{ ucfirst($unit->status ?? '') }}</p>
+                            <p class="text-lg font-bold"><?php echo e(ucfirst($unit->status ?? '')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -82,7 +84,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Fuel</p>
-                            <p class="text-lg font-bold">{{ ucfirst($unit->fuel_status ?? 'Full') }}</p>
+                            <p class="text-lg font-bold"><?php echo e(ucfirst($unit->fuel_status ?? 'Full')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -93,7 +95,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600">Next Coding</p>
-                            <p class="text-lg font-bold">{{ $next_coding_date ?? 'Not Set' }}</p>
+                            <p class="text-lg font-bold"><?php echo e($next_coding_date ?? 'Not Set'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -110,39 +112,40 @@
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Unit Number:</span>
-                            <span class="font-medium">{{ $unit->unit_number }}</span>
+                            <span class="font-medium"><?php echo e($unit->unit_number); ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Plate Number:</span>
-                            <span class="font-medium">{{ $unit->plate_number }}</span>
+                            <span class="font-medium"><?php echo e($unit->plate_number); ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Vehicle:</span>
-                            <span class="font-medium">{{ ($unit->make ?? '') . ' ' . ($unit->model ?? '') }}</span>
+                            <span class="font-medium"><?php echo e(($unit->make ?? '') . ' ' . ($unit->model ?? '')); ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Year:</span>
-                            <span class="font-medium">{{ $unit->year }}</span>
+                            <span class="font-medium"><?php echo e($unit->year); ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Status:</span>
                             <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                                {{ ucfirst($unit->status ?? '') }}
+                                <?php echo e(ucfirst($unit->status ?? '')); ?>
+
                             </span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Boundary Rate:</span>
-                            <span class="font-medium">₱{{ number_format((float) ($unit->boundary_rate ?? 0), 2) }}</span>
+                            <span class="font-medium">₱<?php echo e(number_format((float) ($unit->boundary_rate ?? 0), 2)); ?></span>
                         </div>
                         <div class="pt-3 border-t border-gray-100 mt-3">
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <span class="text-[10px] text-gray-500 uppercase font-semibold block">Input by</span>
-                                    <span class="text-xs font-medium text-gray-900">{{ $unit->created_by_name ?? 'System' }}</span>
+                                    <span class="text-xs font-medium text-gray-900"><?php echo e($unit->created_by_name ?? 'System'); ?></span>
                                 </div>
                                 <div>
                                     <span class="text-[10px] text-gray-500 uppercase font-semibold block">Last Edit</span>
-                                    <span class="text-xs font-medium text-gray-900">{{ $unit->updated_by_name ?? 'System' }}</span>
+                                    <span class="text-xs font-medium text-gray-900"><?php echo e($unit->updated_by_name ?? 'System'); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -157,25 +160,26 @@
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Assigned Drivers:</span>
-                            <span class="font-medium">{{ count($assigned_drivers) }}/2</span>
+                            <span class="font-medium"><?php echo e(count($assigned_drivers)); ?>/2</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Availability:</span>
-                            <span class="px-2 py-1 text-xs rounded-full {{ count($assigned_drivers) >= 2 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                                {{ count($assigned_drivers) >= 2 ? 'Full' : 'Available' }}
+                            <span class="px-2 py-1 text-xs rounded-full <?php echo e(count($assigned_drivers) >= 2 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'); ?>">
+                                <?php echo e(count($assigned_drivers) >= 2 ? 'Full' : 'Available'); ?>
+
                             </span>
                         </div>
-                        @if(!empty($assigned_drivers))
+                        <?php if(!empty($assigned_drivers)): ?>
                             <div class="mt-4 space-y-2">
-                                @foreach($assigned_drivers as $driver)
+                                <?php $__currentLoopData = $assigned_drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="bg-gray-50 p-3 rounded">
-                                        <div class="font-medium">{{ $driver->full_name }}</div>
-                                        <div class="text-sm text-gray-600">{{ $driver->license_number }}</div>
-                                        <div class="text-sm text-gray-600">Contact: {{ $driver->contact_number ?? 'N/A' }}</div>
+                                        <div class="font-medium"><?php echo e($driver->full_name); ?></div>
+                                        <div class="text-sm text-gray-600"><?php echo e($driver->license_number); ?></div>
+                                        <div class="text-sm text-gray-600">Contact: <?php echo e($driver->contact_number ?? 'N/A'); ?></div>
                                     </div>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -184,16 +188,16 @@
         <div id="drivers-tab" class="tab-content hidden">
             <div class="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">Assigned Drivers</h4>
-                @if(!empty($assigned_drivers))
+                <?php if(!empty($assigned_drivers)): ?>
                     <div class="space-y-4">
-                        @foreach($assigned_drivers as $driver)
+                        <?php $__currentLoopData = $assigned_drivers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $driver): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="border border-gray-200 rounded-lg p-4">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <h5 class="font-semibold text-gray-900">{{ $driver->full_name }}</h5>
-                                        <p class="text-sm text-gray-600">License: {{ $driver->license_number }}</p>
-                                        <p class="text-sm text-gray-600">Contact: {{ $driver->contact_number ?? 'N/A' }}</p>
-                                        <p class="text-sm text-gray-600">Email: {{ $driver->email ?? 'N/A' }}</p>
+                                        <h5 class="font-semibold text-gray-900"><?php echo e($driver->full_name); ?></h5>
+                                        <p class="text-sm text-gray-600">License: <?php echo e($driver->license_number); ?></p>
+                                        <p class="text-sm text-gray-600">Contact: <?php echo e($driver->contact_number ?? 'N/A'); ?></p>
+                                        <p class="text-sm text-gray-600">Email: <?php echo e($driver->email ?? 'N/A'); ?></p>
                                     </div>
                                     <div class="text-right">
                                         <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
@@ -202,38 +206,38 @@
                                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div>
                                         <span class="text-gray-600">License Number:</span>
-                                        <p class="font-medium">{{ $driver->license_number ?? 'N/A' }}</p>
+                                        <p class="font-medium"><?php echo e($driver->license_number ?? 'N/A'); ?></p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Contact:</span>
-                                        <p class="font-medium">{{ $driver->contact_number ?? 'N/A' }}</p>
+                                        <p class="font-medium"><?php echo e($driver->contact_number ?? 'N/A'); ?></p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Email:</span>
-                                        <p class="font-medium">{{ $driver->email ?? 'N/A' }}</p>
+                                        <p class="font-medium"><?php echo e($driver->email ?? 'N/A'); ?></p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Daily Target:</span>
-                                        <p class="font-medium">₱{{ number_format((float) ($driver->daily_boundary_target ?? 1100), 2) }}</p>
+                                        <p class="font-medium">₱<?php echo e(number_format((float) ($driver->daily_boundary_target ?? 1100), 2)); ?></p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Hire Date:</span>
-                                        <p class="font-medium">{{ !empty($driver->hire_date) ? \Carbon\Carbon::parse($driver->hire_date)->format('M d, Y') : 'Not set' }}</p>
+                                        <p class="font-medium"><?php echo e(!empty($driver->hire_date) ? \Carbon\Carbon::parse($driver->hire_date)->format('M d, Y') : 'Not set'); ?></p>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">License Expiry:</span>
-                                        <p class="font-medium">{{ !empty($driver->license_expiry) ? \Carbon\Carbon::parse($driver->license_expiry)->format('M d, Y') : 'Not set' }}</p>
+                                        <p class="font-medium"><?php echo e(!empty($driver->license_expiry) ? \Carbon\Carbon::parse($driver->license_expiry)->format('M d, Y') : 'Not set'); ?></p>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="text-center py-8 text-gray-500">
                         <i data-lucide="users" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
                         <p>No drivers assigned to this unit</p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
 
@@ -247,21 +251,23 @@
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Coding Day:</span>
                                 <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                    {{ $coding_day }}
+                                    <?php echo e($coding_day); ?>
+
                                 </span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Last Digit:</span>
-                                <span class="font-medium">{{ substr($unit->plate_number ?? '', -1) }}</span>
+                                <span class="font-medium"><?php echo e(substr($unit->plate_number ?? '', -1)); ?></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Next Coding:</span>
-                                <span class="font-medium">{{ $next_coding_date }}</span>
+                                <span class="font-medium"><?php echo e($next_coding_date); ?></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Days Until Coding:</span>
-                                <span class="font-medium {{ ($days_until_coding ?? 0) === 0 ? 'text-red-600' : 'text-green-600' }}">
-                                    {{ ($days_until_coding ?? 0) === 0 ? 'Today' : ($days_until_coding . ' days') }}
+                                <span class="font-medium <?php echo e(($days_until_coding ?? 0) === 0 ? 'text-red-600' : 'text-green-600'); ?>">
+                                    <?php echo e(($days_until_coding ?? 0) === 0 ? 'Today' : ($days_until_coding . ' days')); ?>
+
                                 </span>
                             </div>
                             <div class="flex justify-between">
@@ -270,8 +276,9 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Coding Status:</span>
-                                <span class="px-2 py-1 text-xs rounded-full {{ ($days_until_coding ?? 0) === 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
-                                    {{ ($days_until_coding ?? 0) === 0 ? 'Coding Today' : 'No Coding' }}
+                                <span class="px-2 py-1 text-xs rounded-full <?php echo e(($days_until_coding ?? 0) === 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'); ?>">
+                                    <?php echo e(($days_until_coding ?? 0) === 0 ? 'Coding Today' : 'No Coding'); ?>
+
                                 </span>
                             </div>
                         </div>
@@ -308,7 +315,7 @@
         <div id="boundary-tab" class="tab-content hidden">
             <div class="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">Boundary Collection History</h4>
-                @if(!empty($boundary_history))
+                <?php if(!empty($boundary_history)): ?>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -320,65 +327,69 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($boundary_history as $bh)
+                                <?php $__currentLoopData = $boundary_history; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $bh): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ !empty($bh->date) ? \Carbon\Carbon::parse($bh->date)->format('M d, Y') : '' }}
+                                            <?php echo e(!empty($bh->date) ? \Carbon\Carbon::parse($bh->date)->format('M d, Y') : ''); ?>
+
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $bh->full_name ?? 'N/A' }}
+                                            <?php echo e($bh->full_name ?? 'N/A'); ?>
+
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                                            ₱{{ number_format((float) ($bh->boundary_amount ?? 0), 2) }}
+                                            ₱<?php echo e(number_format((float) ($bh->boundary_amount ?? 0), 2)); ?>
+
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ ucfirst($bh->status ?? '') }}
+                                            <?php echo e(ucfirst($bh->status ?? '')); ?>
+
                                         </td>
                                     </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="text-center py-8 text-gray-500">
                         <i data-lucide="dollar-sign" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
                         <p>No boundary collection history found</p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
 
         <div id="maintenance-tab" class="tab-content hidden">
             <div class="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">Maintenance Records</h4>
-                @if(!empty($maintenance_records))
+                <?php if(!empty($maintenance_records)): ?>
                     <div class="space-y-4">
-                        @foreach($maintenance_records as $maintenance)
+                        <?php $__currentLoopData = $maintenance_records; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $maintenance): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="border border-gray-200 rounded-lg p-4">
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
-                                        <h5 class="font-semibold text-gray-900">{{ $maintenance->maintenance_type ?? 'Maintenance' }}</h5>
-                                        <p class="text-sm text-gray-600">{{ !empty($maintenance->date_started) ? \Carbon\Carbon::parse($maintenance->date_started)->format('M d, Y') : '' }}</p>
+                                        <h5 class="font-semibold text-gray-900"><?php echo e($maintenance->maintenance_type ?? 'Maintenance'); ?></h5>
+                                        <p class="text-sm text-gray-600"><?php echo e(!empty($maintenance->date_started) ? \Carbon\Carbon::parse($maintenance->date_started)->format('M d, Y') : ''); ?></p>
                                     </div>
                                     <div class="text-right">
-                                        <span class="text-lg font-bold text-orange-600">₱{{ number_format((float) ($maintenance->cost ?? 0), 2) }}</span>
+                                        <span class="text-lg font-bold text-orange-600">₱<?php echo e(number_format((float) ($maintenance->cost ?? 0), 2)); ?></span>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div class="md:col-span-2">
                                         <span class="text-gray-600">Description:</span>
-                                        <p class="font-medium">{{ $maintenance->description ?? 'No description' }}</p>
+                                        <p class="font-medium"><?php echo e($maintenance->description ?? 'No description'); ?></p>
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
-                @else
+                <?php else: ?>
                     <div class="text-center py-8 text-gray-500">
                         <i data-lucide="wrench" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
                         <p>No maintenance records found</p>
                     </div>
-                @endif
+                <?php endif; ?>
             </div>
         </div>
 
@@ -389,15 +400,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <p class="text-purple-100">Total Investment</p>
-                            <p class="text-2xl font-bold">₱{{ number_format((float) ($roi_data['total_investment'] ?? 0), 2) }}</p>
+                            <p class="text-2xl font-bold">₱<?php echo e(number_format((float) ($roi_data['total_investment'] ?? 0), 2)); ?></p>
                         </div>
                         <div>
                             <p class="text-purple-100">Total Revenue</p>
-                            <p class="text-2xl font-bold">₱{{ number_format((float) ($roi_data['total_revenue'] ?? 0), 2) }}</p>
+                            <p class="text-2xl font-bold">₱<?php echo e(number_format((float) ($roi_data['total_revenue'] ?? 0), 2)); ?></p>
                         </div>
                         <div>
                             <p class="text-purple-100">Total Expenses</p>
-                            <p class="text-2xl font-bold">₱{{ number_format((float) ($roi_data['total_expenses'] ?? 0), 2) }}</p>
+                            <p class="text-2xl font-bold">₱<?php echo e(number_format((float) ($roi_data['total_expenses'] ?? 0), 2)); ?></p>
                         </div>
                     </div>
                 </div>
@@ -408,26 +419,28 @@
                         <div class="space-y-4">
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">ROI Percentage</span>
-                                <span class="text-lg font-bold {{ ($roi_data['roi_percentage'] ?? 0) > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                    {{ number_format((float) ($roi_data['roi_percentage'] ?? 0), 1) }}%
+                                <span class="text-lg font-bold <?php echo e(($roi_data['roi_percentage'] ?? 0) > 0 ? 'text-green-600' : 'text-red-600'); ?>">
+                                    <?php echo e(number_format((float) ($roi_data['roi_percentage'] ?? 0), 1)); ?>%
                                 </span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Payback Period</span>
                                 <span class="text-lg font-bold text-blue-600">
-                                    {{ number_format((float) ($roi_data['payback_period'] ?? 0), 1) }} months
+                                    <?php echo e(number_format((float) ($roi_data['payback_period'] ?? 0), 1)); ?> months
                                 </span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Monthly Revenue</span>
                                 <span class="text-lg font-bold text-green-600">
-                                    ₱{{ number_format((float) ($roi_data['monthly_revenue'] ?? 0), 2) }}
+                                    ₱<?php echo e(number_format((float) ($roi_data['monthly_revenue'] ?? 0), 2)); ?>
+
                                 </span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Monthly Expenses</span>
                                 <span class="text-lg font-bold text-red-600">
-                                    ₱{{ number_format((float) ($roi_data['monthly_expenses'] ?? 0), 2) }}
+                                    ₱<?php echo e(number_format((float) ($roi_data['monthly_expenses'] ?? 0), 2)); ?>
+
                                 </span>
                             </div>
                         </div>
@@ -439,24 +452,24 @@
                             <div>
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-sm text-gray-600">ROI Achievement</span>
-                                    <span class="text-sm font-medium">{{ number_format((float) ($roi_data['roi_percentage'] ?? 0), 1) }}%</span>
+                                    <span class="text-sm font-medium"><?php echo e(number_format((float) ($roi_data['roi_percentage'] ?? 0), 1)); ?>%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-4">
-                                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-4 rounded-full" style="width: {{ min(100, max(0, (float) ($roi_data['roi_percentage'] ?? 0))) }}%"></div>
+                                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 h-4 rounded-full" style="width: <?php echo e(min(100, max(0, (float) ($roi_data['roi_percentage'] ?? 0)))); ?>%"></div>
                                 </div>
                             </div>
                             <div>
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-sm text-gray-600">Base Boundary to Achieve ROI</span>
-                                    <span class="text-sm font-medium">₱{{ number_format(((float) ($roi_data['total_investment'] ?? 0)) / 12, 2) }}/month</span>
+                                    <span class="text-sm font-medium">₱<?php echo e(number_format(((float) ($roi_data['total_investment'] ?? 0)) / 12, 2)); ?>/month</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-4">
-                                    @php
+                                    <?php
                                         $investment_per_month = ((float) ($roi_data['total_investment'] ?? 0)) / 12;
                                         $monthly_boundary = (float) ($roi_data['monthly_boundary'] ?? 0);
                                         $progress_percentage = $investment_per_month > 0 ? min(100, ($monthly_boundary / $investment_per_month) * 100) : 0;
-                                    @endphp
-                                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full" style="width: {{ $progress_percentage }}%"></div>
+                                    ?>
+                                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-4 rounded-full" style="width: <?php echo e($progress_percentage); ?>%"></div>
                                 </div>
                             </div>
                         </div>
@@ -474,24 +487,25 @@
                         <div class="space-y-3">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Location:</span>
-                                <span class="font-medium">{{ $location_info['current_location'] }}</span>
+                                <span class="font-medium"><?php echo e($location_info['current_location']); ?></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Last Update:</span>
-                                <span class="font-medium">{{ $location_info['last_location_update'] }}</span>
+                                <span class="font-medium"><?php echo e($location_info['last_location_update']); ?></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">GPS Status:</span>
-                                <span class="px-2 py-1 text-xs rounded-full {{ $location_info['gps_enabled'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $location_info['gps_enabled'] ? 'Enabled' : 'Disabled' }}
+                                <span class="px-2 py-1 text-xs rounded-full <?php echo e($location_info['gps_enabled'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'); ?>">
+                                    <?php echo e($location_info['gps_enabled'] ? 'Enabled' : 'Disabled'); ?>
+
                                 </span>
                             </div>
-                            @if(!empty($location_info['coordinates']))
+                            <?php if(!empty($location_info['coordinates'])): ?>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600">Coordinates:</span>
-                                    <span class="font-medium">{{ $location_info['coordinates'] }}</span>
+                                    <span class="font-medium"><?php echo e($location_info['coordinates']); ?></span>
                                 </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div>
@@ -516,19 +530,21 @@
                         <div class="space-y-3">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Dashcam Status:</span>
-                                <span class="px-2 py-1 text-xs rounded-full {{ ($dashcam_info['dashcam_enabled'] ?? false) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ ($dashcam_info['dashcam_enabled'] ?? false) ? 'Enabled' : 'Disabled' }}
+                                <span class="px-2 py-1 text-xs rounded-full <?php echo e(($dashcam_info['dashcam_enabled'] ?? false) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'); ?>">
+                                    <?php echo e(($dashcam_info['dashcam_enabled'] ?? false) ? 'Enabled' : 'Disabled'); ?>
+
                                 </span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Connection Status:</span>
-                                <span class="px-2 py-1 text-xs rounded-full {{ ($dashcam_info['dashcam_status'] ?? '') === 'Online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                    {{ $dashcam_info['dashcam_status'] ?? 'Offline' }}
+                                <span class="px-2 py-1 text-xs rounded-full <?php echo e(($dashcam_info['dashcam_status'] ?? '') === 'Online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'); ?>">
+                                    <?php echo e($dashcam_info['dashcam_status'] ?? 'Offline'); ?>
+
                                 </span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Last Recording:</span>
-                                <span class="font-medium">{{ $dashcam_info['last_recording'] ?? 'Never' }}</span>
+                                <span class="font-medium"><?php echo e($dashcam_info['last_recording'] ?? 'Never'); ?></span>
                             </div>
                         </div>
                     </div>
@@ -537,24 +553,24 @@
                         <div class="space-y-3">
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Storage Used:</span>
-                                <span class="font-medium">{{ number_format((float) ($dashcam_info['storage_used'] ?? 0), 2) }} GB</span>
+                                <span class="font-medium"><?php echo e(number_format((float) ($dashcam_info['storage_used'] ?? 0), 2)); ?> GB</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-gray-600">Total Storage:</span>
-                                <span class="font-medium">{{ number_format((float) ($dashcam_info['storage_total'] ?? 0), 2) }} GB</span>
+                                <span class="font-medium"><?php echo e(number_format((float) ($dashcam_info['storage_total'] ?? 0), 2)); ?> GB</span>
                             </div>
                             <div>
-                                @php
+                                <?php
                                     $storage_total = (float) ($dashcam_info['storage_total'] ?? 0);
                                     $storage_used = (float) ($dashcam_info['storage_used'] ?? 0);
                                     $storage_pct = $storage_total > 0 ? ($storage_used / $storage_total) * 100 : 0;
-                                @endphp
+                                ?>
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="text-sm text-gray-600">Storage Usage</span>
-                                    <span class="text-sm font-medium">{{ number_format($storage_pct, 1) }}%</span>
+                                    <span class="text-sm font-medium"><?php echo e(number_format($storage_pct, 1)); ?>%</span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-4">
-                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full" style="width: {{ $storage_total > 0 ? min(100, $storage_pct) : 0 }}%"></div>
+                                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full" style="width: <?php echo e($storage_total > 0 ? min(100, $storage_pct) : 0); ?>%"></div>
                                 </div>
                             </div>
                         </div>
@@ -589,3 +605,4 @@ function showTab(tabName) {
     activeBtn.classList.add('border-blue-500', 'text-blue-600');
 }
 </script>
+<?php /**PATH C:\xampp\htdocs\eurotaxisystem\resources\views/units/partials/unit_details_modal.blade.php ENDPATH**/ ?>

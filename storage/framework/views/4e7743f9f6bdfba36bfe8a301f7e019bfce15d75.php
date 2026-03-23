@@ -25,6 +25,7 @@
 
     <!-- Custom CSS -->
     <link href="<?php echo e(asset('assets/app.css')); ?>" rel="stylesheet">
+    <?php echo $__env->yieldPushContent('styles'); ?>
 
     <!-- Custom JS -->
     <script src="<?php echo e(asset('assets/app.js')); ?>"></script>
@@ -65,6 +66,12 @@
                             <span>Unit Management</span>
                         </a>
 
+                        <a href="<?php echo e(route('driver-management.index')); ?>"
+                            class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 <?php echo e(request()->routeIs('driver-management.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : ''); ?>">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            <span>Driver Management</span>
+                        </a>
+
                         <a href="<?php echo e(route('decision-management.index')); ?>"
                             class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 <?php echo e(request()->routeIs('decision-management.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : ''); ?>">
                             <i data-lucide="file-text" class="w-5 h-5"></i>
@@ -93,12 +100,6 @@
                             class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 <?php echo e(request()->routeIs('driver-behavior.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : ''); ?>">
                             <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                             <span>Driver Behavior</span>
-                        </a>
-
-                        <a href="<?php echo e(route('driver-management.index')); ?>"
-                            class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-yellow-50 hover:text-yellow-700 <?php echo e(request()->routeIs('driver-management.*') ? 'bg-yellow-50 text-yellow-700 font-semibold' : ''); ?>">
-                            <i data-lucide="users" class="w-5 h-5"></i>
-                            <span>Driver Management</span>
                         </a>
 
                         <a href="<?php echo e(route('office-expenses.index')); ?>"

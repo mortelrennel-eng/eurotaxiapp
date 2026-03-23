@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\TrackChanges;
 
 class Boundary extends Model
 {
+    use TrackChanges;
     protected $table = 'boundaries';
 
     protected $fillable = [

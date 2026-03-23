@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\TrackChanges;
 
 class Unit extends Model
 {
+    use TrackChanges;
     protected $table = 'units';
 
     protected $fillable = [

@@ -93,9 +93,14 @@
                                     <div class="text-sm text-gray-500"><?php echo e($boundary['plate_number']); ?></div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                <?php echo e($boundary['driver_name'] ?? 'Unassigned'); ?>
-
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900"><?php echo e($boundary['driver_name'] ?? 'Unassigned'); ?></div>
+                                <div class="text-[10px] text-gray-500 mt-1">
+                                    <span title="Input by <?php echo e($boundary['creator_name'] ?? 'System'); ?>">In: <?php echo e($boundary['creator_name'] ?? 'System'); ?></span>
+                                    <?php if(isset($boundary['editor_name']) && $boundary['editor_name']): ?>
+                                        <span class="ml-2" title="Last edit by <?php echo e($boundary['editor_name']); ?>">Ed: <?php echo e($boundary['editor_name']); ?></span>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 <?php echo e(formatCurrency($boundary['boundary_amount'])); ?>

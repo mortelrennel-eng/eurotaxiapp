@@ -72,7 +72,9 @@ class LiveTrackingController extends Controller
                 'online_now' => 0, // Simplified count since complex query was causing issues
             ];
 
-            return view('live-tracking.index', compact('tracked_units', 'alerts', 'maintenanceAlerts'));
+            $units = DB::table('units')->orderBy('unit_number')->get();
+
+            return view('live-tracking.index', compact('tracked_units', 'alerts', 'maintenanceAlerts', 'units'));
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

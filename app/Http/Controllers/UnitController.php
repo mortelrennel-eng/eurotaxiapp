@@ -140,7 +140,8 @@ class UnitController extends Controller
             $status = 'coding';
         }
 
-        DB::table('units')->insert([
+        // Use Eloquent to trigger TrackChanges trait
+        Unit::create([
             'unit_number' => $data['unit_number'],
             'plate_number' => $data['plate_number'],
             'make' => $data['make'],
@@ -157,8 +158,6 @@ class UnitController extends Controller
             'driver_id' => $driver_id,
             'secondary_driver_id' => $secondary_driver_id,
             'coding_updated_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return redirect()->route('units.index')->with('success', 'Unit added successfully!');
@@ -241,7 +240,12 @@ class UnitController extends Controller
         if (isset($data['unit_type'])) $updateData['unit_type'] = $data['unit_type'];
         if (isset($data['fuel_status'])) $updateData['fuel_status'] = $data['fuel_status'];
 
-        DB::table('units')->where('id', $id)->update($updateData);
+        // Use Eloquent to trigger TrackChanges trait
+        $unit = Unit::findOrFail($id);
+        $unit->update($updateData);
+        
+        // Remove 'updated_at' from manual array since Eloquent handles it
+        if (isset($updateData['updated_at'])) unset($updateData['updated_at']);
 
         return redirect()->route('units.index')->with('success', 'Unit updated successfully!');
     }
@@ -268,7 +272,12 @@ class UnitController extends Controller
             return response()->json(['error' => 'Invalid ID'], 400);
         }
 
-        $unit = DB::table('units')->where('id', $unit_id)->first();
+        $unit = DB::table('units as u')
+            ->leftJoin('users as creator', 'u.created_by', '=', 'creator.id')
+            ->leftJoin('users as editor', 'u.updated_by', '=', 'editor.id')
+            ->where('u.id', $unit_id)
+            ->select('u.*', 'creator.full_name as created_by_name', 'editor.full_name as updated_by_name')
+            ->first();
         if (!$unit) {
             return response()->json(['error' => 'Unit not found'], 404);
         }
@@ -384,7 +393,12 @@ class UnitController extends Controller
             return response('Invalid ID', 400);
         }
 
-        $unit = DB::table('units')->where('id', $unit_id)->first();
+        $unit = DB::table('units as u')
+            ->leftJoin('users as creator', 'u.created_by', '=', 'creator.id')
+            ->leftJoin('users as editor', 'u.updated_by', '=', 'editor.id')
+            ->where('u.id', $unit_id)
+            ->select('u.*', 'creator.full_name as created_by_name', 'editor.full_name as updated_by_name')
+            ->first();
         if (!$unit) {
             return response('Unit not found', 404);
         }

@@ -53,11 +53,18 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
-            'email' => 'required|email|unique:users,email',
+            'first_name' => ['required', 'string', 'max:25', 'regex:/^[a-zA-Z]+$/'],
+            'last_name' => ['required', 'string', 'max:25', 'regex:/^[a-zA-Z]+( [a-zA-Z]+)?$/'],
+            'email' => ['required', 'email', 'unique:users,email', 'regex:/^(?!.*\.{2})[a-zA-Z][a-zA-Z0-9.]{4,28}[a-zA-Z0-9]@gmail\.com$/i'],
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:staff,secretary,manager,dispatcher',
+        ], [
+            'first_name.regex' => 'Ang first name ay dapat mga letra lamang at bawal ang spacing o numbers.',
+            'first_name.max' => 'Ang first name ay hanggang 25 characters lamang.',
+            'last_name.regex' => 'Ang last name ay dapat mga letra lamang at isang spacing lamang ang pinapayagan.',
+            'last_name.max' => 'Ang last name ay hanggang 25 characters lamang.',
+            'email.regex' => 'Gmail address lamang ang tinatanggap (halimbawa: yourname@gmail.com).',
+            'email.unique' => 'Ang email na ito ay may existing na account na.',
         ]);
 
         // Generate username based on role and first name
@@ -78,6 +85,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'username' => $username,
             'password' => Hash::make($request->password),
+            'password_hash' => Hash::make($request->password),
             'role' => $request->role,
             'is_active' => true,
         ]);

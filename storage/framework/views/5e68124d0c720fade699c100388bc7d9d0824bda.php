@@ -83,7 +83,16 @@
                         </span>
                     </td>
                     <td class="px-4 py-3 text-gray-700 max-w-xs truncate" title="<?php echo e($r->description); ?>"><?php echo e($r->description); ?></td>
-                    <td class="px-4 py-3 text-gray-600"><?php echo e($r->mechanic_name ?? '—'); ?></td>
+                    <td class="px-4 py-3 text-gray-600">
+                        <?php echo e($r->mechanic_name ?? '—'); ?>
+
+                        <div class="text-[10px] text-gray-400 mt-0.5">
+                            <span title="Input by <?php echo e($r->creator_name ?? 'System'); ?>">In: <?php echo e($r->creator_name ?? 'System'); ?></span>
+                            <?php if(isset($r->editor_name) && $r->editor_name): ?>
+                                <span class="ml-1" title="Last edit by <?php echo e($r->editor_name); ?>">Ed: <?php echo e($r->editor_name); ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </td>
                     <td class="px-4 py-3 text-gray-600"><?php echo e(formatDate($r->date_started)); ?></td>
                     <td class="px-4 py-3 text-gray-600"><?php echo e($r->date_completed ? formatDate($r->date_completed) : '—'); ?></td>
                     <td class="px-4 py-3 font-semibold text-gray-900"><?php echo e(formatCurrency($r->cost)); ?></td>

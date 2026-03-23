@@ -226,7 +226,7 @@
             color: #9ca3af;
             font-size: 0.875rem;
             padding: 0 0.625rem;
-            display: flex;
+            display: none;
             align-items: center;
             align-self: stretch;
             transition: color 0.2s ease;
@@ -234,6 +234,10 @@
 
         .toggle-password:hover {
             color: #3b82f6;
+        }
+
+        .pw-group input:not(:placeholder-shown) + .toggle-password {
+            display: flex;
         }
 
         .btn-primary {
@@ -529,14 +533,14 @@
 
         <!-- Left Side - Static Image -->
         <div class="left-side w-full md:w-1/2 h-full relative overflow-hidden">
-            <img src="{{ asset('uploads/1000053201.jpg') }}" alt="Eurotaxisystem" class="w-full h-full object-cover">
+            <img src="/uploads/1000053201.jpg" alt="Eurotaxisystem" class="w-full h-full object-cover">
 
             <!-- Overlay Content -->
             <div class="absolute inset-0 frosted-overlay flex flex-col">
                 <!-- Logo at top -->
                 <div class="text-center px-8 pt-16">
                     <div class="logo-container mx-auto logo-bounce">
-                        <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxisystem Logo" class="logo-image">
+                        <img src="/uploads/logo.png" alt="Eurotaxisystem Logo" class="logo-image">
                     </div>
                 </div>
 
@@ -640,7 +644,7 @@
 
                             <!-- Forgot Password Panel -->
                             <div class="form-panel forgot-panel">
-                                <div class="mb-4" id="forgotBackButton" style="display:none;">
+                                <div class="mb-4" id="forgotBackButton" style="display: none !important;">
                                     <button type="button" onclick="backToRecoveryOptions()"
                                         class="flex items-center text-gray-600 hover:text-blue-600 transition-colors">
                                         <i class="fas fa-arrow-left mr-2"></i> Back
@@ -763,12 +767,14 @@
                                         <div class="input-group">
                                             <i class="fas fa-user"></i>
                                             <input type="text" name="first_name" id="firstName" placeholder="First name"
-                                                required>
+                                                maxlength="25" required>
+                                            <div id="firstNameError" class="text-red-500 text-xs mt-1 hidden"></div>
                                         </div>
                                         <div class="input-group">
                                             <i class="fas fa-user"></i>
                                             <input type="text" name="last_name" id="lastName" placeholder="Last name"
-                                                required>
+                                                maxlength="25" required>
+                                            <div id="lastNameError" class="text-red-500 text-xs mt-1 hidden"></div>
                                         </div>
                                     </div>
 
@@ -786,9 +792,10 @@
 
                                     <div class="input-group">
                                         <i class="fas fa-envelope"></i>
-                                        <input type="email" name="email" id="regEmail" placeholder="Email address"
+                                        <input type="email" name="email" id="regEmail" placeholder="Gmail address (e.g. you@gmail.com)"
                                             required>
                                     </div>
+                                    <div id="regEmailError" class="text-red-500 text-xs mt-1 hidden"></div>
 
                                     <div class="pw-group">
                                         <i class="fas fa-lock pw-icon"></i>
@@ -836,24 +843,32 @@
         function saveRememberMe() {
             const rememberCheckbox = document.getElementById('remember');
             const emailInput = document.getElementById('loginEmail');
+            const passwordInput = document.getElementById('loginPassword');
             
             if (rememberCheckbox.checked && emailInput.value) {
                 localStorage.setItem('rememberedEmail', emailInput.value);
+                localStorage.setItem('rememberedPassword', passwordInput.value);
                 localStorage.setItem('rememberMeChecked', 'true');
             } else {
                 localStorage.removeItem('rememberedEmail');
+                localStorage.removeItem('rememberedPassword');
                 localStorage.removeItem('rememberMeChecked');
             }
         }
 
         function loadRememberMe() {
             const rememberedEmail = localStorage.getItem('rememberedEmail');
+            const rememberedPassword = localStorage.getItem('rememberedPassword');
             const rememberMeChecked = localStorage.getItem('rememberMeChecked');
             const emailInput = document.getElementById('loginEmail');
+            const passwordInput = document.getElementById('loginPassword');
             const rememberCheckbox = document.getElementById('remember');
             
             if (rememberedEmail && rememberMeChecked === 'true') {
                 emailInput.value = rememberedEmail;
+                if (rememberedPassword) {
+                    passwordInput.value = rememberedPassword;
+                }
                 rememberCheckbox.checked = true;
             }
         }
@@ -876,6 +891,11 @@
             currentState = state;
             const flipper = document.getElementById('flipper');
             flipper.className = 'flipper state-' + state;
+            
+            if (state === 'login' || state === 'forgot') {
+                backToRecoveryOptions();
+            }
+            
             lucide && lucide.createIcons && lucide.createIcons();
         }
 
@@ -885,7 +905,7 @@
 
         function selectRecoveryMethod(method) {
             document.getElementById('recoveryOptions').style.display = 'none';
-            document.getElementById('forgotBackButton').style.display = 'block';
+            document.getElementById('forgotBackButton').style.setProperty('display', 'block', 'important');
             if (method === 'email') {
                 document.getElementById('emailResetForm').style.display = 'block';
                 document.getElementById('phoneResetForm').style.display = 'none';
@@ -897,7 +917,7 @@
 
         function backToRecoveryOptions() {
             document.getElementById('recoveryOptions').style.display = 'flex';
-            document.getElementById('forgotBackButton').style.display = 'none';
+            document.getElementById('forgotBackButton').style.setProperty('display', 'none', 'important');
             document.getElementById('emailResetForm').style.display = 'none';
             document.getElementById('phoneResetForm').style.display = 'none';
             document.getElementById('otpSection').style.display = 'none';
@@ -949,13 +969,20 @@
         function updateUsernamePreview() {
             const role = document.getElementById('regRole').value;
             const firstName = document.getElementById('firstName').value;
-            const preview = document.getElementById('usernamePreview');
+            const preview = document.getElementById('regUsername'); // Wait, ID might be different
+            
+            // Check if there's a preview element (some versions might have it)
+            const usernamePreviewInput = document.getElementById('usernamePreview');
             
             if (role && firstName) {
-                const cleanFirstName = firstName.toLowerCase().replace(/\s+/g, '');
-                preview.value = role + '-' + cleanFirstName;
+                const cleanFirstName = firstName.toLowerCase().replace(/[^a-z]/g, '');
+                if (usernamePreviewInput) {
+                    usernamePreviewInput.value = role + '-' + cleanFirstName;
+                }
             } else {
-                preview.value = '';
+                if (usernamePreviewInput) {
+                    usernamePreviewInput.value = '';
+                }
             }
         }
 
@@ -979,10 +1006,175 @@
             const emailInput = document.getElementById('loginEmail');
             const loginForm = document.getElementById('loginForm');
             
-            // Add event listener for first name to update username preview
             const firstNameInput = document.getElementById('firstName');
             if (firstNameInput) {
-                firstNameInput.addEventListener('input', updateUsernamePreview);
+                firstNameInput.addEventListener('keydown', function(e) {
+                    // Allow: backspace, delete, tab, escape, enter, arrows
+                    if ([8, 46, 9, 27, 13, 37, 38, 39, 40].indexOf(e.keyCode) !== -1) return;
+                    // Block space (32) and anything not a letter
+                    if (e.keyCode === 32 || (e.keyCode < 65 || e.keyCode > 90)) {
+                        e.preventDefault();
+                    }
+                });
+
+                firstNameInput.addEventListener('input', function() {
+                    const val = this.value;
+                    const errorDiv = document.getElementById('firstNameError');
+                    const regex = /^[a-zA-Z]*$/; // Allow typing but validate
+                    
+                    if (!regex.test(val)) {
+                        errorDiv.textContent = 'Dapat mga letra lamang at bawal ang spacing o numbers.';
+                        errorDiv.classList.remove('hidden');
+                        this.classList.add('border-red-500');
+                    } else if (val.length > 25) {
+                        errorDiv.textContent = 'Hanggang 25 characters lamang.';
+                        errorDiv.classList.remove('hidden');
+                        this.classList.add('border-red-500');
+                    } else {
+                        errorDiv.classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                    }
+                    updateUsernamePreview();
+                });
+            }
+
+            const lastNameInput = document.getElementById('lastName');
+            if (lastNameInput) {
+                lastNameInput.addEventListener('keydown', function(e) {
+                    if ([8, 46, 9, 27, 13, 37, 38, 39, 40].indexOf(e.keyCode) !== -1) return;
+                    // Allow one space (32)
+                    if (e.keyCode === 32) {
+                        if (this.value.includes(' ') || this.value.length === 0) {
+                            e.preventDefault();
+                        }
+                        return;
+                    }
+                    // Block numbers and special chars (anything not a letter)
+                    if (e.keyCode < 65 || e.keyCode > 90) {
+                        e.preventDefault();
+                    }
+                });
+
+                lastNameInput.addEventListener('input', function() {
+                    const val = this.value;
+                    const errorDiv = document.getElementById('lastNameError');
+                    // Letters and max one space
+                    const regex = /^[a-zA-Z]+( [a-zA-Z]*)?$/;
+                    
+                    if (val === '') {
+                        errorDiv.classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                    } else if (!regex.test(val)) {
+                        errorDiv.textContent = 'Dapat mga letra lamang at isang spacing lamang ang pinapayagan.';
+                        errorDiv.classList.remove('hidden');
+                        this.classList.add('border-red-500');
+                    } else if (val.length > 25) {
+                        errorDiv.textContent = 'Hanggang 25 characters lamang.';
+                        errorDiv.classList.remove('hidden');
+                        this.classList.add('border-red-500');
+                    } else {
+                        errorDiv.classList.add('hidden');
+                        this.classList.remove('border-red-500');
+                    }
+                });
+            }
+
+            const regEmailInput = document.getElementById('regEmail');
+            if (regEmailInput) {
+                const gmailRegex = /^(?!.*\.{2})[a-zA-Z][a-zA-Z0-9.]{4,28}[a-zA-Z0-9]@gmail\.com$/i;
+                const errorDiv = document.getElementById('regEmailError');
+
+                function validateEmailLive(val) {
+                    if (val === '') {
+                        errorDiv.classList.add('hidden');
+                        regEmailInput.classList.remove('border-red-500');
+                        return;
+                    }
+                    // Check first character: must be a letter
+                    if (/^[0-9]/.test(val)) {
+                        regEmailInput.classList.add('border-red-500');
+                        return;
+                    }
+                    // Once @ is typed, validate the full gmail format
+                    if (val.includes('@')) {
+                        if (!gmailRegex.test(val)) {
+                            regEmailInput.classList.add('border-red-500');
+                        } else {
+                            regEmailInput.classList.remove('border-red-500');
+                        }
+                        return;
+                    }
+                    // Username part only (no @ yet): just keep green/neutral
+                    errorDiv.classList.add('hidden');
+                    regEmailInput.classList.remove('border-red-500');
+                }
+
+                // Block spaces and disallowed characters while typing
+                regEmailInput.addEventListener('keydown', function(e) {
+                    // Allow: backspace, delete, tab, escape, enter, arrow keys
+                    if ([8, 46, 9, 27, 13, 37, 38, 39, 40].indexOf(e.keyCode) !== -1) return;
+                    // Block spacebar always
+                    if (e.keyCode === 32) { e.preventDefault(); return; }
+                    // Allow Ctrl/Cmd combos (copy, paste, etc.)
+                    if (e.ctrlKey || e.metaKey) return;
+                    // Block number as first character
+                    if (this.value.length === 0 && /^[0-9]$/.test(e.key)) {
+                        e.preventDefault();
+                        this.classList.add('border-red-500');
+                        return;
+                    }
+                    // Only allow letters, numbers, dot, @
+                    if (!/^[a-zA-Z0-9.@]$/.test(e.key)) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Strip disallowed characters on paste/autocomplete + live validate
+                regEmailInput.addEventListener('input', function() {
+                    const cleaned = this.value.replace(/[^a-zA-Z0-9.@]/g, '');
+                    if (this.value !== cleaned) this.value = cleaned;
+                    validateEmailLive(this.value.trim());
+                });
+            }
+
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    const fname = document.getElementById('firstName').value;
+                    const lname = document.getElementById('lastName').value;
+                    const emailVal = document.getElementById('regEmail').value.trim();
+                    const fRegex = /^[a-zA-Z]+$/;
+                    const lRegex = /^[a-zA-Z]+( [a-zA-Z]+)?$/;
+                    const gmailRegex = /^(?!.*\.{2})[a-zA-Z][a-zA-Z0-9.]{4,28}[a-zA-Z0-9]@gmail\.com$/i;
+
+                    let hasError = false;
+
+                    if (!fRegex.test(fname) || fname.length > 25) {
+                        hasError = true;
+                        document.getElementById('firstNameError').classList.remove('hidden');
+                        document.getElementById('firstName').classList.add('border-red-500');
+                    }
+
+                    if (!lRegex.test(lname) || lname.length > 25) {
+                        hasError = true;
+                        document.getElementById('lastNameError').classList.remove('hidden');
+                        document.getElementById('lastName').classList.add('border-red-500');
+                    }
+
+                    if (!gmailRegex.test(emailVal)) {
+                        hasError = true;
+                        document.getElementById('regEmailError').classList.remove('hidden');
+                        document.getElementById('regEmail').classList.add('border-red-500');
+                    } else {
+                        document.getElementById('regEmailError').classList.add('hidden');
+                        document.getElementById('regEmail').classList.remove('border-red-500');
+                    }
+
+                    if (hasError) {
+                        e.preventDefault();
+                        showToast('Pakitama ang mga error sa form.', 'error');
+                    }
+                });
             }
             
             if (rememberCheckbox) {
@@ -991,6 +1183,15 @@
             
             if (emailInput) {
                 emailInput.addEventListener('input', function() {
+                    if (rememberCheckbox && rememberCheckbox.checked) {
+                        saveRememberMe();
+                    }
+                });
+            }
+            
+            const passwordInput = document.getElementById('loginPassword');
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
                     if (rememberCheckbox && rememberCheckbox.checked) {
                         saveRememberMe();
                     }
