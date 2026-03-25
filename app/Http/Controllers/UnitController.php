@@ -108,6 +108,7 @@ class UnitController extends Controller
             'coding_day' => 'nullable|string',
             'driver_id' => 'nullable|integer',
             'secondary_driver_id' => 'nullable|integer',
+            'gps_link' => 'nullable|string',
         ]);
 
         $driver_id = $request->input('driver_id') ?: null;
@@ -157,6 +158,7 @@ class UnitController extends Controller
             'coding_day' => $coding_day,
             'driver_id' => $driver_id,
             'secondary_driver_id' => $secondary_driver_id,
+            'gps_link' => $request->input('gps_link') ?: null,
             'coding_updated_at' => now(),
         ]);
 
@@ -186,6 +188,7 @@ class UnitController extends Controller
             'coding_day' => 'nullable|string',
             'driver_id' => 'nullable|integer',
             'secondary_driver_id' => 'nullable|integer',
+            'gps_link' => 'nullable|string',
         ]);
 
         $driver_id = $request->input('driver_id') ?: null;
@@ -230,6 +233,7 @@ class UnitController extends Controller
             'coding_day' => $coding_day,
             'driver_id' => $driver_id,
             'secondary_driver_id' => $secondary_driver_id,
+            'gps_link' => $request->input('gps_link') ?: null,
             'updated_at' => now(),
         ];
 

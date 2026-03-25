@@ -67,27 +67,33 @@ class UnitProfitabilityController extends Controller
             $params
         );
 
-        $units = DB::select($sql, $all_params);
+        $profitability = DB::select($sql, $all_params);
 
         // Calculate additional metrics
-        foreach ($units as &$unit) {
+        foreach ($profitability as &$unit) {
             $unit->net_income = $unit->total_boundary - $unit->total_maintenance - $unit->total_expenses;
-            $unit->roi_percentage = $unit->purchase_cost > 0 ? (($unit->total_boundary - $unit->total_maintenance - $unit->total_expenses) / $unit->purchase_cost) * 100 : 0;
+            $unit->profit_margin = $unit->total_boundary > 0 ? ($unit->net_income / $unit->total_boundary) * 100 : 0;
+            $unit->maintenance_cost = $unit->total_maintenance;
+            $unit->other_expenses = $unit->total_expenses;
+            $unit->roi_percentage = $unit->purchase_cost > 0 ? ($unit->net_income / $unit->purchase_cost) * 100 : 0;
             $unit->payback_period = $unit->total_boundary > 0 ? $unit->purchase_cost / $unit->total_boundary : 0;
-            $unit->avg_daily_boundary = $unit->boundary_days > 0 ? $unit->total_boundary / $unit->boundary_days : 0;
-            $unit->roi_achieved = $unit->purchase_cost > 0 && ($unit->total_boundary - $unit->total_maintenance - $unit->total_expenses) >= $unit->purchase_cost ? 1 : 0;
+            $unit->roi_achieved = $unit->purchase_cost > 0 && $unit->net_income >= $unit->purchase_cost ? 1 : 0;
         }
 
-        // Calculate totals
-        $totals = [
-            'total_boundary' => array_sum(array_column($units, 'total_boundary')),
-            'total_maintenance' => array_sum(array_column($units, 'total_maintenance')),
-            'total_expenses' => array_sum(array_column($units, 'total_expenses')),
-            'net_income' => array_sum(array_column($units, 'net_income')),
-            'total_units' => count($units),
-            'roi_units' => count(array_filter($units, function($u) { return $u->roi_achieved; })),
+        // Calculate totals / overview
+        $overview = [
+            'total_boundary' => array_sum(array_column($profitability, 'total_boundary')),
+            'total_maintenance' => array_sum(array_column($profitability, 'total_maintenance')),
+            'total_expenses' => array_sum(array_column($profitability, 'total_expenses')),
+            'net_income' => array_sum(array_column($profitability, 'net_income')),
+            'total_units' => count($profitability),
+            'avg_margin' => count($profitability) > 0 ? array_sum(array_column($profitability, 'profit_margin')) / count($profitability) : 0,
+            'roi_units' => count(array_filter($profitability, function($u) { return $u->roi_achieved; })),
         ];
 
-        return view('unit-profitability.index', compact('units', 'units_dropdown', 'totals', 'date_from', 'date_to', 'unit_filter'));
+        $units = $units_dropdown;
+        $selected_unit = $unit_filter;
+
+        return view('unit-profitability.index', compact('profitability', 'units', 'overview', 'date_from', 'date_to', 'selected_unit'));
     }
 }

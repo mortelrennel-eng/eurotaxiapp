@@ -26,7 +26,7 @@ class Unit extends Model
         'coding_day',
         'driver_id',
         'secondary_driver_id',
-        'gps_enabled',
+        'gps_link',
         'dashcam_enabled',
         'latitude',
         'longitude',

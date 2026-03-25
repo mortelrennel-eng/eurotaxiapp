@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('page-heading', 'Franchise Decision Management'); ?>
 
-@section('page-heading', 'Franchise Decision Management')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="space-y-6">
     <!-- Toolbar / Actions -->
     <div class="flex justify-end">
@@ -227,4 +225,6 @@ function printDecisionCase() {
 </script>
 
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\xampp\htdocs\eurotaxisystem\resources\views/decision-management/index.blade.php ENDPATH**/ ?>

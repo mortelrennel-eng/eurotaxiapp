@@ -64,3 +64,32 @@ if (!function_exists('statusBadge')) {
         };
     }
 }
+
+if (!function_exists('base_url')) {
+    /**
+     * Get the base URL of the application (Laravel equivalent of CodeIgniter base_url).
+     * 
+     * @param string $path - Additional path to append to base URL
+     * @param bool $secure - Force HTTPS (true) or HTTP (false). null for auto-detect
+     * @return string - Complete URL
+     */
+    function base_url($path = '', $secure = null): string
+    {
+        // Get the base URL from config or use Laravel's url() helper
+        $baseUrl = config('app.url') ?: url('/', $secure);
+        
+        // Ensure base URL ends with single slash
+        $baseUrl = rtrim($baseUrl, '/') . '/';
+        
+        // Clean the path (remove leading slash)
+        $path = ltrim($path, '/');
+        
+        // If path is empty, return base URL
+        if (empty($path)) {
+            return $baseUrl;
+        }
+        
+        // Combine base URL with path
+        return $baseUrl . $path;
+    }
+}

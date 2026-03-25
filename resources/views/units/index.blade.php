@@ -488,44 +488,31 @@
                     <div id="addCodingStatusDisplay" class="mt-4"></div>
                 </div>
 
-                {{-- Section 6: Device Management --}}
+                {{-- Section 6: TracksolidPro GPS Link --}}
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-4">
                         <div class="p-2 bg-indigo-100 rounded-lg">
-                            <i data-lucide="smartphone" class="w-5 h-5 text-indigo-600"></i>
+                            <i data-lucide="map" class="w-5 h-5 text-indigo-600"></i>
                         </div>
-                        <h4 class="text-lg font-semibold text-gray-900">Device Management</h4>
+                        <h4 class="text-lg font-semibold text-gray-900">GPS Tracking Map Link</h4>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {{-- GPS Devices --}}
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-indigo-400 transition-colors">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="map-pin" class="w-5 h-5 text-indigo-600"></i>
-                                    <h5 class="font-semibold text-gray-900">GPS Devices</h5>
+                    <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-200 mb-4">
+                        <p class="text-sm text-indigo-800">
+                            <strong>Paano kunin ang link:</strong> Sa TracksolidPro, i-click ang taxi -> Share -> kopyahin ang link at i-paste dito.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">TracksolidPro Share Link</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="link" class="w-5 h-5 text-gray-400"></i>
                                 </div>
-                                <button type="button" onclick="addUnitAddGPS()" class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
-                                    + Add GPS
-                                </button>
+                                <input type="text" name="gps_link" id="addGpsLink" 
+                                    class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                                    placeholder="https://tracksolidpro.com/share/map?id=...">
                             </div>
-                            <div id="addGPSDevicesList" class="space-y-2">
-                                <p class="text-sm text-gray-500 text-center py-2">No GPS devices added</p>
-                            </div>
-                        </div>
-                        {{-- Dashcam Devices --}}
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-purple-400 transition-colors">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <i data-lucide="camera" class="w-5 h-5 text-purple-600"></i>
-                                    <h5 class="font-semibold text-gray-900">Dashcam Devices</h5>
-                                </div>
-                                <button type="button" onclick="addUnitAddDashcam()" class="px-3 py-1 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
-                                    + Add Dashcam
-                                </button>
-                            </div>
-                            <div id="addDashcamDevicesList" class="space-y-2">
-                                <p class="text-sm text-gray-500 text-center py-2">No dashcam devices added</p>
-                            </div>
+                            <p class="text-xs text-gray-500">Iwanang blangko kung walang GPS link ang unit na ito.</p>
                         </div>
                     </div>
                 </div>
@@ -788,7 +775,38 @@
                     <div id="editCodingStatusDisplay" class="mt-4"></div>
                 </div>
 
-                {{-- Form Actions --}}
+                {{-- Section 6: TracksolidPro GPS Link --}}
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="p-2 bg-teal-100 rounded-lg">
+                            <i data-lucide="map" class="w-5 h-5 text-teal-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900">GPS Tracking Map Link</h4>
+                    </div>
+                    <div class="p-4 bg-teal-50 rounded-lg border border-teal-200 mb-4">
+                        <p class="text-sm text-teal-800">
+                            <strong>Paano kunin ang link:</strong> Sa TracksolidPro, i-click ang taxi -> Share -> kopyahin ang link at i-paste dito.
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">TracksolidPro Share Link</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="link" class="w-5 h-5 text-gray-400"></i>
+                                </div>
+                                <input type="text" name="gps_link" id="editGpsLink" 
+                                    class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent font-mono"
+                                    placeholder="https://tracksolidpro.com/share/map?id=...">
+                            </div>
+                            <p class="text-xs text-gray-500">Iwanang blangko kung walang GPS link ang unit na ito.</p>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <p id="editGpsLinkStatus" class="text-sm text-gray-500"></p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex gap-3 mt-6 pt-4 border-t">
                     <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2">
                         <i data-lucide="save" class="w-5 h-5"></i> Update Unit
@@ -916,6 +934,19 @@
                     document.getElementById('editCodingDay').value = data.coding_day || unit.coding_day || '';
                     document.getElementById('editNextCodingDate').value = '';
                     document.getElementById('editDaysUntilCoding').value = '';
+                }
+
+                // GPS Link
+                const linkInput = document.getElementById('editGpsLink');
+                const linkStatus = document.getElementById('editGpsLinkStatus');
+                if (linkInput) {
+                    linkInput.value = unit.gps_link || '';
+                }
+                if (linkStatus) {
+                    linkStatus.textContent = unit.gps_link
+                        ? '✅ GPS Map Link is set'
+                        : '⚠️ No GPS Map Link yet.';
+                    linkStatus.className = 'text-sm ' + (unit.gps_link ? 'text-teal-700' : 'text-yellow-600');
                 }
 
                 // Set form action

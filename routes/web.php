@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
     // Live Tracking
     Route::get('/live-tracking', [LiveTrackingController::class, 'index'])->name('live-tracking.index');
     Route::get('/live-tracking/unit/{id}', [LiveTrackingController::class, 'getUnitLocation'])->name('live-tracking.unit-location');
+    Route::get('/live-tracking/units-live', [LiveTrackingController::class, 'getUnitsLive'])->name('live-tracking.units-live');
 
     // Unit Profitability
     Route::get('/unit-profitability', [UnitProfitabilityController::class, 'index'])->name('unit-profitability.index');
