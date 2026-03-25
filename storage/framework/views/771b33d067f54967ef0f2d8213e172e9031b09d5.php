@@ -105,8 +105,8 @@
 
     <div class="header">
         <div class="header-left">
-            <h1>Euro System</h1>
-            <p>Units & Drivers Management Report</p>
+            <img src="<?php echo e(asset('uploads/logo.png')); ?>" alt="Euro System Logo" style="height: 50px; margin-bottom: 5px; display: block;">
+            <p style="margin-top: 5px;">Units & Drivers Management Report</p>
         </div>
         <div class="header-right">
             <div>Report Generated:</div>

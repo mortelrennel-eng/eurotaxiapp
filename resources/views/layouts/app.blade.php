@@ -53,9 +53,9 @@
             <aside class="w-64 bg-white shadow-lg flex-shrink-0">
                 <div class="h-full flex flex-col">
                     <!-- Logo -->
-                    <div class="p-3 border-b">
-                        <h1 class="text-2xl font-bold text-yellow-600">Euro System</h1>
-                        <p class="text-xs text-gray-500 mt-1">Fleet Management</p>
+                    <div class="p-4 border-b flex flex-col items-center">
+                        <img src="{{ asset('uploads/logo.png') }}" alt="Euro System Logo" class="h-12 w-auto mb-1">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Fleet Management</p>
                     </div>
 
                     <!-- Navigation -->
