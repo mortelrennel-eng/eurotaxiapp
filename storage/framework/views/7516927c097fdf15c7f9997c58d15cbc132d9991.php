@@ -1389,16 +1389,43 @@
                         <div id="location-tab" class="tab-content hidden">
                             <div class="bg-white border border-gray-200 rounded-lg p-3">
                                 <h4 class="text-sm font-semibold text-gray-900 mb-2">Location Information</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <h5 class="font-medium text-xs text-gray-900 mb-1.5">Current Location</h5>
-                                        <div class="space-y-1.5 text-xs">
-                                            <div class="flex justify-between"><span class="text-gray-600">Location:</span><span class="font-medium text-[10px]">${locInfo.current_location || 'Not Available'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Update:</span><span class="font-medium text-[10px]">${locInfo.last_location_update || 'Never'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">GPS:</span><span class="px-1.5 py-0.5 text-[9px] rounded-full ${locInfo.gps_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${locInfo.gps_enabled ? 'Enabled' : 'Disabled'}</span></div>
+                                <div class="space-y-3">
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
+                                            <span class="text-gray-500 text-[10px]">Location:</span>
+                                            <span class="font-medium text-[10px] text-right">${locInfo.current_location || 'Not Available'}</span>
+                                        </div>
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
+                                            <span class="text-gray-500 text-[10px]">Update:</span>
+                                            <span class="font-medium text-[10px] text-right">${locInfo.last_location_update || 'Never'}</span>
+                                        </div>
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5 items-center">
+                                            <span class="text-gray-500 text-[10px]">GPS:</span>
+                                            <span class="px-1.5 py-0.5 text-[9px] rounded-full ${locInfo.gps_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                                ${locInfo.gps_enabled ? 'Enabled' : 'Disabled'}
+                                            </span>
                                         </div>
                                     </div>
-                                    <div class="bg-gray-100 rounded-lg h-24 flex items-center justify-center"><div class="text-center text-gray-500"><i data-lucide="map" class="w-8 h-8 mx-auto mb-1"></i><p class="text-[10px]">Map view coming soon</p></div></div>
+
+                                    
+                                    <div class="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-100" style="height: 320px;">
+                                        ${unit.gps_link 
+                                            ? `<iframe src="${unit.gps_link}" style="position:absolute; top:0; left:0; width:142.85%; height:142.85%; border:none; transform:scale(0.7); transform-origin:top left;" allowfullscreen></iframe>`
+                                            : `<div class="flex flex-col items-center justify-center h-full text-gray-400">
+                                                <i data-lucide="link-2-off" class="w-10 h-10 mb-2 text-gray-300"></i>
+                                                <p class="text-xs font-medium text-gray-600">No GPS Link</p>
+                                                <p class="text-[10px] mt-1 text-gray-400">Manage GPS link in Unit Settings</p>
+                                               </div>`
+                                        }
+                                    </div>
+
+                                    ${locInfo.coordinates ? `
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
+                                            <span class="text-gray-500 text-[10px]">Coordinates:</span>
+                                            <span class="font-medium text-[10px]">${locInfo.coordinates}</span>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>

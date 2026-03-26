@@ -468,41 +468,51 @@
         <div id="location-tab" class="tab-content hidden">
             <div class="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 class="text-lg font-semibold text-gray-900 mb-4">Location Information</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <h5 class="font-medium text-gray-900 mb-3">Current Location</h5>
-                        <div class="space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Location:</span>
-                                <span class="font-medium">{{ $location_info['current_location'] }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Last Update:</span>
-                                <span class="font-medium">{{ $location_info['last_location_update'] }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">GPS Status:</span>
-                                <span class="px-2 py-1 text-xs rounded-full {{ $location_info['gps_enabled'] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $location_info['gps_enabled'] ? 'Enabled' : 'Disabled' }}
-                                </span>
-                            </div>
-                            @if(!empty($location_info['coordinates']))
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Coordinates:</span>
-                                    <span class="font-medium">{{ $location_info['coordinates'] }}</span>
-                                </div>
-                            @endif
+                <div class="space-y-4">
+                    {{-- Info Row --}}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="flex justify-between bg-gray-50 rounded-lg px-4 py-3">
+                            <span class="text-gray-600 text-sm">Location:</span>
+                            <span class="font-medium text-sm">{{ $location_info['current_location'] }}</span>
+                        </div>
+                        <div class="flex justify-between bg-gray-50 rounded-lg px-4 py-3">
+                            <span class="text-gray-600 text-sm">Last Update:</span>
+                            <span class="font-medium text-sm">{{ $location_info['last_location_update'] }}</span>
+                        </div>
+                        <div class="flex justify-between bg-gray-50 rounded-lg px-4 py-3 items-center">
+                            <span class="text-gray-600 text-sm">GPS Status:</span>
+                            <span class="px-2 py-1 text-xs rounded-full {{ ($location_info['gps_enabled'] || !empty($unit->gps_link)) ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                {{ ($location_info['gps_enabled'] || !empty($unit->gps_link)) ? 'Enabled' : 'Disabled' }}
+                            </span>
                         </div>
                     </div>
-                    <div>
-                        <h5 class="font-medium text-gray-900 mb-3">Map View</h5>
-                        <div class="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
-                            <div class="text-center text-gray-500">
-                                <i data-lucide="map" class="w-12 h-12 mx-auto mb-2"></i>
-                                <p>Map integration coming soon</p>
+
+                    {{-- Map Viewer --}}
+                    <div class="relative rounded-lg overflow-hidden border border-gray-200" style="height: 380px; background: #f3f4f6;">
+                        @if(!empty($unit->gps_link))
+                            <iframe
+                                src="{{ $unit->gps_link }}"
+                                style="position:absolute; top:0; left:0; width:142.85%; height:142.85%; border:none; transform:scale(0.7); transform-origin:top left;"
+                                allowfullscreen
+                            ></iframe>
+                        @else
+                            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                                <i data-lucide="link-2-off" class="w-12 h-12 mb-3 text-gray-300"></i>
+                                <p class="text-base font-medium text-gray-600">No GPS Link</p>
+                                <p class="text-sm mt-1 text-gray-400">This unit does not have a TracksolidPro share link connected.</p>
+                                <a href="{{ route('units.index') }}" class="mt-4 inline-flex items-center gap-1 text-blue-600 text-sm hover:underline">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Manage Unit Settings
+                                </a>
                             </div>
-                        </div>
+                        @endif
                     </div>
+
+                    @if(!empty($location_info['coordinates']))
+                        <div class="flex justify-between bg-gray-50 rounded-lg px-4 py-3">
+                            <span class="text-gray-600 text-sm">Coordinates:</span>
+                            <span class="font-medium text-sm">{{ $location_info['coordinates'] }}</span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

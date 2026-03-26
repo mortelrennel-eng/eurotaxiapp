@@ -366,6 +366,7 @@ class UnitController extends Controller
 
         $gps_device = DB::table('gps_devices')->where('unit_id', $unit_id)->where('status', 'active')->first();
         $dashcam_device = DB::table('dashcam_devices')->where('unit_id', $unit_id)->where('status', 'active')->first();
+        $has_gps = ($gps_device || !empty($unit->gps_link));
 
         return response()->json([
             'unit' => $unit,
@@ -375,9 +376,9 @@ class UnitController extends Controller
             'maintenance_records' => $maintenance_records,
             'coding_day' => $coding_day,
             'location_info' => [
-                'current_location' => $gps_device ? 'Quezon City, Metro Manila' : 'Not Available', // Mock location since DB lacks coordinates
-                'last_location_update' => $gps_device ? date('Y-m-d H:i') : 'Never',
-                'gps_enabled' => $gps_device ? true : false,
+                'current_location' => $has_gps ? 'Live (See Map below)' : 'Not Available',
+                'last_location_update' => $has_gps ? 'Active Tracking' : 'Never',
+                'gps_enabled' => $has_gps,
                 'coordinates' => $gps_device ? ['lat' => 14.6349, 'lng' => 121.0403] : null,
             ],
             'dashcam_info' => [
@@ -495,7 +496,7 @@ class UnitController extends Controller
         $location_info = [
             'current_location' => data_get($unit, 'current_location', 'Unknown'),
             'last_location_update' => data_get($unit, 'last_location_update', 'Never'),
-            'gps_enabled' => (bool) data_get($unit, 'gps_enabled', false),
+            'gps_enabled' => (bool) data_get($unit, 'gps_enabled', false) || !empty($unit->gps_link),
             'coordinates' => (data_get($unit, 'latitude') && data_get($unit, 'longitude')) ? (data_get($unit, 'latitude') . ', ' . data_get($unit, 'longitude')) : null,
         ];
 
