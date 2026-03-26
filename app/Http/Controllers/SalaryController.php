@@ -18,9 +18,10 @@ class SalaryController extends Controller
             ->leftJoin('users as u', 's.employee_id', '=', 'u.id')
             ->select(
                 's.*',
-                'u.full_name',
+                'u.full_name as employee_name',
                 'u.email',
-                DB::raw('CONCAT(u.full_name, " (", s.employee_type, ")") as display_name')
+                's.employee_type as position',
+                's.total_salary as total_pay'
             )
             ->where('s.month', $currentMonth)
             ->where('s.year', $currentYear);
@@ -32,20 +33,37 @@ class SalaryController extends Controller
             });
         }
 
-        $records = $query->orderBy('u.full_name')->get();
+        $salaries = $query->orderBy('u.full_name')->get();
 
-        // Calculate totals
-        $totals = [
-            'total_basic' => $records->sum('basic_salary'),
-            'total_overtime' => $records->sum('overtime_pay'),
-            'total_holiday' => $records->sum('holiday_pay'),
-            'total_night' => $records->sum('night_differential'),
-            'total_allowance' => $records->sum('allowance'),
-            'total_gross' => $records->sum('total_salary'),
-            'total_records' => $records->count(),
+        // Fetch expenses for the current month
+        $expense_records = DB::table('expenses')
+            ->whereMonth('date', $currentMonth)
+            ->whereYear('date', $currentYear)
+            ->orderByDesc('date')
+            ->get();
+
+        // Calculate income from boundaries for net profit
+        $total_income = DB::table('boundaries')
+            ->whereMonth('date', $currentMonth)
+            ->whereYear('date', $currentYear)
+            ->sum('boundary_amount') ?? 0;
+
+        // Calculate totals/summary
+        $total_salaries = $salaries->sum('total_pay');
+        $total_expenses = $expense_records->sum('amount');
+        $total_employees = DB::table('users')->where('is_active', 1)->count();
+        $net_profit = $total_income - ($total_salaries + $total_expenses);
+
+        $summary = [
+            'total_employees' => $total_employees,
+            'total_salaries' => $total_salaries,
+            'total_expenses' => $total_expenses,
+            'net_profit' => $net_profit,
+            'avg_salary' => $total_employees > 0 ? $total_salaries / $total_employees : 0,
+            'avg_expense' => $total_employees > 0 ? $total_expenses / $total_employees : 0,
         ];
 
-        // Get employees for dropdown (users table)
+        // Get employees for dropdown
         $employees = DB::table('users')
             ->where('is_active', 1)
             ->whereIn('role', ['admin', 'staff', 'driver'])
@@ -53,7 +71,7 @@ class SalaryController extends Controller
             ->orderBy('full_name')
             ->get();
 
-        return view('salary.index', compact('records', 'search', 'totals', 'employees'));
+        return view('salary.index', compact('salaries', 'expense_records', 'summary', 'search', 'employees'));
     }
 
     public function store(Request $request)

@@ -13,9 +13,20 @@
     <title>{{ config('app.name', 'Euro Taxi System') }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('favicon_euro_transparent.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
+    <link rel="icon" type="image/png" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
+    <link rel="icon" type="image/png" href="/public/favicon_euro_transparent.png?v=1.5">
+    <link rel="apple-touch-icon" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
+    <link rel="manifest" href="{{ asset('manifest.json') }}?v=1.5">
+    <link rel="manifest" href="/public/manifest.json?v=1.5">
 
     <!-- Tailwind CSS -->
+    <script>
+        // Silence Tailwind CDN production warning
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            window.tailwind = { config: { silent: true } };
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         input::-webkit-outer-spin-button,

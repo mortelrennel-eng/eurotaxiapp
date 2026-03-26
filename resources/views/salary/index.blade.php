@@ -237,18 +237,23 @@
                 @csrf
                 <input type="hidden" name="_method" id="salaryMethod" value="POST">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Employee Name *</label>
-                    <input type="text" name="employee_name" id="salaryEmployee" required
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Employee *</label>
+                    <select name="employee_id" id="salaryEmployee" required
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                        <option value="">Select Employee</option>
+                        @foreach($employees as $employee)
+                            <option value="{{ $employee->id }}">{{ $employee->full_name }} ({{ ucfirst($employee->role) }})</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Salary Type</label>
-                        <select name="salary_type" id="salaryType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
-                            <option value="monthly">Monthly</option>
-                            <option value="bi-monthly">Bi-Monthly</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="daily">Daily</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Employee Type</label>
+                        <select name="employee_type" id="salaryType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            <option value="Staff">Staff</option>
+                            <option value="Driver">Driver</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div>
@@ -281,9 +286,28 @@
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
                     </div>
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Month *</label>
+                        <select name="month" id="salaryMonth" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            @for($i = 1; $i <= 12; $i++)
+                                <option value="{{ $i }}" {{ $i == date('m') ? 'selected' : '' }}>{{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Year *</label>
+                        <select name="year" id="salaryYear" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                            @for($i = 2024; $i <= 2030; $i++)
+                                <option value="{{ $i }}" {{ $i == date('Y') ? 'selected' : '' }}>{{ $i }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Pay Date *</label>
                     <input type="date" name="pay_date" id="salaryPayDate" value="{{ date('Y-m-d') }}" required
+                        onchange="updateMonthYear(this.value)"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
                 </div>
                 <div class="flex gap-3 mt-4">
@@ -411,8 +435,17 @@ function openAddSalaryModal() {
     document.getElementById('salaryNight').value = '0';
     document.getElementById('salaryAllowance').value = '0';
     document.getElementById('salaryPayDate').value = '{{ date('Y-m-d') }}';
+    document.getElementById('salaryMonth').value = '{{ date('m') }}';
+    document.getElementById('salaryYear').value = '{{ date('Y') }}';
     document.getElementById('addSalaryModal').classList.remove('hidden');
     lucide.createIcons();
+}
+
+function updateMonthYear(dateString) {
+    if (!dateString) return;
+    const date = new Date(dateString);
+    document.getElementById('salaryMonth').value = date.getMonth() + 1;
+    document.getElementById('salaryYear').value = date.getFullYear();
 }
 
 function openEditSalaryModal(id) {

@@ -70,9 +70,10 @@
     ExpiresByType application/json "access plus 1 month"
 </IfModule>
 
-# Add MIME type for JSON files
+# Add MIME type for JSON and WebManifest files
 <IfModule mod_mime.c>
     AddType application/json .json
+    AddType application/manifest+json .webmanifest
 </IfModule>
 
 # PHP settings for performance

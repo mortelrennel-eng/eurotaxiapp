@@ -1,7 +1,7 @@
 import './bootstrap.js';
 
 // Initialize Lucide icons
-import lucide from 'lucide';
+import * as lucide from 'lucide';
 window.lucide = lucide;
 
 // Initialize icons when DOM is ready
