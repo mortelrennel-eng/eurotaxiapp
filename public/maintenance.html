@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Under Maintenance - Euro Taxi System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .maintenance-container {
+            text-align: center;
+            color: #333333;
+            padding: 20px;
+            max-width: 600px;
+            width: 90%;
+            background: #ffffff;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            max-width: 120px;
+            max-height: 60px;
+            object-fit: contain;
+        }
+
+        .lottie-container {
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lottie-container svg {
+            width: 100%;
+            height: 100%;
+            max-width: 280px;
+            max-height: 280px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 3px;
+            animation: progress 3s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 75%; }
+            100% { width: 100%; }
+        }
+
+        .contact-info {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .contact-info a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .maintenance-container {
+                padding: 15px;
+                width: 100%;
+                max-width: none;
+            }
+            
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .logo {
+                max-width: 80px;
+                max-height: 40px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 10px;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            
+            .lottie-container {
+                width: 200px;
+                height: 200px;
+                margin: 0 auto 20px;
+            }
+            
+            .progress-bar {
+                margin-bottom: 15px;
+            }
+            
+            .contact-info {
+                margin-top: 10px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+            
+            .maintenance-container {
+                padding: 10px;
+                width: 100%;
+                max-width: none;
+            }
+            
+            .header-container {
+                flex-direction: column;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+            
+            .logo {
+                max-width: 70px;
+                max-height: 35px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .lottie-container {
+                width: 180px;
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-container">
+        <div class="lottie-container" id="lottie-animation"></div>
+        
+        <div class="header-container">
+            <img src="/public/euro-logo.png" alt="Euro Taxi System" class="logo" onerror="this.style.display='none';">
+            <h1>Under Maintenance</h1>
+        </div>
+        
+        <p class="subtitle">
+            We're currently performing scheduled maintenance to improve our services. 
+            We'll be back online shortly!
+        </p>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        
+        <div class="contact-info">
+            <p>Need urgent assistance? Contact us at: <a href="mailto:support@eurotaxisystem.site">support@eurotaxisystem.site</a></p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+    <script>
+        // Load Lottie animation
+        const animationContainer = document.getElementById('lottie-animation');
+
+        // IMPORTANT:
+        // Use a filename WITHOUT SPACES on the server.
+        // Put the file here: public_html/public/site-under-construction.json
+        const LOTTIE_URL = '/public/site-under-construction.json?v=1';
+
+        fetch(LOTTIE_URL)
+            .then(response => response.json())
+            .then(animationData => {
+                lottie.loadAnimation({
+                    container: animationContainer,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    animationData,
+                    rendererSettings: {
+                        preserveAspectRatio: 'xMidYMid meet',
+                        progressiveLoad: true,
+                    },
+                });
+            })
+            .catch(error => {
+                console.error('Error loading Lottie animation:', error);
+                animationContainer.innerHTML = `
+                    <div style="font-size: 100px; animation: pulse 2s infinite;">
+                        🚧
+                    </div>
+                `;
+            });
+
+        // Add pulse animation for fallback
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,37 +1,73 @@
-
 # Performance Optimization
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    #Lagyan ng comment sa unahan pag mamaintance
+    #RewriteRule ^ index.php [L]
+
+    # MAINTENANCE MODE (TOGGLE THIS LINE)
+    # Uncomment the line below to ENABLE maintenance mode
+    # Comment the line below to DISABLE maintenance mode (normal site)
     
-    # Gzip compression
-    <IfModule mod_deflate.c>
-        AddOutputFilterByType DEFLATE text/plain
-        AddOutputFilterByType DEFLATE text/html
-        AddOutputFilterByType DEFLATE text/xml
-        AddOutputFilterByType DEFLATE text/css
-        AddOutputFilterByType DEFLATE application/xml
-        AddOutputFilterByType DEFLATE application/xhtml+xml
-        AddOutputFilterByType DEFLATE application/rss+xml
-        AddOutputFilterByType DEFLATE application/javascript
-        AddOutputFilterByType DEFLATE application/x-javascript
-    </IfModule>
+    RewriteRule ^(.*)$ /public/maintenance.html [L]
     
-    # Browser caching
-    <IfModule mod_expires.c>
-        ExpiresActive On
-        ExpiresByType text/css "access plus 1 month"
-        ExpiresByType application/javascript "access plus 1 month"
-        ExpiresByType image/png "access plus 1 month"
-        ExpiresByType image/jpg "access plus 1 month"
-        ExpiresByType image/jpeg "access plus 1 month"
-        ExpiresByType image/gif "access plus 1 month"
-        ExpiresByType image/ico "access plus 1 month"
-        ExpiresByType image/icon "access plus 1 month"
-    </IfModule>
+    # MAINTENANCE MODE EXCLUSIONS (when enabled)
+    # These allow maintenance assets to load even when maintenance is ON
+    RewriteCond %{REQUEST_URI} ^/public/maintenance\.html$ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/public/site-under-construction\.json$ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/public/lottie-construction\.json$ [NC,OR]
+    RewriteCond %{REQUEST_URI} ^/public/.*\.(css|js|png|jpg|jpeg|gif|svg|ico|webp)$ [NC]
+    RewriteRule ^ - [L]
+</IfModule>
+
+# Gzip compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Browser caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/ico "access plus 1 month"
+    ExpiresByType image/icon "access plus 1 month"
+    ExpiresByType image/svg "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
 </IfModule>
 
 # PHP settings for performance
 <IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+</IfModule>
+
+<IfModule mod_php8.c>
     php_flag display_errors Off
     php_value memory_limit 256M
     php_value max_execution_time 300
