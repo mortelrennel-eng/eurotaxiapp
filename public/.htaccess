@@ -6,6 +6,31 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+    # MAINTENANCE MODE EXCLUSIONS (when enabled)
+    # These allow maintenance assets to load even when maintenance is ON
+    RewriteCond %{REQUEST_URI} ^(/public)?/maintenance\.html [NC,OR]
+    RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|svg|ico|webp|json) [NC]
+    RewriteRule ^ - [L]
+
+    # MAINTENANCE MODE TOGGLE
+    # Comment the line below to ENABLE maintenance mode (shows maintenance.html)
+    # Uncomment the line below to DISABLE maintenance mode (normal site)
+ #   RewriteRule ^ index.php [L]
+
+    # If we are here, maintenance mode is ENABLED.
+    # Set environment variable for headers
+    RewriteRule ^ - [E=SITE_MAINTENANCE:1]
+    
+    # Serve maintenance page
+    RewriteRule ^(.*)$ /public/maintenance.html [L]
+
+    # Prevent browser from caching maintenance page
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate" env=SITE_MAINTENANCE
+        Header set Pragma "no-cache" env=SITE_MAINTENANCE
+        Header set Expires "0" env=SITE_MAINTENANCE
+    </IfModule>
+
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
@@ -14,22 +39,6 @@
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    #Lagyan ng comment sa unahan pag mamaintance
-    #RewriteRule ^ index.php [L]
-
-    # MAINTENANCE MODE (TOGGLE THIS LINE)
-    # Uncomment the line below to ENABLE maintenance mode
-    # Comment the line below to DISABLE maintenance mode (normal site)
-    
-    RewriteRule ^(.*)$ /public/maintenance.html [L]
-    
-    # MAINTENANCE MODE EXCLUSIONS (when enabled)
-    # These allow maintenance assets to load even when maintenance is ON
-    RewriteCond %{REQUEST_URI} ^/public/maintenance\.html$ [NC,OR]
-    RewriteCond %{REQUEST_URI} ^/public/site-under-construction\.json$ [NC,OR]
-    RewriteCond %{REQUEST_URI} ^/public/lottie-construction\.json$ [NC,OR]
-    RewriteCond %{REQUEST_URI} ^/public/.*\.(css|js|png|jpg|jpeg|gif|svg|ico|webp)$ [NC]
-    RewriteRule ^ - [L]
 </IfModule>
 
 # Gzip compression
@@ -58,6 +67,12 @@
     ExpiresByType image/icon "access plus 1 month"
     ExpiresByType image/svg "access plus 1 month"
     ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType application/json "access plus 1 month"
+</IfModule>
+
+# Add MIME type for JSON files
+<IfModule mod_mime.c>
+    AddType application/json .json
 </IfModule>
 
 # PHP settings for performance

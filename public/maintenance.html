@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Under Maintenance - Euro Taxi System</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon_euro.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <style>
         * {
             margin: 0;
@@ -200,7 +203,7 @@
         <div class="lottie-container" id="lottie-animation"></div>
         
         <div class="header-container">
-            <img src="/public/euro-logo.png" alt="Euro Taxi System" class="logo" onerror="this.style.display='none';">
+            <img src="/image/logo.png" alt="Euro Taxi System" class="logo" onerror="this.src='/favicon_euro.png';">
             <h1>Under Maintenance</h1>
         </div>
         
@@ -223,34 +226,56 @@
         // Load Lottie animation
         const animationContainer = document.getElementById('lottie-animation');
 
-        // IMPORTANT:
-        // Use a filename WITHOUT SPACES on the server.
-        // Put the file here: public_html/public/site-under-construction.json
-        const LOTTIE_URL = '/public/site-under-construction.json?v=1';
+        // Try multiple possible Lottie file locations
+        const LOTTIE_URLS = [
+            '/public/site-under-construction.json',
+            '/lottie-construction.json',
+            '/lottie/site-under-construction.json?v=' + Date.now(),
+            '/lottie-construction.json?v=' + Date.now(),
+            'https://tqcqsqvzvunlupqsqqsq.supabase.co/storage/v1/object/public/test/construction.json' // Reliable backup (Construction animation)
+        ];
 
-        fetch(LOTTIE_URL)
-            .then(response => response.json())
-            .then(animationData => {
-                lottie.loadAnimation({
-                    container: animationContainer,
-                    renderer: 'svg',
-                    loop: true,
-                    autoplay: true,
-                    animationData,
-                    rendererSettings: {
-                        preserveAspectRatio: 'xMidYMid meet',
-                        progressiveLoad: true,
-                    },
-                });
-            })
-            .catch(error => {
-                console.error('Error loading Lottie animation:', error);
-                animationContainer.innerHTML = `
-                    <div style="font-size: 100px; animation: pulse 2s infinite;">
-                        🚧
-                    </div>
-                `;
-            });
+        async function loadLottieAnimation() {
+            for (const url of LOTTIE_URLS) {
+                try {
+                    console.log('Trying to load Lottie from:', url);
+                    const response = await fetch(url);
+                    
+                    if (response.ok) {
+                        const animationData = await response.json();
+                        lottie.loadAnimation({
+                            container: animationContainer,
+                            renderer: 'svg',
+                            loop: true,
+                            autoplay: true,
+                            animationData: animationData,
+                            rendererSettings: {
+                                preserveAspectRatio: 'xMidYMid meet',
+                                progressiveLoad: true,
+                            },
+                        });
+                        console.log('Lottie loaded SUCCESSFULLY from:', url);
+                        return true;
+                    } else {
+                        console.warn('Lottie fetch failed (status ' + response.status + ') for:', url);
+                    }
+                } catch (error) {
+                    console.error('Fetch error for ' + url + ':', error);
+                }
+            }
+            return false;
+        }
+
+        loadLottieAnimation().then(success => {
+            if (!success) {
+                console.error('All Lottie URLs failed. Showing fallback 🚧');
+                showFallback();
+            }
+        });
+
+        function showFallback() {
+            animationContainer.innerHTML = `<div style="font-size: 100px; animation: pulse 2s infinite; display: flex; align-items: center; justify-content: center; height: 100%;">🚧</div>`;
+        }
 
         // Add pulse animation for fallback
         const style = document.createElement('style');
@@ -264,3 +289,4 @@
     </script>
 </body>
 </html>
+        
