@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'Unit Management - Euro System'); ?>
 <?php $__env->startSection('page-heading', 'Unit Management'); ?>
 <?php $__env->startSection('page-subheading', 'Manage your fleet of taxi units'); ?>
@@ -294,6 +292,17 @@
                             <input type="text" name="color" value="White"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                                 placeholder="e.g., White, Red, Blue">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Fuel Status</label>
+                            <select name="fuel_status"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                <option value="full">Full Tank</option>
+                                <option value="3/4">3/4 Tank</option>
+                                <option value="1/2">1/2 Tank</option>
+                                <option value="1/4">1/4 Tank</option>
+                                <option value="empty">Empty</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -595,6 +604,58 @@
                                     class="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     oninput="this.value = this.value.toUpperCase(); editUnitUpdateCoding()">
                             </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Make <span class="text-red-500">*</span></label>
+                            <input type="text" name="make" id="editMake" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Model <span class="text-red-500">*</span></label>
+                            <input type="text" name="model" id="editModel" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Year <span class="text-red-500">*</span></label>
+                            <input type="number" name="year" id="editYear" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color</label>
+                            <input type="text" name="color" id="editColor"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Fuel Status</label>
+                            <select name="fuel_status" id="editFuelStatus"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="full">Full Tank</option>
+                                <option value="3/4">3/4 Tank</option>
+                                <option value="1/2">1/2 Tank</option>
+                                <option value="1/4">1/4 Tank</option>
+                                <option value="empty">Empty</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                            <select name="status" id="editStatus"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="active">Active</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="coding">Coding</option>
+                                <option value="retired">Retired</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Unit Type</label>
+                            <select name="unit_type" id="editUnitType"
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="new">New</option>
+                                <option value="old">Old</option>
+                                <option value="rented">Rented</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -903,10 +964,14 @@
                 // Basic Info
                 if (document.getElementById('editUnitNumber')) document.getElementById('editUnitNumber').value = unit.unit_number || '';
                 if (document.getElementById('editPlateNumber')) document.getElementById('editPlateNumber').value = unit.plate_number || '';
-
-
-
-
+                if (document.getElementById('editMake')) document.getElementById('editMake').value = unit.make || '';
+                if (document.getElementById('editModel')) document.getElementById('editModel').value = unit.model || '';
+                if (document.getElementById('editYear')) document.getElementById('editYear').value = unit.year || '';
+                if (document.getElementById('editColor')) document.getElementById('editColor').value = unit.color || '';
+                if (document.getElementById('editStatus')) document.getElementById('editStatus').value = unit.status || 'active';
+                if (document.getElementById('editUnitType')) document.getElementById('editUnitType').value = unit.unit_type || 'new';
+                if (document.getElementById('editFuelStatus')) document.getElementById('editFuelStatus').value = unit.fuel_status || 'full';
+                
                 // Financial
                 const brInput = document.getElementById('editBoundaryRate');
                 if (brInput) {
@@ -1280,8 +1345,12 @@
                                         <div class="flex justify-between"><span class="text-gray-600">Plate Number:</span><span class="font-medium">${unit.plate_number || ''}</span></div>
                                         <div class="flex justify-between"><span class="text-gray-600">Vehicle:</span><span class="font-medium">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
                                         <div class="flex justify-between"><span class="text-gray-600">Year:</span><span class="font-medium">${unit.year || ''}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-600">Color:</span><span class="font-medium">${unit.color || 'N/A'}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-600">Fuel Status:</span><span class="font-medium uppercase">${unit.fuel_status || 'Full'}</span></div>
                                         <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="px-1.5 py-0.5 text-[10px] rounded-full bg-green-100 text-green-800">${unit.status ? unit.status.charAt(0).toUpperCase() + unit.status.slice(1) : ''}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Boundary:</span><span class="font-medium">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+                                        <div class="flex justify-between border-t border-gray-100 pt-1 mt-1"><span class="text-gray-500">Created:</span><span class="text-gray-600">${unit.created_by_name || 'System'} - ${unit.created_at_fmt || 'N/A'}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Updated:</span><span class="text-gray-600">${unit.updated_by_name || 'System'} - ${unit.updated_at_fmt || 'N/A'}</span></div>
+                                        <div class="flex justify-between border-t border-gray-100 pt-1 mt-1"><span class="text-black font-semibold">Boundary:</span><span class="font-bold text-blue-700">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
                                     </div>
                                 </div>
                                 <div class="bg-white border border-gray-200 rounded-lg p-2">

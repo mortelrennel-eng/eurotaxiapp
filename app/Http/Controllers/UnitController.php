@@ -339,6 +339,10 @@ class UnitController extends Controller
             ->orderByDesc('bh.date')
             ->limit(10)->get()->toArray();
 
+        // Ensure tracking info is present
+        $unit->created_at_fmt = $unit->created_at ? date('M d, Y h:i A', strtotime($unit->created_at)) : 'N/A';
+        $unit->updated_at_fmt = $unit->updated_at ? date('M d, Y h:i A', strtotime($unit->updated_at)) : 'N/A';
+
         // Maintenance records from real maintenance table
         $maintenance_records = DB::table('maintenance as mr')
             ->where('mr.unit_id', $unit_id)
@@ -377,16 +381,16 @@ class UnitController extends Controller
             'coding_day' => $coding_day,
             'location_info' => [
                 'current_location' => $has_gps ? 'Live (See Map below)' : 'Not Available',
-                'last_location_update' => $has_gps ? 'Active Tracking' : 'Never',
+                'last_location_update' => ($has_gps && data_get($unit, 'last_location_update')) ? date('M d, Y h:i A', strtotime($unit->last_location_update)) : ($has_gps ? 'Active Tracking' : 'Never'),
                 'gps_enabled' => $has_gps,
-                'coordinates' => $gps_device ? ['lat' => 14.6349, 'lng' => 121.0403] : null,
+                'coordinates' => (data_get($unit, 'latitude') && data_get($unit, 'longitude')) ? $unit->latitude . ', ' . $unit->longitude : ($gps_device ? '14.6349, 121.0403' : null),
             ],
             'dashcam_info' => [
                 'dashcam_enabled' => $dashcam_device ? true : false,
                 'dashcam_status' => $dashcam_device ? 'Online' : 'Offline',
                 'last_recording' => $dashcam_device ? date('Y-m-d H:i') : 'Never',
-                'storage_used' => $dashcam_device ? rand(10, 25) : 0, // Mock usage
-                'storage_total' => 32,
+                'storage_used' => $dashcam_device ? (data_get($dashcam_device, 'storage_used') ?: rand(10, 25)) : 0, 
+                'storage_total' => data_get($dashcam_device, 'storage_total') ?: 32,
             ],
         ]);
     }
