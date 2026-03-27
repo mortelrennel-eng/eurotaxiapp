@@ -175,7 +175,7 @@
                 <h3 class="text-base font-semibold text-gray-900">Unit Status Distribution</h3>
             </div>
             <div class="p-4">
-                <canvas id="unitStatusChart" width="400" height="200"></canvas>
+                <canvas id="unitStatusDistributionChart" width="400" height="200"></canvas>
             </div>
         </div>
     </div>
@@ -1018,7 +1018,7 @@
         });
 
         // Unit Status Distribution Chart
-        const unitStatusDistCtx = document.getElementById('unitStatusChart').getContext('2d');
+        const unitStatusDistCtx = document.getElementById('unitStatusDistributionChart').getContext('2d');
         const unitStatusDistData = @json($unit_status_distribution_data);
         
         // Debug: Log the data to console
