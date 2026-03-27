@@ -5,11 +5,9 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Google Site Verification - Meta Tag Method
-echo '<!DOCTYPE html><html><head><meta name="google-site-verification" content="dbQmbMBCSaAiOHbRKPuXTz9dS8YxSyxOTSP49Jw7FAs"></head><body><p>Verification file</p></body></html>';
-
-// Check if this is verification request
+// Google Site Verification - Only show for verification URL
 if (strpos($_SERVER['REQUEST_URI'], 'google-site-verification.html') !== false) {
+    echo '<!DOCTYPE html><html><head><meta name="google-site-verification" content="dbQmbMBCSaAiOHbRKPuXTz9dS8YxSyxOTSP49Jw7FAs"></head><body><p>Verification file</p></body></html>';
     exit;
 }
 
