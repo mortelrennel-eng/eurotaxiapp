@@ -873,6 +873,13 @@
 @push('scripts')
     <script src="{{ asset('js/realtime-dashboard.js') }}"></script>
     <script>
+        // Register Chart.js datalabels plugin
+        Chart.register(ChartDataLabels);
+        
+        // Debug: Check if Chart.js is loaded
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+        console.log('ChartDataLabels loaded:', typeof ChartDataLabels !== 'undefined');
+        
         // Weekly Financial Chart
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
         const weeklyData = @json($weekly_data);
@@ -1009,8 +1016,22 @@
                             label: function(context) {
                                 const label = context.label || '';
                                 const value = context.parsed || 0;
-                                return label + ': ₱' + value.toLocaleString();
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return label + ': ₱' + value.toLocaleString() + ' (' + percentage + '%)';
                             }
+                        }
+                    },
+                    datalabels: {
+                        color: '#fff',
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        },
+                        formatter: (value, ctx) => {
+                            const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = sum > 0 ? ((value / sum) * 100).toFixed(1) : 0;
+                            return percentage > 0 ? percentage + '%' : '';
                         }
                     }
                 }
