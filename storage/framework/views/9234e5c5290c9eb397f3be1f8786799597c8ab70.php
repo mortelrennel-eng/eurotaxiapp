@@ -1,6 +1,6 @@
-<?php $__env->startSection('title', 'Dashboard - Euro System'); ?>
-<?php $__env->startSection('page-heading', 'Dashboard Overview'); ?>
-<?php $__env->startSection('page-subheading', 'Real-time operational metrics and alerts'); ?>
+<?php $__env->startSection('title', 'Euro Taxi System | Professional Fleet Management Dashboard'); ?>
+<?php $__env->startSection('page-heading', 'Euro Taxi System'); ?>
+<?php $__env->startSection('page-subheading', 'Professional taxi fleet management and real-time tracking solutions'); ?>
 
 <?php $__env->startSection('content'); ?>
     <!-- Stats Grid -->
@@ -173,7 +173,7 @@
                 <h3 class="text-base font-semibold text-gray-900">Unit Status Distribution</h3>
             </div>
             <div class="p-4">
-                <canvas id="unitStatusChart" width="400" height="200"></canvas>
+                <canvas id="unitStatusDistributionChart" width="400" height="200"></canvas>
             </div>
         </div>
     </div>
@@ -871,149 +871,261 @@
 <?php $__env->startPush('scripts'); ?>
     <script src="<?php echo e(asset('js/realtime-dashboard.js')); ?>"></script>
     <script>
+        // Debug: Check if Chart.js is loaded
+        console.log('Chart.js loaded:', typeof Chart !== 'undefined');
+        
         // Weekly Financial Chart
-        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
-        const weeklyData = <?php echo json_encode($weekly_data, 15, 512) ?>;
-        window.weeklyChart = new Chart(weeklyCtx, {
-            type: 'line',
-            data: {
-                labels: weeklyData.map(d => d.day),
-                datasets: [
-                    { label: 'Boundary', data: weeklyData.map(d => d.boundary), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', borderWidth: 2, tension: 0.4 },
-                    { label: 'Expenses', data: weeklyData.map(d => d.expenses), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 2, tension: 0.4 },
-                    { label: 'Net Income', data: weeklyData.map(d => d.net), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
+        try {
+            const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+            const weeklyData = <?php echo json_encode($weekly_data, 15, 512) ?>;
+            console.log('Weekly Data:', weeklyData);
+            window.weeklyChart = new Chart(weeklyCtx, {
+                type: 'line',
+                data: {
+                    labels: weeklyData.map(d => d.day),
+                    datasets: [
+                        { label: 'Boundary', data: weeklyData.map(d => d.boundary), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', borderWidth: 2, tension: 0.4 },
+                        { label: 'Expenses', data: weeklyData.map(d => d.expenses), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 2, tension: 0.4 },
+                        { label: 'Net Income', data: weeklyData.map(d => d.net), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
+                    }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Weekly Chart Error:', error);
+        }
 
         // Unit Status Chart
-        const unitStatusCtx = document.getElementById('unitStatusChart').getContext('2d');
-        const unitStatusData = <?php echo json_encode($unit_status_data, 15, 512) ?>;
-        window.unitStatusChart = new Chart(unitStatusCtx, {
-            type: 'bar',
-            data: {
-                labels: unitStatusData.map(d => d.status),
-                datasets: [{ label: 'Units', data: unitStatusData.map(d => d.count), backgroundColor: '#eab308', borderColor: '#ca8a04', borderWidth: 1 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-            }
-        });
+        try {
+            const unitStatusCtx = document.getElementById('unitStatusChart').getContext('2d');
+            const unitStatusData = <?php echo json_encode($unit_status_data, 15, 512) ?>;
+            console.log('Unit Status Data:', unitStatusData);
+            window.unitStatusChart = new Chart(unitStatusCtx, {
+                type: 'bar',
+                data: {
+                    labels: unitStatusData.map(d => d.status),
+                    datasets: [{ label: 'Units', data: unitStatusData.map(d => d.count), backgroundColor: '#eab308', borderColor: '#ca8a04', borderWidth: 1 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        } catch (error) {
+            console.error('Unit Status Chart Error:', error);
+        }
 
         // Revenue Trend Chart
-        const revenueTrendCtx = document.getElementById('revenueTrendChart').getContext('2d');
-        const revenueTrendData = <?php echo json_encode($revenue_trend, 15, 512) ?>;
-        window.revenueTrendChart = new Chart(revenueTrendCtx, {
-            type: 'line',
-            data: {
-                labels: revenueTrendData.map(d => d.date),
-                datasets: [{
-                    label: 'Daily Revenue',
-                    data: revenueTrendData.map(d => d.revenue),
-                    borderColor: '#22c55e',
-                    backgroundColor: 'rgba(34,197,94,0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+        try {
+            const revenueTrendCtx = document.getElementById('revenueTrendChart').getContext('2d');
+            const revenueTrendData = <?php echo json_encode($revenue_trend, 15, 512) ?>;
+            console.log('Revenue Trend Data:', revenueTrendData);
+            window.revenueTrendChart = new Chart(revenueTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: revenueTrendData.map(d => d.date),
+                    datasets: [{ label: 'Revenue', data: revenueTrendData.map(d => d.revenue), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Revenue Trend Chart Error:', error);
+        }
 
         // Unit Performance Chart
-        const unitPerformanceCtx = document.getElementById('unitPerformanceChart').getContext('2d');
-        const unitPerformanceData = <?php echo json_encode($unit_performance, 15, 512) ?>;
-        window.unitPerformanceChart = new Chart(unitPerformanceCtx, {
-            type: 'bar',
-            data: {
-                labels: unitPerformanceData.map(d => d.unit),
-                datasets: [
-                    {
-                        label: 'Actual Performance',
-                        data: unitPerformanceData.map(d => d.performance),
-                        backgroundColor: '#3b82f6',
-                        borderColor: '#2563eb',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Target',
-                        data: unitPerformanceData.map(d => d.target),
-                        backgroundColor: '#ef4444',
-                        borderColor: '#dc2626',
-                        borderWidth: 1
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { 
-                        beginAtZero: true,
-                        ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+        try {
+            const unitPerformanceCtx = document.getElementById('unitPerformanceChart').getContext('2d');
+            const unitPerformanceData = <?php echo json_encode($unit_performance, 15, 512) ?>;
+            console.log('Unit Performance Data:', unitPerformanceData);
+            window.unitPerformanceChart = new Chart(unitPerformanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: unitPerformanceData.map(d => d.unit),
+                    datasets: [
+                        {
+                            label: 'Actual Performance',
+                            data: unitPerformanceData.map(d => d.performance),
+                            backgroundColor: '#3b82f6',
+                            borderColor: '#2563eb',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Target',
+                            data: unitPerformanceData.map(d => d.target),
+                            backgroundColor: '#ef4444',
+                            borderColor: '#dc2626',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } }
+                        }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Unit Performance Chart Error:', error);
+        }
 
         // Expense Breakdown Chart
-        const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart').getContext('2d');
-        const expenseBreakdownData = <?php echo json_encode($expense_breakdown, 15, 512) ?>;
-        window.expenseBreakdownChart = new Chart(expenseBreakdownCtx, {
-            type: 'doughnut',
-            data: {
-                labels: expenseBreakdownData.map(d => d.category),
-                datasets: [{
-                    data: expenseBreakdownData.map(d => d.amount),
-                    backgroundColor: [
-                        '#ef4444',
-                        '#f59e0b',
-                        '#10b981',
-                        '#3b82f6',
-                        '#8b5cf6',
-                        '#ec4899'
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right' },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.parsed || 0;
-                                return label + ': ₱' + value.toLocaleString();
+        try {
+            const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart').getContext('2d');
+            const expenseBreakdownData = <?php echo json_encode($expense_breakdown, 15, 512) ?>;
+            console.log('Expense Breakdown Data:', expenseBreakdownData);
+            window.expenseBreakdownChart = new Chart(expenseBreakdownCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: expenseBreakdownData.map(d => d.category),
+                    datasets: [{
+                        data: expenseBreakdownData.map(d => d.amount),
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#10b981',
+                            '#3b82f6',
+                            '#8b5cf6',
+                            '#ec4899'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ₱' + value.toLocaleString();
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Expense Breakdown Chart Error:', error);
+        }
+
+        // Unit Status Distribution Chart
+        try {
+            const unitStatusDistCtx = document.getElementById('unitStatusDistributionChart').getContext('2d');
+            const unitStatusDistData = <?php echo json_encode($unit_status_distribution_data, 15, 512) ?>;
+            
+            // Debug: Log the data to console
+            console.log('Unit Status Distribution Data:', unitStatusDistData);
+        
+        // Check if data exists and has values
+        if (!unitStatusDistData || unitStatusDistData.length === 0 || unitStatusDistData.every(d => d.count === 0)) {
+            // Show placeholder data if no real data
+            const placeholderData = [
+                { status: 'Active', count: 5 },
+                { status: 'Under Maintenance', count: 2 },
+                { status: 'Coding', count: 1 },
+                { status: 'Retired', count: 0 }
+            ];
+            window.unitStatusDistChart = new Chart(unitStatusDistCtx, {
+                type: 'pie',
+                data: {
+                    labels: placeholderData.map(d => d.status),
+                    datasets: [{
+                        data: placeholderData.map(d => d.count),
+                        backgroundColor: [
+                            '#22c55e',
+                            '#3b82f6', 
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        title: {
+                            display: true,
+                            text: 'Sample Data - Add units to see real data'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Real data exists - use it
+            window.unitStatusDistChart = new Chart(unitStatusDistCtx, {
+                type: 'pie',
+                data: {
+                    labels: unitStatusDistData.map(d => d.status),
+                    datasets: [{
+                        data: unitStatusDistData.map(d => d.count),
+                        backgroundColor: [
+                            '#22c55e',
+                            '#3b82f6', 
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return label + ': ' + value + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        } catch (error) {
+            console.error('Unit Status Distribution Chart Error:', error);
+        }
 
         // Revenue Trend Period Selection
         function updateRevenueTrend(period) {
