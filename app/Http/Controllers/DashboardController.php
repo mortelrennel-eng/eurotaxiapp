@@ -610,10 +610,13 @@ class DashboardController extends Controller
     /**
      * Get daily boundary collections with detailed information
      */
-    public function getDailyBoundaryCollections()
+    public function getDailyBoundaryCollections(Request $request)
     {
         try {
-            // Get boundary collections with complete information
+            // Get optional date from request, default to today
+            $date = $request->get('date', now()->toDateString());
+
+            // Get boundary collections for the specific date with complete information
             $collections = DB::table('boundaries as b')
                 ->leftJoin('units as u', 'b.unit_id', '=', 'u.id')
                 ->leftJoin('drivers as d', 'u.driver_id', '=', 'd.id')
@@ -628,7 +631,7 @@ class DashboardController extends Controller
                     'du.name as driver_name',
                     'd.id as driver_id'
                 ])
-                ->orderBy('b.date', 'desc')
+                ->whereDate('b.date', $date)
                 ->orderBy('b.id', 'desc')
                 ->get()
                 ->map(function($collection) {
@@ -653,8 +656,7 @@ class DashboardController extends Controller
                 'unique_units' => $collections->pluck('unit_id')->unique()->count(),
                 'unique_drivers' => $collections->pluck('driver_id')->unique()->count(),
                 'total_amount' => $collections->sum('boundary_amount'),
-                'today_collections' => $collections->where('date', now()->toDateString())->count(),
-                'today_amount' => $collections->where('date', now()->toDateString())->sum('boundary_amount')
+                'filter_date' => $date
             ];
 
             return response()->json([

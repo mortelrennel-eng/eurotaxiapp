@@ -576,6 +576,39 @@
                         </button>
                     </div>
                 </div>
+                
+                <!-- Period Filter Buttons -->
+                <div class="flex bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg p-1">
+                    <button 
+                        id="btn-today-income" 
+                        onclick="setIncomePeriod('today')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 bg-white text-green-700"
+                    >
+                        Today
+                    </button>
+                    <button 
+                        id="btn-week-income" 
+                        onclick="setIncomePeriod('week')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 text-white/70 hover:text-white hover:bg-white/10"
+                    >
+                        Weekly
+                    </button>
+                    <button 
+                        id="btn-month-income" 
+                        onclick="setIncomePeriod('month')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 text-white/70 hover:text-white hover:bg-white/10"
+                    >
+                        Monthly
+                    </button>
+                    <button 
+                        id="btn-year-income" 
+                        onclick="setIncomePeriod('year')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 text-white/70 hover:text-white hover:bg-white/10"
+                    >
+                        Yearly
+                    </button>
+                </div>
+                
                 <input 
                     type="date" 
                     id="incomeDateFilter"
@@ -2085,6 +2118,11 @@
         function showNetIncomeModal() {
             document.getElementById('netIncomeModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            
+            // Initialize default period to today
+            window.currentIncomePeriod = 'today';
+            setIncomePeriod('today');
+            
             loadIncomeData();
         }
         
@@ -2217,8 +2255,12 @@
         function filterIncomeData() {
             const searchTerm = document.getElementById('incomeSearchInput').value.toLowerCase();
             const dateFilter = document.getElementById('incomeDateFilter').value;
+            const currentPeriod = window.currentIncomePeriod || 'today';
             
             let filteredData = window.originalIncomeData || [];
+            
+            // Apply period filter
+            filteredData = filterIncomeByPeriod(filteredData, currentPeriod);
             
             // Apply date filter
             if (dateFilter) {
@@ -2246,6 +2288,71 @@
             
             window.currentFilteredIncomeData = filteredData;
             renderIncomeData(filteredData);
+        }
+        
+        function filterIncomeByPeriod(data, period) {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            switch(period) {
+                case 'today':
+                    return data.filter(item => item.date === todayStr);
+                    
+                case 'week':
+                    const weekStart = new Date(today);
+                    weekStart.setDate(today.getDate() - today.getDay());
+                    const weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 6);
+                    
+                    return data.filter(item => {
+                        const itemDate = new Date(item.date);
+                        return itemDate >= weekStart && itemDate <= weekEnd;
+                    });
+                    
+                case 'month':
+                    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                    
+                    return data.filter(item => {
+                        const itemDate = new Date(item.date);
+                        return itemDate >= monthStart && itemDate <= monthEnd;
+                    });
+                    
+                case 'year':
+                    const yearStart = new Date(today.getFullYear(), 0, 1);
+                    const yearEnd = new Date(today.getFullYear(), 11, 31);
+                    
+                    return data.filter(item => {
+                        const itemDate = new Date(item.date);
+                        return itemDate >= yearStart && itemDate <= yearEnd;
+                    });
+                    
+                default:
+                    return data;
+            }
+        }
+        
+        function setIncomePeriod(period) {
+            window.currentIncomePeriod = period;
+            
+            // Update button styles
+            document.querySelectorAll('[id^="btn-"][id$="-income"]').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-green-700');
+                btn.classList.add('text-white/70', 'hover:text-white', 'hover:bg-white/10');
+            });
+            
+            // Highlight active button
+            const activeBtn = document.getElementById('btn-' + period + '-income');
+            if (activeBtn) {
+                activeBtn.classList.remove('text-white/70', 'hover:text-white', 'hover:bg-white/10');
+                activeBtn.classList.add('bg-white', 'text-green-700');
+            }
+            
+            // Clear date filter when switching periods
+            document.getElementById('incomeDateFilter').value = '';
+            
+            // Re-apply filters
+            filterIncomeData();
         }
         
         function clearIncomeSearch() {
@@ -2370,6 +2477,13 @@
         function showDailyBoundaryModal() {
             document.getElementById('dailyBoundaryModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            
+            // Set default date to today if not set
+            const dateInput = document.getElementById('boundaryDateFilter');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            
             loadBoundaryCollections();
         }
         
@@ -2379,7 +2493,10 @@
         }
         
         function loadBoundaryCollections() {
-            fetch('/api/daily-boundary-collections')
+            const date = document.getElementById('boundaryDateFilter').value;
+            const url = `/api/daily-boundary-collections${date ? '?date=' + date : ''}`;
+            
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -2408,6 +2525,7 @@
             // Store original data for filtering
             window.originalBoundaryData = collections;
             window.currentFilteredBoundaryData = collections;
+            window.lastFetchedBoundaryDate = stats.filter_date;
             
             // Render boundary collections
             renderBoundaryCollections(collections);
@@ -2488,14 +2606,14 @@
             const searchTerm = document.getElementById('boundarySearchInput').value.toLowerCase();
             const dateFilter = document.getElementById('boundaryDateFilter').value;
             
-            let filteredCollections = window.originalBoundaryData || [];
-            
-            // Apply date filter
-            if (dateFilter) {
-                filteredCollections = filteredCollections.filter(collection => {
-                    return collection.date === dateFilter;
-                });
+            // Check if we need to re-fetch (if date changed)
+            if (window.lastFetchedBoundaryDate !== dateFilter) {
+                window.lastFetchedBoundaryDate = dateFilter;
+                loadBoundaryCollections();
+                return;
             }
+
+            let filteredCollections = window.originalBoundaryData || [];
             
             // Apply search filter
             if (searchTerm) {
