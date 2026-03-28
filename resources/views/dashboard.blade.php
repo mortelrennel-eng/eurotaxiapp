@@ -9,10 +9,11 @@
             body * {
                 visibility: hidden;
             }
-            #incomeReport, #incomeReport * {
-                visibility: visible;
+            #incomeReport, #incomeReport *,
+            #expensesReport, #expensesReport * {
+                visibility: visible !important;
             }
-            #incomeReport {
+            #incomeReport, #expensesReport {
                 position: absolute;
                 left: 0;
                 top: 0;
@@ -24,19 +25,24 @@
                 margin: 0 !important;
                 background: white !important;
             }
-            #netIncomeModal {
+            #netIncomeModal, #expensesModal {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
                 background: white !important;
-                visibility: visible;
+                visibility: visible !important;
             }
             .print-only {
                 display: block !important;
             }
             .no-print {
                 display: none !important;
+            }
+            /* Hidden elements must stay hidden even in print */
+            .hidden {
+                display: none !important;
+                visibility: hidden !important;
             }
         }
         
