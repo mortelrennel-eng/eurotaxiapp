@@ -4,6 +4,74 @@
 @section('page-heading', 'Euro Taxi System')
 @section('page-subheading', 'Professional taxi fleet management and real-time tracking solutions')
 
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #incomeReport, #incomeReport * {
+                visibility: visible;
+            }
+            #incomeReport {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100% !important;
+                max-width: none !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+            }
+            #netIncomeModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                visibility: visible;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        @media screen {
+            .print-only {
+                display: none !important;
+            }
+        }
+        
+        .receipt-paper::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(135deg, transparent 33.333%, white 33.333%, white 66.666%, transparent 66.666%), 
+                        linear-gradient(45deg, transparent 33.333%, white 33.333%, white 66.666%, transparent 66.666%);
+            background-size: 15px 15px;
+            background-repeat: repeat-x;
+        }
+        
+        .receipt-paper::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(-135deg, transparent 33.333%, white 33.333%, white 66.666%, transparent 66.666%), 
+                        linear-gradient(-45deg, transparent 33.333%, white 33.333%, white 66.666%, transparent 66.666%);
+            background-size: 15px 15px;
+            background-repeat: repeat-x;
+        }
+    </style>
 @section('content')
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -371,12 +439,14 @@
                         </button>
                     </div>
                 </div>
-                <input 
-                    type="date" 
-                    id="driversDateFilter"
-                    class="px-3 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all duration-200 text-sm"
-                    onchange="filterActiveDrivers()"
+                <button 
+                    onclick="toggleDriversSort()" 
+                    id="driversSortBtn"
+                    class="px-3 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg text-white hover:bg-white/30 transition-all duration-200 text-sm flex items-center gap-2 min-w-[100px] justify-center"
                 >
+                    <i data-lucide="sort-asc" id="driversSortIcon" class="w-4 h-4"></i>
+                    <span id="driversSortText">A-Z</span>
+                </button>
             </div>
         </div>
         
@@ -390,37 +460,37 @@
                                 <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
                             </div>
                             <div>
-                                <div class="text-lg font-bold text-blue-600" id="activeDriversCount">0</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Active</div>
+                                <div class="text-lg font-bold text-blue-600" id="totalDriversCount">0</div>
+                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Total Drivers</div>
                             </div>
                         </div>
                     </div>
                     <div class="bg-white rounded-lg p-3 shadow-sm border border-green-100 hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-2">
                             <div class="p-1.5 bg-green-100 rounded">
-                                <i data-lucide="car" class="w-4 h-4 text-green-600"></i>
+                                <i data-lucide="user-minus" class="w-4 h-4 text-green-600"></i>
                             </div>
                             <div>
-                                <div class="text-lg font-bold text-green-600" id="assignedUnitsCount">0</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Assigned</div>
+                                <div class="text-lg font-bold text-green-600" id="vacantDriversCount">0</div>
+                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Total Vacant Drivers</div>
                             </div>
                         </div>
                     </div>
                     <div class="bg-white rounded-lg p-3 shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-2">
                             <div class="p-1.5 bg-orange-100 rounded">
-                                <i data-lucide="trending-up" class="w-4 h-4 text-orange-600"></i>
+                                <i data-lucide="user-check" class="w-4 h-4 text-orange-600"></i>
                             </div>
                             <div>
-                                <div class="text-lg font-bold text-orange-600" id="avgBoundaryCount">₱0</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Avg Daily</div>
+                                <div class="text-lg font-bold text-orange-600" id="activeWithUnitsCount">0</div>
+                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Total Active Drivers</div>
                             </div>
                         </div>
                     </div>
                     <div class="bg-white rounded-lg p-3 shadow-sm border border-purple-100 hover:shadow-md transition-shadow">
                         <div class="flex items-center gap-2">
                             <div class="p-1.5 bg-purple-100 rounded">
-                                <i data-lucide="star" class="w-4 h-4 text-purple-600"></i>
+                                <i data-lucide="award" class="w-4 h-4 text-purple-600"></i>
                             </div>
                             <div>
                                 <div class="text-lg font-bold text-purple-600" id="topPerformersCount">0</div>
@@ -605,9 +675,15 @@
                         <p class="text-green-100 text-xs font-medium">Complete income and expense breakdown</p>
                     </div>
                 </div>
-                <button onclick="hideNetIncomeModal()" class="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all duration-200 backdrop-blur-sm">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="printReport()" class="bg-white text-green-700 hover:bg-green-50 px-4 py-2 rounded-lg transition-all duration-200 shadow-lg flex items-center gap-2 text-sm font-bold border-2 border-white animate-pulse hover:animate-none">
+                        <i data-lucide="printer" class="w-4 h-4 text-green-700"></i>
+                        PRINT REPORT
+                    </button>
+                    <button onclick="hideNetIncomeModal()" class="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all duration-200 backdrop-blur-sm">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
             
             <!-- Search and Date Filter -->
@@ -665,69 +741,95 @@
         </div>
         
         <div class="flex-1 overflow-hidden flex flex-col min-h-0">
-            <!-- Summary Stats -->
-            <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 border-b border-green-200 flex-shrink-0">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-lg p-3 shadow-sm border border-green-100 hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1.5 bg-green-100 rounded">
-                                <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+            <!-- Detailed Report Document (Integrated) -->
+            <div class="bg-gray-50 p-4 border-b border-gray-200 flex-shrink-0 print-section overflow-y-auto max-h-[85vh]">
+                <div class="max-w-4xl mx-auto bg-white border border-gray-200 rounded-xl p-6 shadow-sm relative" id="incomeReport">
+                    <!-- Report Header (Print Only) -->
+                    <div class="text-center mb-10 print-only">
+                        <div class="flex flex-col items-center mb-4">
+                            <img src="{{ asset('image/logo.png') }}" alt="Euro Taxi Logo" class="h-16 w-auto mb-2">
+                        </div>
+                        <h4 class="text-4xl font-black uppercase tracking-[0.4em] text-gray-900 mb-2">Financial Report</h4>
+                        <div class="text-base text-gray-600 uppercase font-black tracking-widest" id="reportPeriodLabelPrint">Period: TODAY</div>
+                        <div class="text-[12px] text-gray-400 mt-3 font-bold tracking-[0.2em]">EURO TAXI MANAGEMENT SYSTEM • OFFICIAL RECORD</div>
+                        <div class="border-t-2 border-gray-100 mt-8 pt-2 h-0 border-dashed"></div>
+                    </div>
+                    
+                    <!-- Revenue Section -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center bg-gray-900 text-white px-6 py-3 rounded-t-lg">
+                            <span class="text-[11px] uppercase font-black tracking-[0.1em]">Revenue: Total Boundary Collected</span>
+                            <span class="text-xl font-black text-emerald-400" id="reportTotalIncome">₱0.00</span>
+                        </div>
+                        <div class="border-x border-b border-gray-100 rounded-b-lg">
+                            <div class="bg-gray-50 px-6 py-1 border-b border-gray-100 flex justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                <span>Unit / Driver Detail</span>
+                                <span>Amount Collected</span>
                             </div>
-                            <div>
-                                <div class="text-lg font-bold text-green-600" id="totalIncomeCount">₱0</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Total Income</div>
+                            <div id="revenueDetailList" class="divide-y divide-gray-50 min-h-[0px]">
+                                <!-- Dynamically populated -->
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg p-3 shadow-sm border border-red-100 hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1.5 bg-red-100 rounded">
-                                <i data-lucide="trending-down" class="w-4 h-4 text-red-600"></i>
+                    
+                    <!-- Operating Expenses Section -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center bg-red-900 text-white px-6 py-3 rounded-t-lg">
+                            <span class="text-[11px] uppercase font-black tracking-[0.1em]">Operating Expenses Breakdown</span>
+                            <span class="text-xl font-black text-red-300" id="reportTotalExpenses">₱0.00</span>
+                        </div>
+                        <div class="border-x border-b border-gray-100 rounded-b-lg p-0">
+                            <!-- Maintenance Breakdown -->
+                            <div class="border-b border-gray-100">
+                                <div class="bg-gray-50 px-6 py-1 border-b border-gray-100 flex justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                    <span>Maintenance & Repairs Itemized</span>
+                                    <span id="reportMaintenanceTotal" class="text-orange-600 font-black">Total: ₱0.00</span>
+                                </div>
+                                <div id="maintenanceDetailList" class="divide-y divide-gray-50 bg-white">
+                                    <!-- Dynamically populated -->
+                                </div>
                             </div>
+
+                            <!-- Office Breakdown -->
                             <div>
-                                <div class="text-lg font-bold text-red-600" id="totalExpenseCount">₱0</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Total Expenses</div>
+                                <div class="bg-gray-50 px-6 py-1 border-b border-gray-100 flex justify-between text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                                    <span>General Office Expenses Itemized</span>
+                                    <span id="reportGeneralExpensesTotal" class="text-red-500 font-black">Total: ₱0.00</span>
+                                </div>
+                                <div id="officeExpensesDetailList" class="divide-y divide-gray-50 bg-white">
+                                    <!-- Dynamically populated -->
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg p-3 shadow-sm border border-blue-100 hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1.5 bg-blue-100 rounded">
-                                <i data-lucide="calculator" class="w-4 h-4 text-blue-600"></i>
+                    
+                    <!-- Computation Summary Box -->
+                    <div class="bg-gray-100 border-2 border-gray-900 p-6 rounded-xl shadow-sm mb-6">
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Computation Summary</span>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="shield-check" class="w-3 h-3 text-green-600"></i>
+                                <span class="text-[9px] text-green-600 font-black italic uppercase tracking-wider">verified</span>
                             </div>
-                            <div>
-                                <div class="text-lg font-bold text-blue-600" id="netIncomeCount">₱0</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Net Income</div>
-                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-3xl font-black text-gray-900 tracking-tighter">
+                            <span>NET INCOME</span>
+                            <span class="text-emerald-700" id="reportNetIncome">₱0.00</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] mt-4 pt-3 border-t border-gray-300 text-gray-500 font-black">
+                            <span class="uppercase tracking-widest">Efficiency Profit Margin</span>
+                            <span class="text-gray-900 font-black" id="reportProfitMargin">0.0%</span>
                         </div>
                     </div>
-                    <div class="bg-white rounded-lg p-3 shadow-sm border border-purple-100 hover:shadow-md transition-shadow">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1.5 bg-purple-100 rounded">
-                                <i data-lucide="pie-chart" class="w-4 h-4 text-purple-600"></i>
-                            </div>
-                            <div>
-                                <div class="text-lg font-bold text-purple-600" id="profitMarginCount">0%</div>
-                                <div class="text-xs text-gray-600 uppercase tracking-wide font-medium">Profit Margin</div>
-                            </div>
-                        </div>
+                    
+                    <!-- Report Footer (Print Only) -->
+                    <div class="text-center mt-8 pt-6 border-t border-gray-100 print-only">
+                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Authenticated Financial Statement</p>
+                        <p class="text-[9px] text-gray-300 font-medium tracking-widest">TIMESTAMP: <span id="reportTimestamp"></span></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Income Data Grid -->
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-50 min-h-0">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4" id="incomeGrid">
-                    <!-- Loading State -->
-                    <div class="col-span-full text-center py-16">
-                        <div class="inline-flex flex-col items-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-600 border-t-transparent mb-4"></div>
-                            <span class="text-lg text-gray-600 font-semibold mb-2">Loading income data...</span>
-                            <p class="text-sm text-gray-400">Please wait while we fetch financial details</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -1766,10 +1868,14 @@
             const drivers = data.drivers || [];
             const stats = data.stats || {};
             
+            // Initialize Sort Order
+            window.driversSortOrder = window.driversSortOrder || 'asc';
+            updateDriversSortUI();
+            
             // Update summary stats
-            document.getElementById('activeDriversCount').textContent = stats.active_drivers || 0;
-            document.getElementById('assignedUnitsCount').textContent = stats.assigned_units || 0;
-            document.getElementById('avgBoundaryCount').textContent = '₱' + (stats.avg_boundary || 0).toLocaleString();
+            document.getElementById('totalDriversCount').textContent = stats.total_drivers || 0;
+            document.getElementById('vacantDriversCount').textContent = stats.vacant_drivers || 0;
+            document.getElementById('activeWithUnitsCount').textContent = stats.active_with_units || 0;
             document.getElementById('topPerformersCount').textContent = stats.top_performers || 0;
             
             // Store original data for filtering
@@ -1866,16 +1972,9 @@
         
         function filterActiveDrivers() {
             const searchTerm = document.getElementById('driversSearchInput').value.toLowerCase();
-            const dateFilter = document.getElementById('driversDateFilter').value;
+            const sortOrder = window.driversSortOrder || 'asc';
             
-            let filteredDrivers = window.originalActiveDriversData || [];
-            
-            // Apply date filter
-            if (dateFilter) {
-                filteredDrivers = filteredDrivers.filter(driver => {
-                    return driver.hire_date === dateFilter;
-                });
-            }
+            let filteredDrivers = [...(window.originalActiveDriversData || [])];
             
             // Apply search filter
             if (searchTerm) {
@@ -1895,14 +1994,52 @@
                     return searchableText.includes(searchTerm);
                 });
             }
+
+            // Apply Sorting (Alphabetical by Name)
+            filteredDrivers.sort((a, b) => {
+                const nameA = (a.name || '').toLowerCase();
+                const nameB = (b.name || '').toLowerCase();
+                
+                if (sortOrder === 'asc') {
+                    return nameA.localeCompare(nameB);
+                } else {
+                    return nameB.localeCompare(nameA);
+                }
+            });
             
             window.currentFilteredActiveDriversData = filteredDrivers;
             renderActiveDrivers(filteredDrivers);
         }
         
+        function toggleDriversSort() {
+            window.driversSortOrder = window.driversSortOrder === 'asc' ? 'desc' : 'asc';
+            updateDriversSortUI();
+            filterActiveDrivers();
+        }
+
+        function updateDriversSortUI() {
+            const icon = document.getElementById('driversSortIcon');
+            const text = document.getElementById('driversSortText');
+            const order = window.driversSortOrder || 'asc';
+            
+            if (icon && text) {
+                if (order === 'asc') {
+                    icon.setAttribute('data-lucide', 'sort-asc');
+                    text.textContent = 'A-Z';
+                } else {
+                    icon.setAttribute('data-lucide', 'sort-desc');
+                    text.textContent = 'Z-A';
+                }
+                
+                // Re-initialize Lucide for the new icon
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        }
+
         function clearDriversSearch() {
             document.getElementById('driversSearchInput').value = '';
-            document.getElementById('driversDateFilter').value = '';
             filterActiveDrivers();
         }
         
@@ -2394,12 +2531,6 @@
             const incomeData = data.income_data || [];
             const stats = data.stats || {};
             
-            // Update summary stats
-            document.getElementById('totalIncomeCount').textContent = '₱' + (stats.total_income || 0).toLocaleString();
-            document.getElementById('totalExpenseCount').textContent = '₱' + (stats.total_expenses || 0).toLocaleString();
-            document.getElementById('netIncomeCount').textContent = '₱' + (stats.net_income || 0).toLocaleString();
-            document.getElementById('profitMarginCount').textContent = (stats.profit_margin || 0).toFixed(1) + '%';
-            
             // Store original data for filtering
             window.originalIncomeData = incomeData;
             
@@ -2414,71 +2545,64 @@
         
         function renderIncomeData(incomeData) {
             const grid = document.getElementById('incomeGrid');
+            if (!grid) return;
             
-            if (incomeData.length === 0) {
+            if (!incomeData || incomeData.length === 0) {
                 grid.innerHTML = `
-                    <div class="col-span-full text-center py-20">
-                        <div class="inline-flex flex-col items-center">
-                            <div class="p-4 bg-gray-100 rounded-full mb-4">
-                                <i data-lucide="trending-up" class="w-8 h-8 text-gray-400"></i>
-                            </div>
-                            <span class="text-xl text-gray-600 font-semibold mb-2">No income data found</span>
-                            <p class="text-sm text-gray-400">Try adjusting your search or date filter</p>
+                    <div class="col-span-full py-12 text-center">
+                        <div class="bg-gray-50 rounded-xl p-8 border-2 border-dashed border-gray-200">
+                            <i data-lucide="info" class="w-8 h-8 text-gray-300 mx-auto mb-3"></i>
+                            <p class="text-gray-500 font-medium font-mono">NO TRANSACTIONS FOUND FOR THIS PERIOD</p>
                         </div>
                     </div>
                 `;
                 return;
             }
+
+            // Receipt-style list (clean table-like rows)
+            grid.classList.remove('grid-cols-1', 'md:grid-cols-2');
+            grid.classList.add('grid-cols-1');
             
-            grid.innerHTML = incomeData.map(item => `
-                <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 ${item.type === 'income' ? 'border-green-500' : 'border-red-500'} hover:scale-102">
-                    <div class="p-4">
-                        <!-- Header -->
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2 ${item.type === 'income' ? 'bg-green-100' : 'bg-red-100'} rounded-lg">
-                                    <i data-lucide="${item.type === 'income' ? 'trending-up' : 'trending-down'}" class="w-4 h-4 ${item.type === 'income' ? 'text-green-600' : 'text-red-600'}"></i>
+            grid.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden font-mono text-sm max-w-4xl mx-auto">
+                    <div class="bg-gray-100 px-6 py-3 border-b-2 border-gray-200 flex justify-between text-[11px] font-black text-gray-500 uppercase tracking-widest">
+                        <span>Description / Category</span>
+                        <span class="text-right">Amount (PHP)</span>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        ${incomeData.map(item => `
+                            <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors border-l-4 ${item.type === 'income' ? 'border-green-500/20' : 'border-red-500/20'}">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded bg-gray-50 border border-gray-200 flex items-center justify-center ${item.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                                        <i data-lucide="${item.type === 'income' ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-black text-gray-900 tracking-tight">${(item.description || 'Unknown').toUpperCase()}</div>
+                                        <div class="flex items-center gap-3 text-[10px] text-gray-400 font-bold mt-0.5">
+                                            <span class="text-gray-500">${(item.category || 'GENERAL').toUpperCase()}</span>
+                                            <span class="text-gray-300">•</span>
+                                            <span>${(item.date || '').split(' ')[0]}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 class="text-lg font-bold text-gray-900">${item.description || 'Unknown'}</h4>
-                                    <span class="text-xs text-gray-500">${item.category || 'General'}</span>
+                                <div class="text-right">
+                                    <div class="font-black text-lg ${item.type === 'income' ? 'text-green-600' : 'text-red-600'}">
+                                        ${item.type === 'income' ? '+' : '-'} ${Math.abs(parseFloat(item.amount) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                                    </div>
+                                    <div class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">${item.source || 'OFFICE'}</div>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <div class="text-lg font-bold ${item.type === 'income' ? 'text-green-600' : 'text-red-600'}">
-                                    ${item.type === 'income' ? '+' : '-'}₱${Math.abs(item.amount).toLocaleString()}
-                                </div>
-                                <div class="text-xs text-gray-500">${item.date}</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Details -->
-                        <div class="bg-gray-50 rounded-lg p-3 mb-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-gray-900">Type: ${item.type === 'income' ? 'Income' : 'Expense'}</span>
-                                <span class="text-xs text-gray-600">${item.source || 'Unknown'}</span>
-                            </div>
-                            ${item.reference ? `
-                                <div class="text-xs text-gray-600">
-                                    Reference: ${item.reference}
-                                </div>
-                            ` : ''}
-                        </div>
-                        
-                        <!-- Footer -->
-                        <div class="flex items-center justify-between text-xs text-gray-500">
-                            <span class="flex items-center gap-1">
-                                <i data-lucide="calendar" class="w-3 h-3"></i>
-                                ${item.date}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <i data-lucide="check-circle" class="w-3 h-3"></i>
-                                Verified
-                            </span>
-                        </div>
+                        `).join('')}
+                    </div>
+                    <div class="bg-gray-50 px-6 py-4 border-t-2 border-dashed border-gray-200 text-center">
+                        <p class="text-[10px] text-gray-400 uppercase font-black tracking-[0.2em]">End of transaction list</p>
                     </div>
                 </div>
-            `).join('');
+            `;
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
         
         function filterIncomeData() {
@@ -2515,23 +2639,107 @@
         function updateIncomeSummary(data) {
             let totalIncome = 0;
             let totalExpenses = 0;
+            let breakdown = {
+                revenueItems: [],
+                maintenanceItems: [],
+                officeItems: [],
+                maintenanceTotal: 0,
+                officeTotal: 0
+            };
             
             data.forEach(item => {
                 const amount = Math.abs(parseFloat(item.amount) || 0);
+                const category = (item.category || '').toLowerCase();
+                const type = (item.type || '').toLowerCase();
+                const description = (item.description || 'Record').toUpperCase();
+                const date = item.date ? new Date(item.date).toLocaleDateString() : '';
+
                 if (item.type === 'income') {
                     totalIncome += amount;
+                    breakdown.revenueItems.push({
+                        description: description,
+                        amount: amount,
+                        date: date
+                    });
                 } else {
+                    // Skip coding as per user request
+                    if (category.includes('coding') || type === 'coding') {
+                        return;
+                    }
+
                     totalExpenses += amount;
+                    
+                    if (category.includes('maintenance') || type === 'maintenance') {
+                        breakdown.maintenanceTotal += amount;
+                        breakdown.maintenanceItems.push({
+                            description: description,
+                            amount: amount,
+                            date: date
+                        });
+                    } else {
+                        breakdown.officeTotal += amount;
+                        breakdown.officeItems.push({
+                            description: description,
+                            amount: amount,
+                            date: date
+                        });
+                    }
                 }
             });
             
             const netIncome = totalIncome - totalExpenses;
             const profitMargin = totalIncome > 0 ? (netIncome / totalIncome) * 100 : 0;
             
-            document.getElementById('totalIncomeCount').textContent = '₱' + totalIncome.toLocaleString();
-            document.getElementById('totalExpenseCount').textContent = '₱' + totalExpenses.toLocaleString();
-            document.getElementById('netIncomeCount').textContent = '₱' + netIncome.toLocaleString();
-            document.getElementById('profitMarginCount').textContent = profitMargin.toFixed(1) + '%';
+            // Helper to format currency
+            const fmt = (num) => '₱' + num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // Update Primary Report Fields
+            const safeSet = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+
+            safeSet('reportTotalIncome', fmt(totalIncome));
+            safeSet('reportTotalExpenses', fmt(totalExpenses));
+            safeSet('reportMaintenanceTotal', 'Total: ' + fmt(breakdown.maintenanceTotal));
+            safeSet('reportGeneralExpensesTotal', 'Total: ' + fmt(breakdown.officeTotal));
+            safeSet('reportNetIncome', fmt(netIncome));
+            safeSet('reportProfitMargin', profitMargin.toFixed(1) + '%');
+            safeSet('reportTimestamp', new Date().toLocaleString());
+            
+            // Helper to render lists
+            const renderList = (id, items) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                
+                if (items.length > 0) {
+                    el.innerHTML = items.map(item => `
+                        <div class="px-6 py-2 flex justify-between items-center hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-black text-gray-800 tracking-tight leading-tight">${item.description}</span>
+                                <span class="text-[8px] text-gray-400 font-bold uppercase">${item.date}</span>
+                            </div>
+                            <span class="text-xs font-black ${id === 'revenueDetailList' ? 'text-emerald-600' : 'text-red-500'}">${fmt(item.amount)}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    el.innerHTML = '';
+                }
+            };
+
+            renderList('revenueDetailList', breakdown.revenueItems);
+            renderList('maintenanceDetailList', breakdown.maintenanceItems);
+            renderList('officeExpensesDetailList', breakdown.officeItems);
+        }
+
+        function renderIncomeData(data) {
+            // Grid rendering is now integrated into updateIncomeSummary
+            // This function is kept for compatibility with fetchIncomeData flow
+            console.log("Income report updated with " + data.length + " items");
+        }
+
+        function printReport() {
+            window.print();
         }
         
         function filterIncomeByPeriod(data, period) {
@@ -2546,7 +2754,10 @@
             
             switch(period) {
                 case 'today':
-                    return data.filter(item => item.date === todayStr);
+                    return data.filter(item => {
+                        const itemDateStr = (item.date || '').split(' ')[0];
+                        return itemDateStr === todayStr;
+                    });
                     
                 case 'week':
                     const weekStart = new Date(today);
@@ -2556,7 +2767,8 @@
                     weekEnd.setHours(23, 59, 59, 999);
                     
                     return data.filter(item => {
-                        const itemDate = new Date(item.date + 'T00:00:00'); // Force local interpretation
+                        const itemDateStr = (item.date || '').split(' ')[0];
+                        const itemDate = new Date(itemDateStr + 'T00:00:00');
                         return itemDate >= weekStart && itemDate <= weekEnd;
                     });
                     
@@ -2566,7 +2778,8 @@
                     monthEnd.setHours(23, 59, 59, 999);
                     
                     return data.filter(item => {
-                        const itemDate = new Date(item.date + 'T00:00:00');
+                        const itemDateStr = (item.date || '').split(' ')[0];
+                        const itemDate = new Date(itemDateStr + 'T00:00:00');
                         return itemDate >= monthStart && itemDate <= monthEnd;
                     });
                     
@@ -2576,7 +2789,8 @@
                     yearEnd.setHours(23, 59, 59, 999);
                     
                     return data.filter(item => {
-                        const itemDate = new Date(item.date + 'T00:00:00');
+                        const itemDateStr = (item.date || '').split(' ')[0];
+                        const itemDate = new Date(itemDateStr + 'T00:00:00');
                         return itemDate >= yearStart && itemDate <= yearEnd;
                     });
                     
@@ -2588,6 +2802,19 @@
         function setIncomePeriod(period) {
             window.currentIncomePeriod = period;
             
+            // Update receipt label
+            const periodLabels = {
+                'today': 'Period: TODAY',
+                'week': 'Period: THIS WEEK',
+                'month': 'Period: THIS MONTH',
+                'year': 'Period: THIS YEAR'
+            };
+            const labelText = periodLabels[period] || 'Period: Custom';
+            const labelEl = document.getElementById('reportPeriodLabel');
+            if (labelEl) labelEl.textContent = labelText;
+            const labelElPrint = document.getElementById('reportPeriodLabelPrint');
+            if (labelElPrint) labelElPrint.textContent = labelText;
+
             // Update button styles
             document.querySelectorAll('[id^="btn-"][id$="-income"]').forEach(btn => {
                 btn.classList.remove('bg-white', 'text-green-700');

@@ -68,8 +68,13 @@ class RealTimeDashboard {
     }
 
     updateCharts(chartData) {
+        if (!chartData) return;
+
+        // Helper to check if a global variable is a valid Chart instance
+        const isValidChart = (chart) => chart && typeof chart.update === 'function' && chart.data && chart.data.datasets;
+
         // Update weekly financial chart
-        if (window.weeklyChart && chartData.weekly_data) {
+        if (isValidChart(window.weeklyChart) && chartData.weekly_data) {
             window.weeklyChart.data.datasets[0].data = chartData.weekly_data.map(d => d.boundary);
             window.weeklyChart.data.datasets[1].data = chartData.weekly_data.map(d => d.expenses);
             window.weeklyChart.data.datasets[2].data = chartData.weekly_data.map(d => d.net);
@@ -77,26 +82,26 @@ class RealTimeDashboard {
         }
 
         // Update unit status chart
-        if (window.unitStatusChart && chartData.unit_status_data) {
+        if (isValidChart(window.unitStatusChart) && chartData.unit_status_data) {
             window.unitStatusChart.data.datasets[0].data = chartData.unit_status_data.map(d => d.count);
             window.unitStatusChart.update('none');
         }
 
         // Update revenue trend chart
-        if (window.revenueTrendChart && chartData.revenue_trend) {
+        if (isValidChart(window.revenueTrendChart) && chartData.revenue_trend) {
             window.revenueTrendChart.data.datasets[0].data = chartData.revenue_trend.map(d => d.revenue);
             window.revenueTrendChart.update('none');
         }
 
         // Update unit performance chart
-        if (window.unitPerformanceChart && chartData.unit_performance) {
+        if (isValidChart(window.unitPerformanceChart) && chartData.unit_performance) {
             window.unitPerformanceChart.data.datasets[0].data = chartData.unit_performance.map(d => d.performance);
             window.unitPerformanceChart.data.datasets[1].data = chartData.unit_performance.map(d => d.target);
             window.unitPerformanceChart.update('none');
         }
 
         // Update expense breakdown chart
-        if (window.expenseBreakdownChart && chartData.expense_breakdown) {
+        if (isValidChart(window.expenseBreakdownChart) && chartData.expense_breakdown) {
             window.expenseBreakdownChart.data.datasets[0].data = chartData.expense_breakdown.map(d => d.amount);
             window.expenseBreakdownChart.data.labels = chartData.expense_breakdown.map(d => d.category);
             window.expenseBreakdownChart.update('none');
