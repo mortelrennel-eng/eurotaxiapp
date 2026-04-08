@@ -2406,7 +2406,7 @@
                     const fname = document.getElementById('firstName').value;
                     const lname = document.getElementById('lastName').value;
                     const emailVal = document.getElementById('regEmail').value.trim();
-                    const fRegex = /^[a-zA-ZñÑ]+$/;
+                    const fRegex = /^[a-zA-ZñÑ]+( [a-zA-ZñÑ]+)?$/;
                     const lRegex = /^[a-zA-ZñÑ]+( [a-zA-ZñÑ]+)?$/;
                     const gmailRegex = /^(?=[^@]*[a-zA-Z])(?!\.)(?!.*\.{2})[a-zA-Z0-9][a-zA-Z0-9.]{4,28}[a-zA-Z0-9]@gmail\.com$/i;
 
