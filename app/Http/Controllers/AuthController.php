@@ -205,7 +205,7 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'first_name'    => ['required', 'string', 'max:25', 'regex:/^[a-zA-ZñÑ]+$/'],
+            'first_name'    => ['required', 'string', 'max:25', 'regex:/^[a-zA-ZñÑ]+( [a-zA-ZñÑ]+)?$/'],
             'middle_name'   => ['nullable', 'string', 'max:25', 'regex:/^[a-zA-ZñÑ]+$/'],
             'last_name'     => ['required', 'string', 'max:25', 'regex:/^[a-zA-ZñÑ]+( [a-zA-ZñÑ]+)?$/'],
             'suffix'        => ['nullable', 'in:,N/A,Jr.,Sr.,II,III,IV,V'],
@@ -214,7 +214,7 @@ class AuthController extends Controller
             'password'      => ['required', 'string', 'min:6', 'confirmed', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])[A-Za-z\d\D]{6,}$/'],
             'role'          => 'required|in:staff,secretary,manager,dispatcher',
         ], [
-            'first_name.regex'      => 'First name must contain letters only (no spaces or numbers).',
+            'first_name.regex'      => 'First name must contain letters only. A single space is permitted.',
             'first_name.max'        => 'First name must not exceed 25 characters.',
             'middle_name.regex'     => 'Middle name must contain letters only.',
             'middle_name.max'       => 'Middle name must not exceed 25 characters.',
