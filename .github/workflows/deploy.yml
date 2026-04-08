@@ -11,45 +11,31 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        extensions: mbstring, xml, mysql, bcmath
-        
-    - name: Install Dependencies
-      run: composer install --no-dev --optimize-autoloader
-      
-    - name: Deploy to Hostinger via FTP
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
-      with:
-        server: ${{ secrets.HOSTINGER_FTP_SERVER }}
-        username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-        password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-        local-dir: ./
-        server-dir: /public_html/
-        exclude: |
-          **/.git*
-          **/.github*
-          **/node_modules*
-          **/tests*
-          **/.env*
-          storage/logs/*
-          storage/framework/cache/*
-          storage/framework/sessions/*
-          storage/framework/views/*
-          **/README.md
-
-    - name: Run Remote Commands (Optional)
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.HOSTINGER_SSH_HOST }}
-        username: ${{ secrets.HOSTINGER_SSH_USERNAME }}
-        key: ${{ secrets.HOSTINGER_SSH_KEY }}
-        script: |
-          cd /home/username/public_html
-          php artisan migrate --force
-          php artisan cache:clear
-          php artisan config:clear
+      - name: Deploy to Hostinger via SSH
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.HOSTINGER_SSH_HOST }}
+          username: ${{ secrets.HOSTINGER_SSH_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          script: |
+            cd /home/u747826271/domains/eurotaxisystem.site/public_html
+            
+            # Put site in maintenance mode
+            php artisan down || true
+            
+            # Fetch latest changes
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Install/Update dependencies
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+            
+            # Run database migrations
+            php artisan migrate --force
+            
+            # Clear and rebuild cache
+            php artisan optimize
+            
+            # Bring site back online
+            php artisan up
