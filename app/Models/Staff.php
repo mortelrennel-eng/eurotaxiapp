@@ -18,4 +18,12 @@ class Staff extends Model
         'phone',
         'status',
     ];
+
+    /**
+     * Get the staff's name capitalized.
+     */
+    public function getNameAttribute($value)
+    {
+        return ucwords(strtolower($value));
+    }
 }

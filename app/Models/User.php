@@ -52,6 +52,38 @@ class User extends Authenticatable
         'last_login'  => 'datetime',
     ];
 
+    /**
+     * Get the user's full name capitalized.
+     */
+    public function getFullNameAttribute($value)
+    {
+        return ucwords(strtolower($value));
+    }
+
+    /**
+     * Get the user's first name capitalized.
+     */
+    public function getFirstNameAttribute($value)
+    {
+        return ucfirst(strtolower($value));
+    }
+
+    /**
+     * Get the user's middle name capitalized.
+     */
+    public function getMiddleNameAttribute($value)
+    {
+        return ucfirst(strtolower($value));
+    }
+
+    /**
+     * Get the user's last name capitalized.
+     */
+    public function getLastNameAttribute($value)
+    {
+        return ucfirst(strtolower($value));
+    }
+
 
 
     public function driver()

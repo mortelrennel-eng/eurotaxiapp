@@ -1377,17 +1377,6 @@
             if(verifyBtn) verifyBtn.disabled = false;
         }
 
-        function verifyOTP() {
-            const inputs = document.querySelectorAll('.otp-input');
-            let otp = '';
-            inputs.forEach(i => otp += i.value);
-            if (otp.length === 6) {
-                document.getElementById('otpSection').style.display = 'none';
-                document.getElementById('newPasswordForm').style.display = 'block';
-            } else {
-                showToast('Please enter the 6-digit OTP', 'error');
-            }
-        }
 
         let countdownInterval;
         function startCountdown() {

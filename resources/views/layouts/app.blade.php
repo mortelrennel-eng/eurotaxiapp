@@ -179,7 +179,7 @@
                     </nav>
 
                     <!-- User Menu -->
-                    <div class="p-2 lg:p-4 border-t">
+                    <div class="p-2 lg:p-4 border-t bg-white relative z-50">
                         <a href="{{ route('my-account') }}" 
                            class="flex items-center justify-center lg:justify-start lg:gap-3 mb-3 p-1 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors group">
                             <div
@@ -204,12 +204,16 @@
                             </div>
                             <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:text-yellow-600 transition-colors hidden lg:block"></i>
                         </a>
-                        <a href="{{ route('logout') }}"
-                            class="flex items-center justify-center lg:justify-start lg:gap-2 px-1 lg:px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg w-full"
-                            onclick="event.preventDefault(); if(confirm('Are you sure you want to logout?')) { window.location.href = '{{ route('logout') }}'; }">
+                        
+                        <!-- Logout Form -->
+                        <form id="logout-form" action="{{ route('logout') }}" method="GET" class="hidden"></form>
+                        
+                        <button type="button"
+                            onclick="if(confirm('Are you sure you want to logout?')) { document.getElementById('logout-form').submit(); }"
+                            class="flex items-center justify-center lg:justify-start lg:gap-2 px-1 lg:px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg w-full transition-colors">
                             <i data-lucide="log-out" class="w-4 h-4"></i>
                             <span class="hidden lg:block">Logout</span>
-                        </a>
+                        </button>
                     </div>
                 </div>
             </aside>
