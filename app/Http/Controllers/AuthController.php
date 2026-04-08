@@ -130,7 +130,7 @@ class AuthController extends Controller
 
         require_once app_path('Helpers/MailerHelper.php');
 
-        if ($request->method === 'email') {
+        if ($request->input('method') === 'email') {
             $emailBody = "
                 <div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#f9fafb;border-radius:12px;'>
                     <h2 style='color:#1d4ed8;margin-bottom:8px;'>New Device Login Detected</h2>
@@ -140,7 +140,9 @@ class AuthController extends Controller
                     <p style='color:#6b7280;font-size:0.85rem;'>If this wasn't you, we recommend changing your password immediately.</p>
                 </div>
             ";
-            send_custom_email($user->email, 'Eurotaxisystem — Device Verification Code', $emailBody);
+            if (!send_custom_email($user->email, 'Eurotaxisystem — Device Verification Code', $emailBody)) {
+                return response()->json(['success' => false, 'message' => 'Failed to send verification email. Please check your email configuration.'], 500);
+            }
         } else {
             // SMS logic
             $phone = $user->phone_number ?? $user->phone;
@@ -281,11 +283,19 @@ class AuthController extends Controller
             </div>
         ";
 
-        send_custom_email(
+        if (!send_custom_email(
             $request->email,
             'Eurotaxisystem — Email Verification Code',
             $emailBody
-        );
+        )) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to send verification email. Please check your email address or try again later.',
+                ], 500);
+            }
+            return back()->withErrors(['email' => 'Failed to send verification email. Please check your configuration.'])->withInput();
+        }
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -393,7 +403,9 @@ class AuthController extends Controller
             </div>
         ";
 
-        send_custom_email($pending['email'], 'Eurotaxisystem — New Verification Code', $emailBody);
+        if (!send_custom_email($pending['email'], 'Eurotaxisystem — New Verification Code', $emailBody)) {
+            return response()->json(['success' => false, 'message' => 'Failed to resend verification email. Please check your configuration.'], 500);
+        }
 
         return response()->json(['success' => true, 'message' => 'A new code has been sent to your email.']);
     }

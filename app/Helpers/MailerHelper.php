@@ -27,18 +27,18 @@ if (!function_exists('send_custom_email')) {
             // Server settings
             $mail->SMTPDebug = SMTP::DEBUG_OFF; // Set to DEBUG_SERVER for troubleshooting
             $mail->isSMTP();
-            $mail->Host = env('MAIL_HOST', 'smtp.hostinger.com');
+            $mail->Host = config('mail.mailers.smtp.host', 'smtp.hostinger.com');
             $mail->SMTPAuth = true;
-            $mail->Username = env('MAIL_USERNAME');
-            $mail->Password = env('MAIL_PASSWORD');
-            $mail->SMTPSecure = env('MAIL_ENCRYPTION', PHPMailer::ENCRYPTION_SMTPS);
-            $mail->Port = env('MAIL_PORT', 465);
+            $mail->Username = config('mail.mailers.smtp.username');
+            $mail->Password = config('mail.mailers.smtp.password');
+            $mail->SMTPSecure = config('mail.mailers.smtp.encryption', PHPMailer::ENCRYPTION_SMTPS);
+            $mail->Port = config('mail.mailers.smtp.port', 465);
 
             // Anti-Spam Headers
             $mail->CharSet = 'UTF-8';
-            $mail->setFrom(env('MAIL_FROM_ADDRESS', 'noreply@eurotaxisystem.site'), env('MAIL_FROM_NAME', 'Euro Taxi System'));
+            $mail->setFrom(config('mail.from.address', 'noreply@eurotaxisystem.site'), config('mail.from.name', 'Euro Taxi System'));
             $mail->addAddress($to);
-            $mail->addReplyTo(env('MAIL_FROM_ADDRESS', 'support@eurotaxisystem.site'), env('MAIL_FROM_NAME', 'Support'));
+            $mail->addReplyTo(config('mail.from.address', 'support@eurotaxisystem.site'), config('mail.from.name', 'Support'));
 
             // Content
             $mail->isHTML(true);

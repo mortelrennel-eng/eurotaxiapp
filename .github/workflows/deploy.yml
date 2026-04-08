@@ -34,7 +34,15 @@ jobs:
             # Run database migrations
             php artisan migrate --force
             
+            # Synchronize public assets to the web root (Hostinger standard)
+            cp -rv public/* . 2>/dev/null || true
+            cp -v public/.htaccess . 2>/dev/null || true
+            
             # Clear and rebuild cache
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan cache:clear
             php artisan optimize
             
             # Bring site back online
