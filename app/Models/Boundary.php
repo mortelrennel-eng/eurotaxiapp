@@ -14,11 +14,15 @@ class Boundary extends Model
     protected $fillable = [
         'unit_id',
         'driver_id',
-        'boundary_amount',
         'date',
+        'boundary_amount',
+        'actual_boundary',
+        'shortage',
+        'excess',
         'status',
         'notes',
         'recorded_by',
+        'is_extra_driver',
     ];
 
     protected $casts = [
