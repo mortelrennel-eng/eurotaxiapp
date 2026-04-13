@@ -152,87 +152,62 @@
     </div>
 </div>
 
-<!-- Stats Overview Row -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <?php
-    $totalCount = count($cases);
-    $expiredCount = 0;
-    $expiringSoonCount = 0;
-    $activeCount = 0;
-    $now = time();
-    $soon = strtotime('+1 year');
-
-    foreach ($cases as $c) {
-        if (empty($c['expiry_date'])) {
-            $activeCount++;
-            continue;
-        }
-        $ts = strtotime($c['expiry_date']);
-        if ($ts < $now) $expiredCount++;
-        elseif ($ts <= $soon) $expiringSoonCount++;
-        else $activeCount++;
-    }
-    ?>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md">
-        <div class="flex items-center gap-4">
-            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                <i data-lucide="folders" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Total Cases</p>
-                <h4 class="text-2xl font-black text-gray-800" id="stat-total-cases"><?php echo $totalCount; ?></h4>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md">
-        <div class="flex items-center gap-4">
-            <div class="p-3 bg-green-50 text-green-600 rounded-xl">
-                <i data-lucide="check-circle" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Active Cases</p>
-                <h4 class="text-2xl font-black text-green-600"><?php echo $activeCount; ?></h4>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md border-l-4 border-l-orange-400">
-        <div class="flex items-center gap-4">
-            <div class="p-3 bg-orange-50 text-orange-600 rounded-xl">
-                <i data-lucide="alert-circle" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Expiring 1yr</p>
-                <h4 class="text-2xl font-black text-orange-600"><?php echo $expiringSoonCount; ?></h4>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md border-l-4 border-l-red-500">
-        <div class="flex items-center gap-4">
-            <div class="p-3 bg-red-50 text-red-600 rounded-xl">
-                <i data-lucide="x-circle" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Expired</p>
-                <h4 class="text-2xl font-black text-red-600"><?php echo $expiredCount; ?></h4>
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="pt-2"> <!-- Subtle padding for alignment -->
+<?php
+$totalCount = count($cases);
+$expiredCount = 0;
+$expiringSoonCount = 0;
+$activeCount = 0;
+$now = time();
+$soon = strtotime('+1 year');
 
+foreach ($cases as $c) {
+    if (empty($c['expiry_date'])) {
+        $activeCount++;
+        continue;
+    }
+    $ts = strtotime($c['expiry_date']);
+    if ($ts < $now) $expiredCount++;
+    elseif ($ts <= $soon) $expiringSoonCount++;
+    else $activeCount++;
+}
+?>
     <div class="bg-white shadow rounded-lg p-6">
-        <div class="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
-            <div>
-                <h3 class="text-xl font-bold text-gray-800">Franchise Directory</h3>
-                <p class="text-sm text-gray-500 mt-1">Manage and track all franchise case files and assigned units.</p>
+        <div class="flex flex-col xl:flex-row justify-between xl:items-center mb-8 gap-6">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Franchise Directory</h3>
+                    <p class="text-[10px] text-gray-400 mt-0.5 font-black uppercase tracking-widest">Case monitoring</p>
+                </div>
+                
+                <!-- Compact Internal Stats Row -->
+                <div class="flex items-center gap-2 bg-gray-50 p-1 rounded-2xl border border-gray-100 shadow-inner">
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider">Total</span>
+                        <span class="text-sm font-black text-gray-800" id="stat-total-cases"><?php echo $totalCount; ?></span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider">Active</span>
+                        <span class="text-sm font-black text-green-600"><?php echo $activeCount; ?></span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="w-1.5 h-1.5 rounded-full bg-orange-400"></div>
+                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider">Soon</span>
+                        <span class="text-sm font-black text-orange-600"><?php echo $expiringSoonCount; ?></span>
+                    </div>
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl shadow-sm border border-red-100">
+                        <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                        <span class="text-[9px] font-black text-gray-400 uppercase tracking-wider">Expired</span>
+                        <span class="text-sm font-black text-red-600"><?php echo $expiredCount; ?></span>
+                    </div>
+                </div>
             </div>
+            
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Advanced Search Bar -->
-                <div class="relative min-w-[300px]">
+                <div class="relative min-w-[280px]">
                     <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
                     <input type="text" id="franchiseSearch" 
                            placeholder="Search Case #, Applicant, Plate..." 
@@ -241,7 +216,7 @@
                 </div>
                 
                 <!-- Status Filter -->
-                <div class="relative min-w-[150px]">
+                <div class="relative min-w-[140px]">
                     <select id="statusFilter" 
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all shadow-sm appearance-none cursor-pointer pr-10"
                             onchange="filterFranchiseItems()">
@@ -255,7 +230,7 @@
 
                 <button onclick="openCaseModal()" class="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 flex items-center gap-2 text-sm font-bold shadow-md transition-all shrink-0">
                     <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                    <span>Register New Case</span>
+                    <span>New Case</span>
                 </button>
             </div>
         </div>
