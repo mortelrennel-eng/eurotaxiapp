@@ -643,14 +643,14 @@
 
         <!-- Left Side - Static Image -->
         <div class="left-side w-full md:w-1/2 h-full relative overflow-hidden">
-            <img src="/uploads/1000053201.jpg" alt="Eurotaxisystem" class="w-full h-full object-cover">
+            <img src="{{ asset('uploads/1000053201.jpg') }}" alt="Eurotaxisystem" class="w-full h-full object-cover">
 
             <!-- Overlay Content -->
             <div class="absolute inset-0 frosted-overlay flex flex-col">
                 <!-- Logo at top -->
                 <div class="text-center px-8 pt-16">
                     <div class="logo-container mx-auto logo-bounce">
-                        <img src="/uploads/logo.png" alt="Eurotaxisystem Logo" class="logo-image">
+                        <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxisystem Logo" class="logo-image">
                     </div>
                 </div>
 
