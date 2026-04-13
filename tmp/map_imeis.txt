@@ -1,0 +1,33 @@
+$service = new App\Services\TracksolidService();
+$devices = $service->getDevices(1, 100);
+
+if (!$devices || !isset($devices['list'])) {
+    echo "Could not fetch devices.\n";
+    return;
+}
+
+echo "Found " . count($devices['list']) . " devices on Tracksolid.\n";
+
+$matchedCount = 0;
+foreach ($devices['list'] as $device) {
+    $imei = $device['imei'];
+    $name = strtoupper(preg_replace('/\s+/', '', $device['deviceName'] ?? ''));
+    
+    echo "Checking device: $imei ($name)...\n";
+    
+    // Try to find a unit with matching plate number (ignoring spaces)
+    $unit = App\Models\Unit::all()->filter(function($u) use ($name) {
+        return strtoupper(preg_replace('/\s+/', '', $u->plate_number)) === $name;
+    })->first();
+    
+    if ($unit) {
+        echo "  - Matched to Unit: " . $unit->plate_number . " (ID: " . $unit->id . ")\n";
+        $unit->imei = $imei;
+        $unit->save();
+        $matchedCount++;
+    } else {
+        echo "  - No match found for $name.\n";
+    }
+}
+
+echo "Total matched and updated: $matchedCount\n";

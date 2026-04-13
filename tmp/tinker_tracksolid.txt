@@ -1,0 +1,68 @@
+$service = new App\Services\TracksolidService();
+echo "--- TRACKSOLID API DIAGNOSTIC ---\n";
+echo "1. Testing Access Token...\n";
+try {
+    $token = $service->getAccessToken();
+    if ($token) {
+        echo "[SUCCESS] Token: " . substr($token, 0, 10) . "...\n";
+    } else {
+        echo "[FAILED] Could not get access token. Check credentials in .env\n";
+    }
+} catch (\Exception $e) {
+    echo "[EXCEPTION] " . $e->getMessage() . "\n";
+}
+
+echo "\n2. Fetching Device List...\n";
+try {
+    $deviceList = $service->getDevices(1, 100);
+    if ($deviceList && isset($deviceList['list'])) {
+        echo "[SUCCESS] Found " . count($deviceList['list']) . " devices.\n";
+        foreach ($deviceList['list'] as $device) {
+            echo " - IMEI: " . $device['imei'] . " | Name: " . ($device['deviceName'] ?? 'N/A') . "\n";
+        }
+    } else {
+        echo "[FAILED] Could not fetch device list.\n";
+        print_r($deviceList);
+    }
+} catch (\Exception $e) {
+    echo "[EXCEPTION] " . $e->getMessage() . "\n";
+}
+
+echo "\n3. Fetching All Locations...\n";
+try {
+    $locations = $service->getAllLocations();
+    if ($locations) {
+        echo "[SUCCESS] Found " . count($locations) . " locations.\n";
+        if (count($locations) > 0) {
+            echo "Sample Location (First device):\n";
+            print_r($locations[0]);
+        }
+    } else {
+        echo "[FAILED] Could not fetch locations.\n";
+    }
+} catch (\Exception $e) {
+    echo "[EXCEPTION] " . $e->getMessage() . "\n";
+}
+
+echo "\n4. Comparing with Database...\n";
+$units = DB::table('units')->select('id', 'plate_number', 'imei')->get();
+$dbImeis = $units->pluck('imei')->filter()->toArray();
+echo "Total units in DB: " . $units->count() . "\n";
+echo "Units with IMEI in DB: " . count($dbImeis) . "\n";
+
+if (isset($deviceList) && isset($deviceList['list'])) {
+    $apiImeis = collect($deviceList['list'])->pluck('imei')->toArray();
+    $matched = array_intersect($dbImeis, $apiImeis);
+    $unmatched = array_diff($apiImeis, $dbImeis);
+    
+    echo "Matched IMEIs: " . count($matched) . "\n";
+    echo "Unmatched API IMEIs: " . count($unmatched) . "\n";
+    
+    if (count($unmatched) > 0) {
+        echo "Unmatched IMEIs from API (Ready to be mapped):\n";
+        foreach ($unmatched as $imei) {
+            $device = collect($deviceList['list'])->firstWhere('imei', $imei);
+            echo " - IMEI: $imei | Name: " . ($device['deviceName'] ?? 'N/A') . "\n";
+        }
+    }
+}
