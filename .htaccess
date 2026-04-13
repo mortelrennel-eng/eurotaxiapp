@@ -1,5 +1,99 @@
+# Performance Optimization
 <IfModule mod_rewrite.c>
-    RewriteEngine on
-    RewriteCond %{REQUEST_URI} !^public
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # SPECIFIC GOOGLE VERIFICATION EXCLUSION
+    RewriteCond %{REQUEST_URI} ^/google[a-z0-9]+\.html [NC]
+    RewriteRule ^ - [L]
+
+    # MAINTENANCE MODE EXCLUSIONS (when enabled)
+    # These allow maintenance assets to load even when maintenance is ON
+    RewriteCond %{REQUEST_URI} ^(/public)?/maintenance\.html [NC,OR]
+    RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|svg|ico|webp|json|html) [NC]
+    RewriteRule ^ - [L]
+
+    # MAINTENANCE MODE TOGGLE
+    # Comment the line below to ENABLE maintenance mode (shows maintenance.html)
+    # Uncomment the line below to DISABLE maintenance mode (normal site)
+    # RewriteRule ^ public/index.php [L]
+
+    # If we are here, maintenance mode is ENABLED.
+    # Set environment variable for headers
+    RewriteRule ^ - [E=SITE_MAINTENANCE:1]
+    
+    # Serve maintenance page
+    RewriteRule ^(.*)$ public/maintenance.html [L]
+
+    # Prevent browser from caching maintenance page
+    <IfModule mod_headers.c>
+        Header set Cache-Control "no-cache, no-store, must-revalidate" env=SITE_MAINTENANCE
+        Header set Pragma "no-cache" env=SITE_MAINTENANCE
+        Header set Expires "0" env=SITE_MAINTENANCE
+    </IfModule>
+
+    # Hostinger - Redirect ALL Traffic Default to Public Folder
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller (Laravel Server public/ directory)...
+    RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Gzip compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Browser caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/ico "access plus 1 month"
+    ExpiresByType image/icon "access plus 1 month"
+    ExpiresByType image/svg "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType application/json "access plus 1 month"
+</IfModule>
+
+# Add MIME type for JSON and WebManifest files
+<IfModule mod_mime.c>
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# PHP settings for performance
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_value memory_limit 256M
+    php_value max_execution_time 300
+</IfModule>
+
+<IfModule mod_php8.c>
+    php_flag display_errors Off
+    php_value memory_limit 256M
+    php_value max_execution_time 300
 </IfModule>
