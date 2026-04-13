@@ -83,7 +83,7 @@
             <div class="flex items-center gap-2">
                 <i data-lucide="calendar-check" class="w-5 h-5 text-yellow-600"></i>
                 <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest">Coding Today ({{ $today_name }})</h3>
-                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-black rounded-full">{{ $units->count() }} units</span>
+                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-[10px] font-black rounded-full">{{ $today_units->count() }} units</span>
             </div>
         </div>
         
@@ -100,7 +100,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
-                    @forelse($units as $unit)
+                    @forelse($today_units as $unit)
                         <tr class="hover:bg-gray-50/50 transition-colors group">
                             <td class="px-6 py-4 whitespace-nowrap font-black text-gray-900 group-hover:text-blue-600 transition-colors">{{ $unit->plate_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-gray-500">{{ $unit->make }} {{ $unit->model }}</td>

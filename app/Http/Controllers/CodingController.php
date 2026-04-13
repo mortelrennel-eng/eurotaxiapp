@@ -46,18 +46,43 @@ class CodingController extends Controller
             ->get();
 
         // Get today's coding status
-        $today_name = date('l');
-        $today_units = DB::table('units as u')
+        $today_name = now()->timezone('Asia/Manila')->format('l');
+        $today_units_query = DB::table('units as u')
             ->leftJoin('drivers as drv1', 'u.driver_id', '=', 'drv1.id')
             ->leftJoin('drivers as drv2', 'u.secondary_driver_id', '=', 'drv2.id')
-            ->where('u.coding_day', $today_name)
             ->select(
                 'u.*', 
                 DB::raw("CONCAT(COALESCE(drv1.first_name,''), ' ', COALESCE(drv1.last_name,'')) as driver1_name"),
                 DB::raw("CONCAT(COALESCE(drv2.first_name,''), ' ', COALESCE(drv2.last_name,'')) as driver2_name")
-            )
-            ->orderBy('u.plate_number')
-            ->get();
+            );
+
+        if (!empty($search)) {
+            $today_units_query->where('u.plate_number', 'like', "%{$search}%");
+        }
+
+        $all_fleet = $today_units_query->get();
+
+        // Map coding day automatically based on plate if null
+        $mapPlateToDay = function($plate) {
+            $lastDigit = @substr(preg_replace('/[^0-9]/', '', $plate), -1);
+            if ($lastDigit === false || $lastDigit === '') return 'Unknown';
+            if ($lastDigit == 1 || $lastDigit == 2) return 'Monday';
+            if ($lastDigit == 3 || $lastDigit == 4) return 'Tuesday';
+            if ($lastDigit == 5 || $lastDigit == 6) return 'Wednesday';
+            if ($lastDigit == 7 || $lastDigit == 8) return 'Thursday';
+            if ($lastDigit == 9 || $lastDigit == 0) return 'Friday';
+            return 'Unknown';
+        };
+
+        foreach ($all_fleet as $u) {
+            if (empty($u->coding_day)) {
+                $u->coding_day = $mapPlateToDay($u->plate_number);
+            }
+        }
+
+        $today_units = $all_fleet->filter(function($u) use ($today_name) {
+            return $u->coding_day === $today_name;
+        });
 
         // Get coding statistics
         $stats = [
@@ -68,12 +93,11 @@ class CodingController extends Controller
 
         // Build coding calendar
         $coding_calendar = [];
-        $all_units = DB::table('units')->select('plate_number', 'coding_day')->get();
         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         
         foreach ($days as $day) {
-            $coding_calendar[$day] = $all_units->filter(function($unit) use ($day) {
-                return $unit->coding_day === $day;
+            $coding_calendar[$day] = $all_fleet->filter(function($u) use ($day) {
+                return $u->coding_day === $day;
             });
         }
 
