@@ -55,15 +55,15 @@ class DashboardController extends Controller
         // Auto-generate notification if count > 0 and no alert yet for today
         if ($codingUnitsCount > 0) {
             $alertExists = DB::table('system_alerts')
-                ->where('alert_type', 'coding_notice')
+                ->where('type', 'coding_notice')
                 ->whereDate('created_at', now()->toDateString())
                 ->exists();
             
             if (!$alertExists) {
                 DB::table('system_alerts')->insert([
-                    'alert_type' => 'coding_notice',
-                    'severity' => 'info',
-                    'message' => "Today's Coding: There are {$codingUnitsCount} units restricted today ({$todayDay}).",
+                    'type' => 'coding_notice',
+                    'title' => "Today's Coding Units",
+                    'message' => "There are {$codingUnitsCount} units restricted today ({$todayDay}).",
                     'is_resolved' => false,
                     'created_at' => now(),
                     'updated_at' => now()
