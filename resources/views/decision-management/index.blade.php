@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('page-heading', 'Franchise Decision Management')
+@section('page-subheading', 'Monitor and manage franchise case status, renewals, and expiration tracking.')
+
 
 @section('content')
 
@@ -152,7 +154,9 @@
     </div>
 </div>
 
-<div class="pt-2"> <!-- Subtle padding for alignment -->
+<!-- Main Container -->
+<div class="space-y-6">
+
 <?php
 $totalCount = count($cases);
 $expiredCount = 0;
@@ -564,5 +568,5 @@ function filterFranchiseItems() {
 }
 </script>
 
-</div>
+    </div>
 @endsection
