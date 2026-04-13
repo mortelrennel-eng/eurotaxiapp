@@ -229,6 +229,8 @@ class CodingController extends Controller
         ];
 
         return view('coding.violations', compact('violations', 'pagination', 'date', 'search'));
+    }
+
     public function suggestions(Request $request)
     {
         $q = $request->input('q');
