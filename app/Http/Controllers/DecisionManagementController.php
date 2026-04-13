@@ -12,7 +12,7 @@ class DecisionManagementController extends Controller
     {
         $search = $request->input('search', '');
         $page = max(1, (int) $request->input('page', 1));
-        $limit = 15;
+        $limit = 1000; // Removed pagination limit so grouped expiry dates work correctly across all cases
         $offset = ($page - 1) * $limit;
 
         $hasUnitsTable = Schema::hasTable('franchise_case_units');
@@ -54,10 +54,15 @@ class DecisionManagementController extends Controller
         $cases = collect($casesCollection)->map(function($c) use ($hasUnitsTable) {
             $row = (array)$c;
             if ($hasUnitsTable) {
-                $row['unit_count'] = DB::table('franchise_case_units')
+                $units = DB::table('franchise_case_units')
                     ->where('franchise_case_id', $row['id'] ?? 0)
-                    ->count();
+                    ->get()
+                    ->map(fn($u) => (array)$u)
+                    ->toArray();
+                $row['units'] = $units;
+                $row['unit_count'] = count($units);
             } else {
+                $row['units'] = [];
                 $row['unit_count'] = 0;
             }
             return $row;
@@ -103,6 +108,45 @@ class DecisionManagementController extends Controller
             return $this->destroy($request->input('case_id'));
         }
 
+        $caseId = $request->input('case_id');
+
+        // Check for duplicate case_no
+        $duplicateCase = DB::table('franchise_cases')
+            ->where('case_no', $request->case_no)
+            ->whereNull('deleted_at')
+            ->when($caseId > 0, function($q) use ($caseId) {
+                return $q->where('id', '!=', $caseId);
+            })
+            ->first();
+            
+        if ($duplicateCase) {
+            return redirect()->back()->withInput()->with('error', 'Error: Case No. "' . $request->case_no . '" already exists in the system.');
+        }
+
+        // Check for duplicate plate numbers in units attached to other active franchise cases
+        if ($request->has('units') && is_array($request->units)) {
+            $incomingPlates = [];
+            foreach ($request->units as $u) {
+                if (!empty($u['plate_no'])) {
+                    $incomingPlates[] = strtoupper(trim($u['plate_no']));
+                }
+            }
+            if (!empty($incomingPlates)) {
+                $duplicatePlate = DB::table('franchise_case_units')
+                    ->whereIn('plate_no', $incomingPlates)
+                    ->when($caseId > 0, function($q) use ($caseId) {
+                        return $q->where('franchise_case_id', '!=', $caseId);
+                    })
+                    ->join('franchise_cases', 'franchise_case_units.franchise_case_id', '=', 'franchise_cases.id')
+                    ->whereNull('franchise_cases.deleted_at')
+                    ->first();
+
+                if ($duplicatePlate) {
+                    return redirect()->back()->withInput()->with('error', 'Error: Plate No. "' . $duplicatePlate->plate_no . '" is already registered in Case No. "' . $duplicatePlate->case_no . '".');
+                }
+            }
+        }
+
         $request->validate([
             'applicant_name' => 'required|string|max:255',
             'case_no' => 'required|string|max:100',
@@ -112,7 +156,6 @@ class DecisionManagementController extends Controller
             'expiry_date' => 'nullable|date',
         ]);
 
-        $caseId = $request->input('case_id');
         $data = [
             'applicant_name' => $request->applicant_name,
             'case_no' => $request->case_no,

@@ -23,6 +23,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\MyAccountController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\BoundarySettingsController;
+use App\Http\Controllers\SparePartController;
 
 // ─── Auth Routes ───────────────────────────────────────
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -84,6 +85,7 @@ Route::middleware('auth')->group(function () {
 
     // Maintenance Resource Routes
     Route::resource('maintenance', MaintenanceController::class);
+    Route::get('/maintenance/{id}/parts', [MaintenanceController::class, 'getParts'])->name('maintenance.parts');
 
     // Coding Management
     Route::get('/coding', [CodingController::class, 'index'])->name('coding.index');
@@ -152,4 +154,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/boundary-rules', [BoundarySettingsController::class, 'store'])->name('boundary-rules.store');
     Route::put('/boundary-rules/{id}', [BoundarySettingsController::class, 'update'])->name('boundary-rules.update');
     Route::delete('/boundary-rules/{id}', [BoundarySettingsController::class, 'destroy'])->name('boundary-rules.destroy');
+
+    // ─── Spare Parts Management ───────────────────────────
+    Route::get('/spare-parts', [SparePartController::class, 'index'])->name('spare-parts.index');
+    Route::post('/spare-parts', [SparePartController::class, 'store'])->name('spare-parts.store');
+    Route::delete('/spare-parts/{id}', [SparePartController::class, 'destroy'])->name('spare-parts.destroy');
 });

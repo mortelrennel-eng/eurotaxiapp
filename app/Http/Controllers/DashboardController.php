@@ -89,7 +89,7 @@ class DashboardController extends Controller
             ->whereNull('deleted_at')
             ->whereMonth('date_started', now()->month)
             ->whereYear('date_started', now()->year)
-            ->where('status', 'completed')
+            ->where('status', '!=', 'cancelled')
             ->sum('cost') ?? 0;
 
         // Coding cost this month
@@ -104,7 +104,7 @@ class DashboardController extends Controller
         $todayMaintenance = DB::table('maintenance')
             ->whereNull('deleted_at')
             ->whereDate('date_started', now()->toDateString())
-            ->where('status', 'completed')
+            ->where('status', '!=', 'cancelled')
             ->sum('cost') ?? 0;
             
         // Coding fees are excluded (assumed 0 as per user instruction)
@@ -338,7 +338,7 @@ class DashboardController extends Controller
         $todayMaintenance = DB::table('maintenance')
             ->whereNull('deleted_at')
             ->whereDate('date_started', now()->toDateString())
-            ->where('status', 'completed')
+            ->where('status', '!=', 'cancelled')
             ->sum('cost') ?? 0;
             
         $todayCoding = DB::table('coding_records')
@@ -372,7 +372,7 @@ class DashboardController extends Controller
             ->whereNull('deleted_at')
             ->whereMonth('date_started', now()->month)
             ->whereYear('date_started', now()->year)
-            ->where('status', 'completed')
+            ->where('status', '!=', 'cancelled')
             ->sum('cost') ?? 0;
 
         // System alerts
@@ -642,7 +642,7 @@ class DashboardController extends Controller
                     }
                     
                     // Calculate Net ROI percentage (Revenue - Costs)
-                    $totalCosts = (DB::table('maintenance')->where('unit_id', $unit->id)->whereNull('deleted_at')->sum('cost') ?? 0) + 
+                    $totalCosts = (DB::table('maintenance')->where('unit_id', $unit->id)->whereNull('deleted_at')->where('status', '!=', 'cancelled')->sum('cost') ?? 0) + 
                                   (DB::table('coding_records')->where('unit_id', $unit->id)->whereNull('deleted_at')->sum('cost') ?? 0);
                     
                     $netRevenue = $totalBoundary - $totalCosts;
@@ -947,7 +947,7 @@ class DashboardController extends Controller
                             return [
                                 'id' => $item->id,
                                 'type' => 'expense',
-                                'description' => $item->description || $item->expense_type,
+                                'description' => $item->description ?: $item->expense_type,
                                 'category' => $item->expense_type,
                                 'amount' => (float) $item->amount,
                                 'date' => $item->date,
@@ -966,14 +966,16 @@ class DashboardController extends Controller
 
             // Add Maintenance costs as expenses
             $maintenanceExpenses = DB::table('maintenance as m')
-                ->where('m.status', 'completed')
+                ->join('units as u', 'm.unit_id', '=', 'u.id')
+                ->where('m.status', '!=', 'cancelled')
                 ->whereNull('m.deleted_at')
+                ->select('m.*', 'u.plate_number')
                 ->get()
                 ->map(function($item) {
                     return [
                         'id' => $item->id,
                         'type' => 'maintenance',
-                        'description' => $item->description ?: $item->maintenance_type,
+                        'description' => 'Unit ' . $item->plate_number . ' - ' . ($item->maintenance_type ?: 'Maintenance'),
                         'category' => 'Maintenance',
                         'amount' => (float) $item->cost,
                         'date' => $item->date_started,
@@ -986,14 +988,15 @@ class DashboardController extends Controller
 
             // Add Coding costs as expenses
             $codingExpenses = DB::table('coding_records as c')
-                ->where('c.status', 'completed')
+                ->join('units as u', 'c.unit_id', '=', 'u.id')
                 ->whereNull('c.deleted_at')
+                ->select('c.*', 'u.plate_number')
                 ->get()
                 ->map(function($item) {
                     return [
                         'id' => $item->id,
                         'type' => 'coding',
-                        'description' => $item->description ?: 'Daily Coding',
+                        'description' => 'Unit ' . $item->plate_number . ' - Coding Fee',
                         'category' => 'Coding',
                         'amount' => (float) $item->cost,
                         'date' => $item->date,

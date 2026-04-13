@@ -22,16 +22,24 @@ class MaintenanceController extends Controller
             ->whereNull('maintenance.deleted_at')
             ->join('units', 'maintenance.unit_id', '=', 'units.id')
             ->whereNull('units.deleted_at')
+            ->leftJoin('drivers', 'maintenance.driver_id', '=', 'drivers.id')
             ->leftJoin('users as creator', 'maintenance.created_by', '=', 'creator.id')
             ->leftJoin('users as editor', 'maintenance.updated_by', '=', 'editor.id')
-            ->select('maintenance.*', 'units.plate_number', 'creator.full_name as creator_name', 'editor.full_name as editor_name');
+            ->select(
+                'maintenance.*',
+                DB::raw('maintenance.id as id'),  // explicit — prevents collision with joined table ids
+                'units.plate_number', 
+                DB::raw('CONCAT(drivers.first_name, " ", drivers.last_name) as driver_name'),
+                'creator.full_name as creator_name', 
+                'editor.full_name as editor_name'
+            );
 
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('units.plate_number', 'like', DB::raw("CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci"), [$search])
-                    ->orWhere('units.plate_number', 'like', DB::raw("CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci"), [$search])
                     ->orWhere('maintenance.description', 'like', DB::raw("CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci"), [$search])
-                    ->orWhere('maintenance.mechanic_name', 'like', DB::raw("CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci"), [$search]);
+                    ->orWhere('maintenance.mechanic_name', 'like', DB::raw("CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci"), [$search])
+                    ->orWhere(DB::raw('CONCAT(drivers.first_name, " ", drivers.last_name)'), 'like', DB::raw("CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci"), [$search]);
             });
         }
 
@@ -57,6 +65,13 @@ class MaintenanceController extends Controller
         ')->first();
 
         $units = DB::table('units')->whereNull('deleted_at')->where('status', '!=', 'retired')->orderBy('plate_number')->get();
+        $drivers = DB::table('drivers')
+            ->whereNull('deleted_at')
+            ->select('id', DB::raw('CONCAT(first_name, " ", last_name) as name'), 'nickname')
+            ->orderBy('first_name')
+            ->get();
+        $staff = DB::table('staff')->whereNull('deleted_at')->where('role', 'Mechanic')->orderBy('name')->get();
+        $spare_parts = DB::table('spare_parts')->orderBy('name')->get();
 
         $pagination = [
             'page' => $page,
@@ -68,6 +83,25 @@ class MaintenanceController extends Controller
             'next_page' => $page + 1,
         ];
 
+        // Maintenance Today Notifications
+        $todayMaintenance = DB::table('maintenance')
+            ->join('units', 'maintenance.unit_id', '=', 'units.id')
+            ->whereNull('maintenance.deleted_at')
+            ->where('maintenance.date_started', date('Y-m-d'))
+            ->where('maintenance.status', '!=', 'completed')
+            ->select('maintenance.id', 'units.plate_number', 'maintenance.maintenance_type')
+            ->get();
+
+        $maintNotifs = [];
+        foreach($todayMaintenance as $tm) {
+            $maintNotifs[] = [
+                'type' => 'maintenance_today',
+                'title' => 'Maintenance Today',
+                'message' => "Unit {$tm->plate_number} is scheduled for " . ucfirst($tm->maintenance_type) . " maintenance today.",
+                'url' => route('maintenance.index', ['search' => $tm->plate_number])
+            ];
+        }
+
         return view('maintenance.index', compact(
             'records',
             'search',
@@ -75,7 +109,11 @@ class MaintenanceController extends Controller
             'type',
             'pagination',
             'totals',
-            'units'
+            'units',
+            'drivers',
+            'staff',
+            'spare_parts',
+            'maintNotifs'
         ));
     }
 
@@ -83,25 +121,86 @@ class MaintenanceController extends Controller
     {
         $data = $request->validate([
             'unit_id' => 'required|integer',
+            'driver_id' => 'nullable|integer',
             'maintenance_type' => 'required|string',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'labor_cost' => 'nullable|numeric|min:0',
             'odometer_reading' => 'nullable|integer',
             'date_started' => 'required|date',
             'date_completed' => 'nullable|date',
             'status' => 'required|string',
-            'mechanic_name' => 'nullable|string|max:100',
+            'mechanic_name' => 'required|array',
+            'mechanic_name.*' => 'nullable|string',
             'parts_list' => 'nullable|string',
+            'parts_data' => 'nullable|string', // JSON from UI
             'cost' => 'required|numeric|min:0',
         ]);
 
-        // Update unit status if maintenance is in progress
-        if (!$data['date_completed']) {
-            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'maintenance']);
+        // Combine mechanic names
+        $mechs = array_filter($data['mechanic_name']);
+        $data['mechanic_name'] = implode(', ', $mechs);
+
+        // Process parts and other costs if provided
+        if (!empty($data['parts_data'])) {
+            $parsed = json_decode($data['parts_data'], true);
+            if (is_array($parsed)) {
+                $summary = [];
+                if (!empty($parsed['parts'])) {
+                    foreach ($parsed['parts'] as $p) {
+                        $summary[] = ($p['name'] ?? 'Part') . " (x" . ($p['qty'] ?? 1) . ")";
+                    }
+                }
+                if (!empty($parsed['others'])) {
+                    foreach ($parsed['others'] as $o) {
+                        if (!empty($o['name'])) $summary[] = $o['name'];
+                    }
+                }
+                $data['parts_list'] = implode(', ', $summary);
+            }
+        }
+
+        // Update unit status based on maintenance completion
+        if ($data['status'] === 'completed' && $data['date_completed']) {
+            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'active', 'updated_at' => now()]);
+        } else if (in_array($data['status'], ['pending', 'in_progress'])) {
+            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'maintenance', 'updated_at' => now()]);
         }
 
         // Use Eloquent to trigger TrackChanges trait
-        Maintenance::create($data);
+        $maintenance = Maintenance::create($data);
+
+        // Store individual parts for history
+        if (!empty($data['parts_data']) && is_array($parsed)) {
+            // Store Spare Parts
+            if (!empty($parsed['parts'])) {
+                foreach ($parsed['parts'] as $p) {
+                    DB::table('maintenance_parts')->insert([
+                        'maintenance_id' => $maintenance->id,
+                        'part_id' => $p['id'] ?? null,
+                        'part_name' => $p['name'] ?? 'Part',
+                        'quantity' => $p['qty'] ?? 1,
+                        'price' => $p['price'] ?? 0,
+                        'total' => ($p['price'] ?? 0) * ($p['qty'] ?? 1),
+                        'created_at' => now(), 'updated_at' => now()
+                    ]);
+                }
+            }
+            // Store Other Costs/Services
+            if (!empty($parsed['others'])) {
+                foreach ($parsed['others'] as $o) {
+                    if (empty($o['name'])) continue;
+                    DB::table('maintenance_parts')->insert([
+                        'maintenance_id' => $maintenance->id,
+                        'part_id' => null,
+                        'part_name' => $o['name'],
+                        'quantity' => 1,
+                        'price' => $o['price'] ?? 0,
+                        'total' => $o['price'] ?? 0,
+                        'created_at' => now(), 'updated_at' => now()
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('maintenance.index')->with('success', 'Maintenance record added successfully');
     }
@@ -110,23 +209,98 @@ class MaintenanceController extends Controller
     {
         $data = $request->validate([
             'unit_id' => 'required|integer',
+            'driver_id' => 'nullable|integer',
             'maintenance_type' => 'required|string',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'labor_cost' => 'nullable|numeric|min:0',
             'odometer_reading' => 'nullable|integer',
             'date_started' => 'required|date',
             'date_completed' => 'nullable|date',
             'status' => 'required|string',
-            'mechanic_name' => 'nullable|string|max:100',
+            'mechanic_name' => 'required|array',
+            'mechanic_name.*' => 'nullable|string',
             'parts_list' => 'nullable|string',
+            'parts_data' => 'nullable|string',
             'cost' => 'required|numeric|min:0',
         ]);
+
+        // Combine mechanic names
+        $mechs = array_filter($data['mechanic_name']);
+        $data['mechanic_name'] = implode(', ', $mechs);
+
+        // Process parts if provided
+        if (!empty($data['parts_data'])) {
+            $parsed = json_decode($data['parts_data'], true);
+            if (is_array($parsed)) {
+                $summary = [];
+                if (!empty($parsed['parts'])) {
+                    foreach ($parsed['parts'] as $p) {
+                        $summary[] = ($p['name'] ?? 'Part') . " (x" . ($p['qty'] ?? 1) . ")";
+                    }
+                }
+                if (!empty($parsed['others'])) {
+                    foreach ($parsed['others'] as $o) {
+                        if (!empty($o['name'])) $summary[] = $o['name'];
+                    }
+                }
+                $data['parts_list'] = implode(', ', $summary);
+            }
+        }
 
         // Use Eloquent to trigger TrackChanges trait
         $maintenance = Maintenance::findOrFail($id);
         $maintenance->update($data);
 
+        // Update unit status based on maintenance completion
+        if ($data['status'] === 'completed' && $data['date_completed']) {
+            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'active', 'updated_at' => now()]);
+        } else if (in_array($data['status'], ['pending', 'in_progress'])) {
+            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'maintenance', 'updated_at' => now()]);
+        }
+
+        // Update individual parts history
+        if (!empty($data['parts_data']) && is_array($parsed)) {
+            DB::table('maintenance_parts')->where('maintenance_id', $id)->delete();
+            
+            if (!empty($parsed['parts'])) {
+                foreach ($parsed['parts'] as $p) {
+                    DB::table('maintenance_parts')->insert([
+                        'maintenance_id' => $maintenance->id,
+                        'part_id' => $p['id'] ?? null,
+                        'part_name' => $p['name'] ?? 'Part',
+                        'quantity' => $p['qty'] ?? 1,
+                        'price' => $p['price'] ?? 0,
+                        'total' => ($p['price'] ?? 0) * ($p['qty'] ?? 1),
+                        'created_at' => now(), 'updated_at' => now()
+                    ]);
+                }
+            }
+            if (!empty($parsed['others'])) {
+                foreach ($parsed['others'] as $o) {
+                    if (empty($o['name'])) continue;
+                    DB::table('maintenance_parts')->insert([
+                        'maintenance_id' => $maintenance->id,
+                        'part_id' => null,
+                        'part_name' => $o['name'],
+                        'quantity' => 1,
+                        'price' => $o['price'] ?? 0,
+                        'total' => $o['price'] ?? 0,
+                        'created_at' => now(), 'updated_at' => now()
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('maintenance.index')->with('success', 'Maintenance record updated successfully');
+    }
+
+    public function getParts($id) 
+    {
+        $parts = DB::table('maintenance_parts')->where('maintenance_id', $id)->get();
+        return response()->json([
+            'success' => true,
+            'data' => $parts
+        ]);
     }
 
     public function destroy($id)

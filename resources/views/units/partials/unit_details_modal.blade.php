@@ -112,6 +112,18 @@
                             <span class="text-gray-600">Year:</span>
                             <span class="font-medium">{{ $unit->year }}</span>
                         </div>
+                        @if($unit->motor_no)
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Motor No:</span>
+                            <span class="font-medium font-mono text-sm">{{ $unit->motor_no }}</span>
+                        </div>
+                        @endif
+                        @if($unit->chassis_no)
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Chassis No:</span>
+                            <span class="font-medium font-mono text-sm">{{ $unit->chassis_no }}</span>
+                        </div>
+                        @endif
                         <div class="flex justify-between">
                             <span class="text-gray-600">Status:</span>
                             <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
@@ -333,33 +345,153 @@
 
         <div id="maintenance-tab" class="tab-content hidden">
             <div class="bg-white border border-gray-200 rounded-lg p-6">
-                <h4 class="text-lg font-semibold text-gray-900 mb-4">Maintenance Records</h4>
+                <h4 class="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                    <i data-lucide="history" class="w-5 h-5 text-gray-600"></i>
+                    Comprehensive Maintenance History
+                </h4>
                 @if(!empty($maintenance_records))
-                    <div class="space-y-4">
+                    <div class="space-y-6">
                         @foreach($maintenance_records as $maintenance)
-                            <div class="border border-gray-200 rounded-lg p-4">
-                                <div class="flex justify-between items-start mb-3">
+                            <div class="relative pl-6 border-l-2 {{ $maintenance->status === 'completed' ? 'border-green-500' : 'border-yellow-500' }} pb-6 transition-all hover:bg-gray-50 p-4 rounded-r-lg">
+                                <div class="absolute -left-[9px] top-4 w-4 h-4 rounded-full border-4 border-white {{ $maintenance->status === 'completed' ? 'bg-green-500' : 'bg-yellow-500' }} shadow-sm"></div>
+                                
+                                <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-3">
                                     <div>
-                                        <h5 class="font-semibold text-gray-900">{{ $maintenance->maintenance_type ?? 'Maintenance' }}</h5>
-                                        <p class="text-sm text-gray-600">{{ !empty($maintenance->date_started) ? \Carbon\Carbon::parse($maintenance->date_started)->format('M d, Y') : '' }}</p>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h5 class="font-bold text-gray-900 text-base uppercase tracking-tight">{{ $maintenance->maintenance_type ?? 'Maintenance' }}</h5>
+                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full uppercase {{ $maintenance->status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
+                                                {{ $maintenance->status ?? 'pending' }}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs font-semibold text-gray-500">
+                                            <i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>
+                                            Started: {{ !empty($maintenance->date_started) ? \Carbon\Carbon::parse($maintenance->date_started)->format('M d, Y') : 'N/A' }}
+                                            @if($maintenance->date_completed)
+                                                <span class="mx-2">|</span>
+                                                Done: {{ \Carbon\Carbon::parse($maintenance->date_completed)->format('M d, Y') }}
+                                            @endif
+                                        </p>
                                     </div>
                                     <div class="text-right">
-                                        <span class="text-lg font-bold text-orange-600">₱{{ number_format((float) ($maintenance->cost ?? 0), 2) }}</span>
+                                        <div class="text-[10px] text-gray-400 font-bold uppercase mb-1">Maintenance Cost</div>
+                                        <div class="text-xl font-black text-red-600">₱{{ number_format((float) ($maintenance->cost ?? 0), 2) }}</div>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div class="md:col-span-2">
-                                        <span class="text-gray-600">Description:</span>
-                                        <p class="font-medium">{{ $maintenance->description ?? 'No description' }}</p>
+
+                                <div class="space-y-4">
+                                    <!-- Driver Information -->
+                                    @if($maintenance->driver_name)
+                                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                                        <div class="flex items-center gap-1.5 mb-2 text-green-700">
+                                            <i data-lucide="user" class="w-4 h-4"></i>
+                                            <span class="text-[10px] font-black uppercase tracking-wider">Assigned Driver</span>
+                                        </div>
+                                        <p class="text-sm font-bold text-green-900">{{ $maintenance->driver_name }}</p>
                                     </div>
+                                    @endif
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                            <span class="text-[10px] text-gray-400 font-bold uppercase block mb-1">Work Description</span>
+                                            <p class="text-sm text-gray-800 leading-relaxed">{{ $maintenance->description ?? 'No description provided' }}</p>
+                                        </div>
+                                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 italic">
+                                            <div class="flex items-center gap-1.5 mb-1">
+                                                <i data-lucide="wrench" class="w-3.5 h-3.5 text-gray-400"></i>
+                                                <span class="text-[10px] text-gray-400 font-bold uppercase">Mechanic</span>
+                                            </div>
+                                            <p class="text-sm font-bold text-gray-700">{{ $maintenance->mechanic_name ?? 'Not specified' }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Detailed Cost Breakdown -->
+                                    @if(isset($maintenance->parts_details) && count($maintenance->parts_details) > 0)
+                                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                                        <div class="flex items-center gap-1.5 mb-3 text-amber-700">
+                                            <i data-lucide="receipt" class="w-4 h-4"></i>
+                                            <span class="text-[10px] font-black uppercase tracking-wider">Detailed Cost Breakdown</span>
+                                        </div>
+                                        
+                                        <div class="space-y-2">
+                                            <!-- Parts List -->
+                                            @php
+                                                $parts = $maintenance->parts_details->where('part_id', '!=', null);
+                                                $others = $maintenance->parts_details->where('part_id', null);
+                                            @endphp
+                                            
+                                            @if($parts->count() > 0)
+                                            <div class="bg-white p-3 rounded border border-amber-100">
+                                                <div class="text-[10px] font-bold text-gray-600 uppercase mb-2">Parts Replaced</div>
+                                                @foreach($parts as $part)
+                                                <div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
+                                                    <div class="flex-1">
+                                                        <span class="text-sm font-medium text-gray-900">{{ $part->part_name }}</span>
+                                                        @if($part->quantity > 1)
+                                                        <span class="text-xs text-gray-500 ml-1">(x{{ $part->quantity }})</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="text-sm font-bold text-gray-900">₱{{ number_format($part->total, 2) }}</div>
+                                                </div>
+                                                @endforeach
+                                                <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-200">
+                                                    <span class="text-xs font-bold text-gray-600 uppercase">Parts Subtotal</span>
+                                                    <span class="text-sm font-black text-blue-600">₱{{ number_format($parts->sum('total'), 2) }}</span>
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <!-- Other Costs/Services -->
+                                            @if($others->count() > 0)
+                                            <div class="bg-orange-50 p-3 rounded border border-orange-100">
+                                                <div class="text-[10px] font-bold text-gray-600 uppercase mb-2">Other Costs & Services</div>
+                                                @foreach($others as $other)
+                                                <div class="flex justify-between items-center py-1 border-b border-orange-100 last:border-0">
+                                                    <div class="flex-1">
+                                                        <span class="text-sm font-medium text-gray-900">{{ $other->part_name }}</span>
+                                                    </div>
+                                                    <div class="text-sm font-bold text-gray-900">₱{{ number_format($other->total, 2) }}</div>
+                                                </div>
+                                                @endforeach
+                                                <div class="flex justify-between items-center pt-2 mt-2 border-t border-orange-200">
+                                                    <span class="text-xs font-bold text-gray-600 uppercase">Other Costs Subtotal</span>
+                                                    <span class="text-sm font-black text-orange-600">₱{{ number_format($others->sum('total'), 2) }}</span>
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <!-- Total Summary -->
+                                            <div class="bg-gradient-to-r from-amber-100 to-amber-50 p-3 rounded border border-amber-200">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm font-black text-gray-900 uppercase">Total Maintenance Cost</span>
+                                                    <span class="text-lg font-black text-red-600">₱{{ number_format($maintenance->cost, 2) }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    <!-- Legacy Parts List (fallback) -->
+                                    @if(!isset($maintenance->parts_details) && $maintenance->parts_list)
+                                    <div class="md:col-span-2 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                                        <div class="flex items-center gap-1.5 mb-2 text-blue-700">
+                                            <i data-lucide="package" class="w-4 h-4"></i>
+                                            <span class="text-[10px] font-black uppercase tracking-wider">Parts Replaced</span>
+                                        </div>
+                                        <p class="text-sm text-blue-900 bg-white/50 p-2 rounded border border-blue-100 min-h-[40px] whitespace-pre-line">{{ $maintenance->parts_list }}</p>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <div class="text-center py-8 text-gray-500">
-                        <i data-lucide="wrench" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
-                        <p>No maintenance records found</p>
+                    <div class="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        <div class="relative inline-block mb-4">
+                            <i data-lucide="wrench" class="w-16 h-16 text-gray-200"></i>
+                            <i data-lucide="slash" class="w-16 h-16 text-gray-100 absolute inset-0"></i>
+                        </div>
+                        <h5 class="text-gray-900 font-bold mb-1">No Maintenance Records</h5>
+                        <p class="text-sm text-gray-500 max-w-[200px] mx-auto">This unit hasn't had any recorded maintenance jobs yet.</p>
                     </div>
                 @endif
             </div>

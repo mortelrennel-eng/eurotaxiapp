@@ -39,6 +39,8 @@ class UnitController extends Controller
                     ->selectRaw('COALESCE(SUM(actual_boundary), 0)'),
                 'maintenance_cost' => DB::table('maintenance')
                     ->whereColumn('unit_id', 'u.id')
+                    ->whereNull('deleted_at')
+                    ->where('status', '!=', 'cancelled')
                     ->selectRaw('COALESCE(SUM(cost), 0)'),
                 'gps_device_count' => DB::table('gps_devices')
                     ->whereColumn('unit_id', 'u.id')
@@ -154,7 +156,8 @@ class UnitController extends Controller
             'boundary_rate' => 'required|numeric',
             'purchase_date' => 'nullable|date',
             'purchase_cost' => 'nullable|numeric',
-            'color' => 'nullable|string',
+            'motor_no' => 'required|string',
+            'chassis_no' => 'required|string',
             'unit_type' => 'sometimes|required|in:new,old,rented',
             'coding_day' => 'nullable|string',
             'driver_id' => 'nullable|integer',
@@ -202,7 +205,8 @@ class UnitController extends Controller
             'boundary_rate' => $data['boundary_rate'],
             'purchase_date' => $data['purchase_date'] ?? null,
             'purchase_cost' => $data['purchase_cost'] ?? 0,
-            'color' => $data['color'] ?? null,
+            'motor_no' => $data['motor_no'],
+            'chassis_no' => $data['chassis_no'],
             'unit_type' => $data['unit_type'] ?? 'new',
             'coding_day' => $coding_day,
             'driver_id' => $driver_id,
@@ -234,7 +238,8 @@ class UnitController extends Controller
             'boundary_rate' => 'required|numeric',
             'purchase_date' => 'nullable|date',
             'purchase_cost' => 'nullable|numeric',
-            'color' => 'nullable|string',
+            'motor_no' => 'required|string',
+            'chassis_no' => 'required|string',
             'unit_type' => 'sometimes|required|in:new,old,rented',
             'coding_day' => 'nullable|string',
             'driver_id' => 'nullable|integer',
@@ -279,7 +284,8 @@ class UnitController extends Controller
             'boundary_rate' => $data['boundary_rate'],
             'purchase_date' => $data['purchase_date'] ?? null,
             'purchase_cost' => $data['purchase_cost'] ?? 0,
-            'color' => $data['color'] ?? null,
+            'motor_no' => $data['motor_no'],
+            'chassis_no' => $data['chassis_no'],
             'coding_day' => $coding_day,
             'driver_id' => $driver_id,
             'secondary_driver_id' => $secondary_driver_id,
@@ -372,6 +378,7 @@ class UnitController extends Controller
         // ROI data from real boundaries
         $roi = DB::table('boundaries')
             ->where('unit_id', $unit_id)
+            ->whereNull('deleted_at')
             ->selectRaw('
                 SUM(actual_boundary) as total_boundary,
                 SUM(CASE WHEN MONTH(date)=MONTH(CURDATE()) AND YEAR(date)=YEAR(CURDATE()) THEN actual_boundary ELSE 0 END) as monthly_boundary,
@@ -380,6 +387,8 @@ class UnitController extends Controller
 
         $maintenance_cost = DB::table('maintenance')
             ->where('unit_id', $unit_id)
+            ->whereNull('deleted_at')
+            ->where('status', '!=', 'cancelled')
             ->selectRaw('SUM(cost) as total, SUM(CASE WHEN MONTH(date_started)=MONTH(CURDATE()) AND YEAR(date_started)=YEAR(CURDATE()) THEN cost ELSE 0 END) as monthly')
             ->first();
 
@@ -408,6 +417,7 @@ class UnitController extends Controller
         $boundary_history = DB::table('boundaries as bh')
             ->leftJoin('drivers as d', 'bh.driver_id', '=', 'd.id')
             ->where('bh.unit_id', $unit_id)
+            ->whereNull('bh.deleted_at')
             ->select('bh.*', DB::raw("CONCAT(COALESCE(d.first_name,''), ' ', COALESCE(d.last_name,'')) as full_name"))
             ->orderByDesc('bh.date')
             ->limit(10)->get()->toArray();
@@ -416,12 +426,29 @@ class UnitController extends Controller
         $unit->created_at_fmt = $unit->created_at ? date('M d, Y h:i A', strtotime($unit->created_at)) : 'N/A';
         $unit->updated_at_fmt = $unit->updated_at ? date('M d, Y h:i A', strtotime($unit->updated_at)) : 'N/A';
 
-        // Maintenance records from real maintenance table
+        // Maintenance records from real maintenance table with enhanced details
         $maintenance_records = DB::table('maintenance as mr')
             ->where('mr.unit_id', $unit_id)
-            ->select('mr.*')
+            ->whereNull('mr.deleted_at')
+            ->leftJoin('drivers', 'mr.driver_id', '=', 'drivers.id')
+            ->select(
+                'mr.*',
+                DB::raw('CONCAT(drivers.first_name, " ", drivers.last_name) as driver_name')
+            )
             ->orderByDesc('mr.date_started')
             ->limit(10)->get()->toArray();
+
+        // Add detailed parts and cost breakdown for each maintenance record
+        foreach ($maintenance_records as &$record) {
+            $parts = DB::table('maintenance_parts')
+                ->where('maintenance_id', $record->id)
+                ->orderBy('part_name')
+                ->get();
+            
+            $record->parts_details = $parts;
+            $record->total_parts_cost = $parts->where('part_id', '!=', null)->sum('total');
+            $record->total_other_costs = $parts->where('part_id', null)->sum('total');
+        }
 
 
         // Coding info
@@ -496,6 +523,7 @@ class UnitController extends Controller
 
         $roi = DB::table('boundaries')
             ->where('unit_id', $unit_id)
+            ->whereNull('deleted_at')
             ->selectRaw('
                 SUM(actual_boundary) as total_boundary,
                 SUM(CASE WHEN MONTH(date)=MONTH(CURDATE()) AND YEAR(date)=YEAR(CURDATE()) THEN actual_boundary ELSE 0 END) as monthly_boundary,
@@ -504,6 +532,8 @@ class UnitController extends Controller
 
         $maintenance_cost = DB::table('maintenance')
             ->where('unit_id', $unit_id)
+            ->whereNull('deleted_at')
+            ->where('status', '!=', 'cancelled')
             ->selectRaw('SUM(cost) as total, SUM(CASE WHEN MONTH(date_started)=MONTH(CURDATE()) AND YEAR(date_started)=YEAR(CURDATE()) THEN cost ELSE 0 END) as monthly')
             ->first();
 
@@ -529,15 +559,33 @@ class UnitController extends Controller
         $boundary_history = DB::table('boundaries as bh')
             ->leftJoin('drivers as d', 'bh.driver_id', '=', 'd.id')
             ->where('bh.unit_id', $unit_id)
+            ->whereNull('bh.deleted_at')
             ->select('bh.*', DB::raw("CONCAT(COALESCE(d.first_name,''), ' ', COALESCE(d.last_name,'')) as full_name"))
             ->orderByDesc('bh.date')
             ->limit(10)->get()->toArray();
 
         $maintenance_records = DB::table('maintenance as mr')
             ->where('mr.unit_id', $unit_id)
-            ->select('mr.*')
+            ->whereNull('mr.deleted_at')
+            ->leftJoin('drivers', 'mr.driver_id', '=', 'drivers.id')
+            ->select(
+                'mr.*',
+                DB::raw('CONCAT(drivers.first_name, " ", drivers.last_name) as driver_name')
+            )
             ->orderByDesc('mr.date_started')
             ->limit(10)->get()->toArray();
+
+        // Add detailed parts and cost breakdown for each maintenance record
+        foreach ($maintenance_records as &$record) {
+            $parts = DB::table('maintenance_parts')
+                ->where('maintenance_id', $record->id)
+                ->orderBy('part_name')
+                ->get();
+            
+            $record->parts_details = $parts;
+            $record->total_parts_cost = $parts->where('part_id', '!=', null)->sum('total');
+            $record->total_other_costs = $parts->where('part_id', null)->sum('total');
+        }
 
         $last_digit = substr($unit->plate_number ?? '', -1);
         $coding_schedule = [

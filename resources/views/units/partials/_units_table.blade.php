@@ -24,8 +24,11 @@
                     <td class="px-6 py-1 whitespace-nowrap">
                         <div class="space-y-0.5">
                             <div class="font-bold text-gray-900">{{ $unit->plate_number }}</div>
-                            @if($unit->color)
-                                <div class="text-[10px] text-gray-400">Color: {{ $unit->color }}</div>
+                            @if($unit->motor_no)
+                                <div class="text-[10px] text-gray-500 font-mono tracking-tight cursor-default" title="Motor Number">M: {{ $unit->motor_no }}</div>
+                            @endif
+                            @if($unit->chassis_no)
+                                <div class="text-[10px] text-gray-500 font-mono tracking-tight cursor-default" title="Chassis Number">C: {{ $unit->chassis_no }}</div>
                             @endif
                         </div>
                     </td>

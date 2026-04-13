@@ -67,8 +67,12 @@
         @php
             // Notifications for header bell
             $headerNotifications = [];
-            $headerNotificationCount = 0;
-
+            
+            // Merge specialized notifications from views if they exist
+            if(isset($maintNotifs)) { $headerNotifications = array_merge($headerNotifications, $maintNotifs); }
+            if(isset($expiringFranchise)) { $headerNotifications = array_merge($headerNotifications, $expiringFranchise); }
+            
+            $headerNotificationCount = count($headerNotifications);
         @endphp
 
         <!-- Main Layout -->

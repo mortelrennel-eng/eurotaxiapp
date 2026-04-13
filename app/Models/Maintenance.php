@@ -13,6 +13,7 @@ class Maintenance extends Model
  
     protected $fillable = [
         'unit_id',
+        'driver_id',
         'maintenance_type',
         'description',
         'labor_cost',
@@ -29,11 +30,17 @@ class Maintenance extends Model
 
     protected $casts = [
         'cost' => 'float',
-        'maintenance_date' => 'date',
+        'date_started' => 'date',
+        'date_completed' => 'date',
     ];
 
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unit_id');
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class, 'driver_id');
     }
 }

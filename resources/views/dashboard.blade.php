@@ -2918,11 +2918,11 @@
 
         async function updateExpensesSummary(period) {
             try {
-                const response = await fetch('/get-income-breakdown');
+                const response = await fetch('/api/net-income-details');
                 const result = await response.json();
                 
                 if (result.success) {
-                    const filteredData = filterIncomeByPeriod(result.data, period);
+                    const filteredData = filterIncomeByPeriod(result.income_data, period);
                     renderExpensesReport(filteredData);
                 }
             } catch (error) {

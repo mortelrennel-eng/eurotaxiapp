@@ -152,10 +152,18 @@
                                 placeholder="e.g., 2023">
                         </div>
                         <div class="space-y-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color</label>
-                            <input type="text" name="color" value="White"
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Motor No <span class="text-red-500">*</span></label>
+                            <input type="text" name="motor_no" required
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                                placeholder="e.g., White, Red, Blue">
+                                placeholder="e.g., 2NZ7847183"
+                                oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Chassis No <span class="text-red-500">*</span></label>
+                            <input type="text" name="chassis_no" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                                placeholder="e.g., NCP1512071757"
+                                oninput="this.value = this.value.toUpperCase()">
                         </div>
 
                     </div>
@@ -463,9 +471,16 @@
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         <div class="space-y-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Color</label>
-                            <input type="text" name="color" id="editColor"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Motor No <span class="text-red-500">*</span></label>
+                            <input type="text" name="motor_no" id="editMotorNo" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Chassis No <span class="text-red-500">*</span></label>
+                            <input type="text" name="chassis_no" id="editChassisNo" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                oninput="this.value = this.value.toUpperCase()">
                         </div>
 
                         <div class="space-y-2">
@@ -838,7 +853,8 @@
                 if (document.getElementById('editMake')) document.getElementById('editMake').value = unit.make || '';
                 if (document.getElementById('editModel')) document.getElementById('editModel').value = unit.model || '';
                 if (document.getElementById('editYear')) document.getElementById('editYear').value = unit.year || '';
-                if (document.getElementById('editColor')) document.getElementById('editColor').value = unit.color || '';
+                if (document.getElementById('editMotorNo')) document.getElementById('editMotorNo').value = unit.motor_no || '';
+                if (document.getElementById('editChassisNo')) document.getElementById('editChassisNo').value = unit.chassis_no || '';
                 if (document.getElementById('editStatus')) document.getElementById('editStatus').value = unit.status || 'active';
                 if (document.getElementById('editUnitType')) document.getElementById('editUnitType').value = unit.unit_type || 'new';
                 if (document.getElementById('editImei')) document.getElementById('editImei').value = unit.imei || '';
@@ -1129,6 +1145,64 @@
                 let maintHtml = '';
                 if (maint.length > 0) {
                     maint.forEach(m => {
+                        // Build parts details HTML if available
+                        let partsDetailsHtml = '';
+                        if (m.parts_details && m.parts_details.length > 0) {
+                            const parts = m.parts_details.filter(p => p.part_id != null);
+                            const others = m.parts_details.filter(p => p.part_id == null);
+                            
+                            partsDetailsHtml = '<div class="mt-3 space-y-2">';
+                            
+                            if (parts.length > 0) {
+                                partsDetailsHtml += '<div class="bg-blue-50 p-2 rounded border border-blue-100"><div class="text-[10px] font-bold text-gray-600 uppercase mb-1">Parts Replaced</div>';
+                                parts.forEach(p => {
+                                    partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
+                                        <div class="flex-1">
+                                            <span class="text-xs font-medium text-gray-900">${p.part_name}</span>
+                                            ${p.quantity > 1 ? `<span class="text-xs text-gray-500 ml-1">(x${p.quantity})</span>` : ''}
+                                        </div>
+                                        <div class="text-xs font-bold text-gray-900">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                    </div>`;
+                                });
+                                const partsTotal = parts.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+                                partsDetailsHtml += `<div class="flex justify-between items-center pt-1 mt-1 border-t border-gray-200">
+                                    <span class="text-xs font-bold text-gray-600 uppercase">Parts Subtotal</span>
+                                    <span class="text-xs font-black text-blue-600">₱${partsTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                </div></div>`;
+                            }
+                            
+                            if (others.length > 0) {
+                                partsDetailsHtml += '<div class="bg-orange-50 p-2 rounded border border-orange-100"><div class="text-[10px] font-bold text-gray-600 uppercase mb-1">Other Costs & Services</div>';
+                                others.forEach(o => {
+                                    partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-orange-100 last:border-0">
+                                        <div class="flex-1">
+                                            <span class="text-xs font-medium text-gray-900">${o.part_name}</span>
+                                        </div>
+                                        <div class="text-xs font-bold text-gray-900">₱${parseFloat(o.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                    </div>`;
+                                });
+                                const othersTotal = others.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+                                partsDetailsHtml += `<div class="flex justify-between items-center pt-1 mt-1 border-t border-orange-200">
+                                    <span class="text-xs font-bold text-gray-600 uppercase">Other Costs Subtotal</span>
+                                    <span class="text-xs font-black text-orange-600">₱${othersTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                </div></div>`;
+                            }
+                            
+                            partsDetailsHtml += '</div>';
+                        }
+                        
+                        // Build driver info HTML if available
+                        let driverHtml = '';
+                        if (m.driver_name) {
+                            driverHtml = `<div class="bg-green-50 p-2 rounded border border-green-100 mb-2">
+                                <div class="flex items-center gap-1 mb-1 text-green-700">
+                                    <i data-lucide="user" class="w-3 h-3"></i>
+                                    <span class="text-[9px] font-black uppercase">Assigned Driver</span>
+                                </div>
+                                <p class="text-xs font-bold text-green-900">${m.driver_name}</p>
+                            </div>`;
+                        }
+                        
                         maintHtml += `<div class="border border-gray-200 rounded-lg p-4">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
@@ -1137,11 +1211,16 @@
                                 </div>
                                 <div class="text-right"><span class="text-lg font-bold text-orange-600">₱${parseFloat(m.total_cost || m.cost || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
                             </div>
+                            
+                            ${driverHtml}
+                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 <div><span class="text-gray-600">Mechanic:</span><p class="font-medium">${m.mechanic_name || 'N/A'}</p></div>
                                 <div><span class="text-gray-600">Status:</span><p class="font-medium">${m.status || 'Unknown'}</p></div>
                                 <div class="md:col-span-2"><span class="text-gray-600">Description:</span><p class="font-medium">${m.description || m.notes || 'No description'}</p></div>
                             </div>
+                            
+                            ${partsDetailsHtml}
                         </div>`;
                     });
                 } else {
