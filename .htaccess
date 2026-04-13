@@ -14,23 +14,15 @@
     RewriteCond %{REQUEST_URI} ^/google[a-z0-9]+\.html [NC]
     RewriteRule ^ - [L]
 
-    # MAINTENANCE MODE EXCLUSIONS (when enabled)
-    # These allow maintenance assets to load even when maintenance is ON
-    RewriteCond %{REQUEST_URI} ^(/public)?/maintenance\.html [NC,OR]
-    RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|svg|ico|webp|json|html) [NC]
+    # If the request is for an existing file inside public/, serve it directly
+    RewriteCond %{REQUEST_URI} ^/public/
     RewriteRule ^ - [L]
 
     # MAINTENANCE MODE TOGGLE
-    # Comment the line below to ENABLE maintenance mode (shows maintenance.html)
-    # Uncomment the line below to DISABLE maintenance mode (normal site)
-    # RewriteRule ^ public/index.php [L]
-
-    # If we are here, maintenance mode is ENABLED.
-    # Set environment variable for headers
-    RewriteRule ^ - [E=SITE_MAINTENANCE:1]
-    
-    # Serve maintenance page
-    RewriteRule ^(.*)$ public/maintenance.html [L]
+    # To ENABLE maintenance mode:  Uncomment the next 2 lines
+    # To DISABLE maintenance mode: Comment the next 2 lines (normal site operation)
+    # RewriteRule ^ - [E=SITE_MAINTENANCE:1]
+    # RewriteRule ^(.*)$ public/maintenance.html [L]
 
     # Prevent browser from caching maintenance page
     <IfModule mod_headers.c>
@@ -39,15 +31,13 @@
         Header set Expires "0" env=SITE_MAINTENANCE
     </IfModule>
 
-    # Hostinger - Redirect ALL Traffic Default to Public Folder
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller (Laravel Server public/ directory)...
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L]
+    # Send ALL Requests To Laravel Front Controller
+    RewriteRule ^(.*)$ public/index.php [L]
 </IfModule>
 
 # Gzip compression
