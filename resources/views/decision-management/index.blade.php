@@ -152,6 +152,76 @@
     </div>
 </div>
 
+<!-- Stats Overview Row -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <?php
+    $totalCount = count($cases);
+    $expiredCount = 0;
+    $expiringSoonCount = 0;
+    $activeCount = 0;
+    $now = time();
+    $soon = strtotime('+1 year');
+
+    foreach ($cases as $c) {
+        if (empty($c['expiry_date'])) {
+            $activeCount++;
+            continue;
+        }
+        $ts = strtotime($c['expiry_date']);
+        if ($ts < $now) $expiredCount++;
+        elseif ($ts <= $soon) $expiringSoonCount++;
+        else $activeCount++;
+    }
+    ?>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                <i data-lucide="folders" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Total Cases</p>
+                <h4 class="text-2xl font-black text-gray-800" id="stat-total-cases"><?php echo $totalCount; ?></h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-green-50 text-green-600 rounded-xl">
+                <i data-lucide="check-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Active Cases</p>
+                <h4 class="text-2xl font-black text-green-600"><?php echo $activeCount; ?></h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md border-l-4 border-l-orange-400">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-orange-50 text-orange-600 rounded-xl">
+                <i data-lucide="alert-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Expiring 1yr</p>
+                <h4 class="text-2xl font-black text-orange-600"><?php echo $expiringSoonCount; ?></h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 transition-all hover:shadow-md border-l-4 border-l-red-500">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-red-50 text-red-600 rounded-xl">
+                <i data-lucide="x-circle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Expired</p>
+                <h4 class="text-2xl font-black text-red-600"><?php echo $expiredCount; ?></h4>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="pt-2"> <!-- Subtle padding for alignment -->
 
     <div class="bg-white shadow rounded-lg p-6">
@@ -160,10 +230,34 @@
                 <h3 class="text-xl font-bold text-gray-800">Franchise Directory</h3>
                 <p class="text-sm text-gray-500 mt-1">Manage and track all franchise case files and assigned units.</p>
             </div>
-            <button onclick="openCaseModal()" class="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 flex items-center gap-2 text-sm font-bold shadow-md transition-all shrink-0">
-                <i data-lucide="plus-circle" class="w-5 h-5"></i>
-                <span>Register New Franchise Case</span>
-            </button>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Advanced Search Bar -->
+                <div class="relative min-w-[300px]">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    <input type="text" id="franchiseSearch" 
+                           placeholder="Search Case #, Applicant, Plate..." 
+                           class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all shadow-sm"
+                           onkeyup="filterFranchiseItems()">
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="relative min-w-[150px]">
+                    <select id="statusFilter" 
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-yellow-500 focus:bg-white transition-all shadow-sm appearance-none cursor-pointer pr-10"
+                            onchange="filterFranchiseItems()">
+                        <option value="all">All Status</option>
+                        <option value="active">Active Only</option>
+                        <option value="expiring">Expiring Soon</option>
+                        <option value="expired">Expired Only</option>
+                    </select>
+                    <i data-lucide="filter" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                </div>
+
+                <button onclick="openCaseModal()" class="px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg hover:from-yellow-600 hover:to-yellow-700 flex items-center gap-2 text-sm font-bold shadow-md transition-all shrink-0">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    <span>Register New Case</span>
+                </button>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
@@ -248,7 +342,7 @@
                             }
                         ?>
                             <!-- Group Header for Expiry Date -->
-                            <tr class="bg-gradient-to-r <?php echo $bgGradient; ?> border-y <?php echo $borderColor; ?> <?php echo $isExpired ? 'relative z-10' : ''; ?>">
+                            <tr class="bg-gradient-to-r <?php echo $bgGradient; ?> border-y <?php echo $borderColor; ?> <?php echo $isExpired ? 'relative z-10' : ''; ?> group-header" data-expiry-group="<?php echo htmlspecialchars($expiry); ?>">
                                 <td colspan="8" class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="p-2 <?php echo $iconBg; ?> <?php echo $iconColor; ?> rounded my-1 shadow-sm border <?php echo $borderColor; ?> <?php echo $animation; ?>">
@@ -270,9 +364,21 @@
                                 </td>
                             </tr>
                             
-                            <!-- Display Cases under this Expiry Date -->
-                            <?php foreach ($group as $c): ?>
-                                <tr class="border-b transition-colors hover:bg-yellow-50/50 cursor-pointer bg-white"
+                             <!-- Display Cases under this Expiry Date -->
+                            <?php foreach ($group as $c): 
+                                $statusKey = 'active';
+                                if ($isExpired) $statusKey = 'expired';
+                                elseif ($isExpiringSoon) $statusKey = 'expiring';
+                                
+                                // Collect all plate numbers for this case to make them searchable
+                                $plates = implode(' ', array_column($c['units'] ?? [], 'plate_no'));
+                            ?>
+                                <tr class="border-b transition-colors hover:bg-yellow-50/50 cursor-pointer bg-white franchise-row"
+                                    data-case-no="<?php echo strtolower($c['case_no']); ?>"
+                                    data-applicant="<?php echo strtolower($c['applicant_name']); ?>"
+                                    data-plates="<?php echo strtolower($plates); ?>"
+                                    data-status="<?php echo $statusKey; ?>"
+                                    data-expiry-group="<?php echo htmlspecialchars($expiry); ?>"
                                     onclick="document.getElementById('units-<?php echo $c['id']; ?>').classList.toggle('hidden')">
                                     <td class="px-4 py-3 font-medium text-gray-900"><?php echo htmlspecialchars($c['case_no']); ?></td>
                                     <td class="px-4 py-3">
@@ -430,6 +536,55 @@ document.addEventListener('keydown', function(event) {
         closeCaseModal();
     }
 });
+
+function filterFranchiseItems() {
+    const query = document.getElementById('franchiseSearch').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('.franchise-row');
+    const headers = document.querySelectorAll('.group-header');
+    
+    // Track which groups have visible items
+    const visibleGroups = new Set();
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const caseNo = row.dataset.caseNo;
+        const applicant = row.dataset.applicant;
+        const plates = row.dataset.plates;
+        const status = row.dataset.status;
+        const group = row.dataset.expiryGroup;
+        const unitDetailsRow = document.getElementById(`units-${row.id.split('-')[1]}`);
+
+        const matchesQuery = caseNo.includes(query) || applicant.includes(query) || plates.includes(query);
+        const matchesStatus = statusFilter === 'all' || status === statusFilter;
+
+        if (matchesQuery && matchesStatus) {
+            row.classList.remove('hidden');
+            visibleGroups.add(group);
+            visibleCount++;
+        } else {
+            row.classList.add('hidden');
+            // Also hide the detail row if open
+            const detailID = row.getAttribute('onclick').match(/units-(\d+)/)[1];
+            const detailRow = document.getElementById(`units-${detailID}`);
+            if (detailRow) detailRow.classList.add('hidden');
+        }
+    });
+
+    // Show/Hide headers based on visible items
+    headers.forEach(header => {
+        const groupName = header.dataset.expiryGroup;
+        if (visibleGroups.has(groupName)) {
+            header.classList.remove('hidden');
+        } else {
+            header.classList.add('hidden');
+        }
+    });
+
+    // Update total count badge if it exists
+    const totalBadge = document.getElementById('stat-total-cases');
+    if (totalBadge) totalBadge.textContent = visibleCount;
+}
 </script>
 
 </div>
