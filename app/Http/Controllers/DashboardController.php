@@ -41,19 +41,13 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // Units under coding (Today only - Automated via plate ending)
+        // Units under coding (Today only - Strictly Automated via plate ending)
         $todayDay = now()->timezone('Asia/Manila')->format('l');
-        $todayManualCodingIds = DB::table('coding_records')
-            ->whereNull('deleted_at')
-            ->whereDate('date', now()->toDateString())
-            ->pluck('unit_id')
-            ->toArray();
-
         $allFleetForCoding = DB::table('units')->whereNull('deleted_at')->get();
         
-        $codingUnitsCount = $allFleetForCoding->filter(function($unit) use ($todayDay, $todayManualCodingIds) {
+        $codingUnitsCount = $allFleetForCoding->filter(function($unit) use ($todayDay) {
             $codingDay = $unit->coding_day ?: $this->getCodingDay($unit->plate_number);
-            return ($codingDay === $todayDay || in_array($unit->id, $todayManualCodingIds));
+            return $codingDay === $todayDay;
         })->count();
 
         $stats['coding_units'] = $codingUnitsCount;
@@ -196,9 +190,9 @@ class DashboardController extends Controller
         })->values()->toArray();
 
         $allUnitsForStats = DB::table('units')->whereNull('deleted_at')->get();
-        $codingUnitsCount = $allUnitsForStats->filter(function($unit) use ($todayDay, $todayManualCodingIds) {
+        $codingUnitsCount = $allUnitsForStats->filter(function($unit) use ($todayDay) {
             $codingDay = $unit->coding_day ?: $this->getCodingDay($unit->plate_number);
-            return ($codingDay === $todayDay || in_array($unit->id, $todayManualCodingIds));
+            return $codingDay === $todayDay;
         })->count();
 
         $maintenanceUnitsCount = $allUnitsForStats->filter(function($unit) {
@@ -314,18 +308,12 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // Units under coding (Today only - Automated via plate ending + manual records)
+        // Units under coding (Today only - Strictly Automated)
         $todayDay = now()->format('l');
-        $todayManualCodingIds = DB::table('coding_records')
-            ->whereNull('deleted_at')
-            ->whereDate('date', now()->toDateString())
-            ->pluck('unit_id')
-            ->toArray();
-
         $allUnitsForStats = DB::table('units')->whereNull('deleted_at')->get();
-        $stats['coding_units'] = $allUnitsForStats->filter(function($unit) use ($todayDay, $todayManualCodingIds) {
-            $plateCodingDay = $this->getCodingDay($unit->plate_number);
-            return ($plateCodingDay === $todayDay || in_array($unit->id, $todayManualCodingIds));
+        $stats['coding_units'] = $allUnitsForStats->filter(function($unit) use ($todayDay) {
+            $codingDay = $unit->coding_day ?: $this->getCodingDay($unit->plate_number);
+            return $codingDay === $todayDay;
         })->count();
 
         // Units under maintenance
@@ -602,31 +590,11 @@ class DashboardController extends Controller
             // Get all units with complete real information
             // Get IDs of units that have a coding record today
             // Get IDs of units that have a coding record today OR match today's plate ending
-            $todayCodingUnitIds = DB::table('coding_records')
-                ->whereDate('date', now()->toDateString())
-                ->whereNull('deleted_at')
-                ->pluck('unit_id')
-                ->toArray();
-            
-            $todayDay = now()->format('l'); // Friday, etc.
-
-            $units = DB::table('units')
-                ->whereNull('deleted_at')
-                ->select('id', 'status', 'boundary_rate', 'purchase_cost', 'plate_number', 'driver_id')
-                ->orderBy('plate_number')
-                ->get()
-                ->map(function($unit) use ($todayCodingUnitIds, $todayDay) {
-                    $isCodingToday = in_array($unit->id, $todayCodingUnitIds);
-                    
-                    // Force 'coding' status ONLY if it has a record today.
-                    // If it's marked as coding in DB but has no record today, treat as 'active' for this view.
-                    $displayStatus = strtolower($unit->status);
-                    
                     // Automation: Identify if it should be coding based on plate number
                     $plateCodingDay = $this->getCodingDay($unit->plate_number);
                     $shouldBeCodingToday = ($plateCodingDay === $todayDay);
 
-                    if ($isCodingToday || $shouldBeCodingToday) {
+                    if ($shouldBeCodingToday) {
                         $displayStatus = 'coding';
                     } elseif ($displayStatus === 'coding' && !$shouldBeCodingToday) {
                         $displayStatus = 'active';
