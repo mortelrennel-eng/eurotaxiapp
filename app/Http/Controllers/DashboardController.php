@@ -43,11 +43,17 @@ class DashboardController extends Controller
 
         // Units under coding (Today only - Automated via plate ending)
         $todayDay = now()->timezone('Asia/Manila')->format('l');
+        $todayManualCodingIds = DB::table('coding_records')
+            ->whereNull('deleted_at')
+            ->whereDate('date', now()->toDateString())
+            ->pluck('unit_id')
+            ->toArray();
+
         $allFleetForCoding = DB::table('units')->whereNull('deleted_at')->get();
         
-        $codingUnitsCount = $allFleetForCoding->filter(function($unit) use ($todayDay) {
+        $codingUnitsCount = $allFleetForCoding->filter(function($unit) use ($todayDay, $todayManualCodingIds) {
             $codingDay = $unit->coding_day ?: $this->getCodingDay($unit->plate_number);
-            return $codingDay === $todayDay;
+            return ($codingDay === $todayDay || in_array($unit->id, $todayManualCodingIds));
         })->count();
 
         $stats['coding_units'] = $codingUnitsCount;
@@ -191,8 +197,8 @@ class DashboardController extends Controller
 
         $allUnitsForStats = DB::table('units')->whereNull('deleted_at')->get();
         $codingUnitsCount = $allUnitsForStats->filter(function($unit) use ($todayDay, $todayManualCodingIds) {
-            $plateCodingDay = $this->getCodingDay($unit->plate_number);
-            return ($plateCodingDay === $todayDay || in_array($unit->id, $todayManualCodingIds));
+            $codingDay = $unit->coding_day ?: $this->getCodingDay($unit->plate_number);
+            return ($codingDay === $todayDay || in_array($unit->id, $todayManualCodingIds));
         })->count();
 
         $maintenanceUnitsCount = $allUnitsForStats->filter(function($unit) {
