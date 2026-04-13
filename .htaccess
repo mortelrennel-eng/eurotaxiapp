@@ -14,15 +14,23 @@
     RewriteCond %{REQUEST_URI} ^/google[a-z0-9]+\.html [NC]
     RewriteRule ^ - [L]
 
-    # If the request is for an existing file inside public/, serve it directly
-    RewriteCond %{REQUEST_URI} ^/public/
+    # MAINTENANCE MODE EXCLUSIONS (when enabled)
+    # These allow maintenance assets to load even when maintenance is ON
+    RewriteCond %{REQUEST_URI} ^(/public)?/maintenance\.html [NC,OR]
+    RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|svg|ico|webp|json|html) [NC]
     RewriteRule ^ - [L]
 
     # MAINTENANCE MODE TOGGLE
-    # To ENABLE maintenance mode:  Uncomment the next 2 lines
-    # To DISABLE maintenance mode: Comment the next 2 lines (normal site operation)
-    # RewriteRule ^ - [E=SITE_MAINTENANCE:1]
-    # RewriteRule ^(.*)$ public/maintenance.html [L]
+    # Comment the line below to ENABLE maintenance mode (shows maintenance.html)
+    # Uncomment the line below to DISABLE maintenance mode (normal site)
+    RewriteRule ^ public/index.php [L]
+
+    # If we are here, maintenance mode is ENABLED.
+    # Set environment variable for headers
+    RewriteRule ^ - [E=SITE_MAINTENANCE:1]
+    
+    # Serve maintenance page
+    RewriteRule ^(.*)$ /public/maintenance.html [L]
 
     # Prevent browser from caching maintenance page
     <IfModule mod_headers.c>
@@ -36,8 +44,10 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send ALL Requests To Laravel Front Controller
-    RewriteRule ^(.*)$ public/index.php [L]
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ public/index.php [L]
 </IfModule>
 
 # Gzip compression
@@ -86,4 +96,8 @@
     php_flag display_errors Off
     php_value memory_limit 256M
     php_value max_execution_time 300
+    # Send Requests To Front Controller even in PHP8 block...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ public/index.php [L]
 </IfModule>
