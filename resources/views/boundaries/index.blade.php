@@ -431,8 +431,8 @@
                         <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
                             <input type="checkbox" name="needs_maintenance_zero" id="needsMaintenanceZeroCheck" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 needs-maintenance-opt">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down Immediately (< 2 hrs)</span>
-                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down within 2 hours of deployment. Sets target boundary to 0.</span>
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down Immediately (< 5 hrs)</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down within 5 hours of deployment. Sets target boundary to 0.</span>
                             </div>
                         </label>
 
@@ -1350,13 +1350,13 @@ function updateBreakdownComputation() {
     document.getElementById('calculatedHours').value = hoursDriven;
 
     if (zeroCheck.checked) {
-        if (parseFloat(hoursDriven) < 2) {
-            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-green-700">${hoursDriven} hrs (< 2hr)</span></span>
+        if (parseFloat(hoursDriven) < 5) {
+            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-green-700">${hoursDriven} hrs (< 5hr)</span></span>
                                      <span class="flex justify-between border-t border-blue-100 mt-1 pt-1"><span>Target:</span> <span class="font-bold text-green-700">₱0.00 (No Boundary)</span></span>`;
             amtInput.value = '0.00';
             actInput.value = '0.00';
         } else {
-            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-red-600">${hoursDriven} hrs (> 2hr)</span></span>
+            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-red-600">${hoursDriven} hrs (> 5hr)</span></span>
                                      <span class="flex justify-between border-t border-blue-100 mt-1 pt-1"><span>Target (Hourly):</span> <span class="font-bold text-red-700">₱${parseFloat(prorated).toLocaleString()}</span></span>`;
             amtInput.value = prorated;
             actInput.value = prorated;

@@ -330,7 +330,7 @@ class BoundaryController extends Controller
                                 ? "Automatic entry: Reported broken down during boundary turnover (Half Boundary).\nComputation: " . $comp_note
                                 : "Automatic entry: Reported broken down immediately upon deployment (No Boundary).";
                             
-                            if ($needs_maintenance_zero && $hours_driven >= 2) {
+                            if ($needs_maintenance_zero && $hours_driven >= 5) {
                                 $repair_desc .= "\nNote: Driver claimed 'No Boundary' but unit was out for " . number_format($hours_driven, 2) . " hrs.";
                             }
                             
@@ -356,9 +356,9 @@ class BoundaryController extends Controller
                             // Auto-log to Driver Performance
                             $behavior_desc = $needs_maintenance_half
                                 ? "Auto-logged [Breakdown]: Unit broke down after " . number_format($hours_driven, 2) . " hrs on shift."
-                                : "Auto-logged [Breakdown]: Unit broke down immediately upon deployment (< 2 hrs).";
+                                : "Auto-logged [Breakdown]: Unit broke down immediately upon deployment (< 5 hrs).";
                                 
-                            if ($needs_maintenance_zero && $hours_driven >= 2) {
+                            if ($needs_maintenance_zero && $hours_driven >= 5) {
                                 $behavior_desc = "Auto-logged [Breakdown]: Unit broke down after " . number_format($hours_driven, 2) . " hrs. No boundary collected.";
                             }
 
@@ -366,7 +366,7 @@ class BoundaryController extends Controller
                                 'unit_id'       => $unit_id,
                                 'driver_id'     => $driver_id,
                                 'incident_type' => 'other',
-                                'severity'      => ($needs_maintenance_half || ($needs_maintenance_zero && $hours_driven >= 2)) ? 'medium' : 'low',
+                                'severity'      => ($needs_maintenance_half || ($needs_maintenance_zero && $hours_driven >= 5)) ? 'medium' : 'low',
                                 'description'   => $behavior_desc,
                                 'latitude'      => 0,
                                 'longitude'     => 0,
