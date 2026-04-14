@@ -105,7 +105,8 @@ class MaintenanceController extends Controller
             'unit_id' => 'required|integer',
             'driver_id' => 'nullable|integer',
             'maintenance_type' => 'required|string',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
+            'dispatcher_notes' => 'nullable|string',
             'labor_cost' => 'nullable|numeric|min:0',
             'odometer_reading' => 'nullable|integer',
             'date_started' => 'required|date',
@@ -121,6 +122,11 @@ class MaintenanceController extends Controller
         // Combine mechanic names
         $mechs = array_filter($data['mechanic_name']);
         $data['mechanic_name'] = implode(', ', $mechs);
+
+        if (!empty($data['dispatcher_notes'])) {
+            $data['description'] .= "\n\nDispatcher Notes:\n" . trim($data['dispatcher_notes']);
+        }
+        unset($data['dispatcher_notes']);
 
         // Process parts and other costs if provided
         if (!empty($data['parts_data'])) {
@@ -193,7 +199,8 @@ class MaintenanceController extends Controller
             'unit_id' => 'required|integer',
             'driver_id' => 'nullable|integer',
             'maintenance_type' => 'required|string',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
+            'dispatcher_notes' => 'nullable|string',
             'labor_cost' => 'nullable|numeric|min:0',
             'odometer_reading' => 'nullable|integer',
             'date_started' => 'required|date',
@@ -209,6 +216,11 @@ class MaintenanceController extends Controller
         // Combine mechanic names
         $mechs = array_filter($data['mechanic_name']);
         $data['mechanic_name'] = implode(', ', $mechs);
+
+        if (!empty($data['dispatcher_notes'])) {
+            $data['description'] .= "\n\nDispatcher Notes:\n" . trim($data['dispatcher_notes']);
+        }
+        unset($data['dispatcher_notes']);
 
         // Process parts if provided
         if (!empty($data['parts_data'])) {

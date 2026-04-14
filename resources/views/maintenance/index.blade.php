@@ -490,9 +490,15 @@
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
-                    <textarea name="description" id="em_description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:outline-none"></textarea>
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Service / Reported Issue *</label>
+                        <textarea name="description" id="em_description" required rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:outline-none bg-gray-50"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-blue-700 mb-1">Dispatcher Notes (Optional)</label>
+                        <textarea name="dispatcher_notes" id="em_dispatcher_notes" rows="2" placeholder="Additional remarks..." class="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-blue-50 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-tight">Mechanic Name *</label>
@@ -638,14 +644,14 @@
                         <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <i data-lucide="info" class="w-3 h-3 text-yellow-600"></i> Service Description
                         </h4>
-                        <div id="viewDescription" class="p-4 bg-gray-50 rounded-xl text-gray-700 text-sm italic border-l-4 border-yellow-200 leading-relaxed shadow-sm max-h-[76px] overflow-y-auto custom-scrollbar whitespace-pre-wrap"></div>
+                        <div id="viewDescription" class="p-4 bg-gray-50 rounded-xl text-gray-700 text-sm italic border-l-4 border-yellow-200 leading-relaxed shadow-sm max-h-[76px] overflow-y-auto custom-scrollbar break-words whitespace-pre-wrap"></div>
                     </div>
 
                     <div id="dispatcherNotesContainer" class="hidden">
                         <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4 mb-3 flex items-center gap-2">
                             <i data-lucide="message-square" class="w-3 h-3 text-blue-500"></i> Dispatcher Notes
                         </h4>
-                        <div id="viewDispatcherNotes" class="p-4 bg-blue-50/50 rounded-xl text-gray-700 text-sm italic border-l-4 border-blue-400 leading-relaxed shadow-sm max-h-[76px] overflow-y-auto custom-scrollbar whitespace-pre-wrap"></div>
+                        <div id="viewDispatcherNotes" class="p-4 bg-blue-50/50 rounded-xl text-gray-700 text-sm italic border-l-4 border-blue-400 leading-relaxed shadow-sm max-h-[76px] overflow-y-auto custom-scrollbar break-words whitespace-pre-wrap"></div>
                     </div>
                     
                     <div>
@@ -904,7 +910,17 @@ async function openEditMaint(btn) {
 
     document.getElementById('em_type').value   = r.maintenance_type || 'preventive';
     document.getElementById('em_status').value = r.status || 'pending';
-    document.getElementById('em_description').value = r.description || '';
+    
+    let fullDesc = r.description || '';
+    let splitIdx = fullDesc.indexOf('Dispatcher Notes:');
+    
+    if (splitIdx !== -1) {
+        document.getElementById('em_description').value = fullDesc.substring(0, splitIdx).trim();
+        document.getElementById('em_dispatcher_notes').value = fullDesc.substring(splitIdx + 'Dispatcher Notes:'.length).trim();
+    } else {
+        document.getElementById('em_description').value = fullDesc;
+        document.getElementById('em_dispatcher_notes').value = '';
+    }
     
     // Handle Multiple Mechanics — filter empty strings before checking length
     const mechs = (r.mechanic_name || '').split(',').map(m => m.trim()).filter(m => m.length > 0);
