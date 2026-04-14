@@ -299,7 +299,6 @@ class BoundaryController extends Controller
                                 'longitude'     => 0,
                                 'video_url'     => '',
                                 'created_at'    => $now,
-                                'updated_at'    => $now,
                             ]);
                         }
 
@@ -345,7 +344,6 @@ class BoundaryController extends Controller
                                 'longitude'     => 0,
                                 'video_url'     => '',
                                 'created_at'    => $now,
-                                'updated_at'    => $now,
                             ]);
                         }
 
@@ -381,25 +379,68 @@ class BoundaryController extends Controller
             $actual_boundary = (float) $request->input('actual_boundary', 0);
             $notes           = $request->input('notes', '');
             
-            if ($id > 0 && $boundary_amount > 0) {
+            $past_cutoff = $request->has('past_cutoff');
+            $vehicle_damaged = $request->has('vehicle_damaged');
+            $needs_maintenance_half = $request->has('needs_maintenance_half');
+            $needs_maintenance_zero = $request->has('needs_maintenance_zero');
+
+            // Allow 0 amount if expressly No Boundary due to Breakdown
+            $is_valid_amount = $needs_maintenance_zero ? ($boundary_amount >= 0) : ($boundary_amount > 0);
+            
+            if ($id > 0 && $is_valid_amount) {
+                // Strip existing system-generated tags from notes to prevent duplicates on edit
+                $clean_notes = preg_replace('/\[Automatic Violation:.*?\]/i', '', $notes);
+                $clean_notes = preg_replace('/\[Unit Sent to Maintenance.*?\]/i', '', $clean_notes);
+                $clean_notes = trim($clean_notes);
+
+                $has_incentive = true;
+
+                if ($past_cutoff) {
+                    $has_incentive = false;
+                    $clean_notes .= " [Automatic Violation: Late Boundary (Past 10:00 AM)]";
+                }
+                if ($vehicle_damaged) {
+                    $has_incentive = false;
+                    $clean_notes .= " [Automatic Violation: Vehicle Damaged]";
+                }
+                if ($needs_maintenance_half) {
+                    $clean_notes .= " [Unit Sent to Maintenance - Shift Schedule Paused (Half Boundary)]";
+                }
+                if ($needs_maintenance_zero) {
+                    $clean_notes .= " [Unit Sent to Maintenance - Shift Schedule Paused (No Boundary)]";
+                }
+                
+                $clean_notes = trim($clean_notes);
+
                 $shortage = max(0, $boundary_amount - $actual_boundary);
                 $excess   = max(0, $actual_boundary - $boundary_amount);
                 $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
                 $boundary = Boundary::find($id);
                 if ($boundary) {
+                    // Update legacy check - if deadline passed but not overridden by past_cutoff
+                    if (!$past_cutoff && $boundary->unit && $boundary->unit->shift_deadline_at) {
+                        $deadline = Carbon::parse($boundary->unit->shift_deadline_at);
+                        $boundary_time = Carbon::parse($boundary->created_at);
+                        if ($boundary_time->greaterThan($deadline)) {
+                            $has_incentive = false; // Kept late status from original stamp
+                        }
+                    }
+
                     $boundary->update([
                         'boundary_amount' => $boundary_amount,
                         'actual_boundary' => $actual_boundary,
                         'shortage'        => $shortage,
                         'excess'          => $excess,
                         'status'          => $status,
-                        'notes'           => $notes,
+                        'notes'           => $clean_notes,
+                        'has_incentive'   => $has_incentive,
+                        'vehicle_damaged' => $vehicle_damaged ? 1 : 0,
                     ]);
                 }
                 return redirect()->route('boundaries.index')->with('success', 'Boundary record updated successfully');
             } else {
-                return back()->with('error', 'Please fill in all required fields');
+                return back()->with('error', 'Please fill in all required fields (Target amount must be valid)');
             }
         }
 
