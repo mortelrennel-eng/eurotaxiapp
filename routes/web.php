@@ -97,8 +97,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/coding/update-day', [CodingController::class, 'updateCodingDay'])->name('coding.update-day');
 
     // Driver Behavior Resource Routes
-    Route::resource('driver-behavior', DriverBehaviorController::class);
+    Route::resource('driver-behavior', DriverBehaviorController::class)->except(['edit','update','show']);
     Route::get('/driver-behavior/statistics', [DriverBehaviorController::class, 'getStatistics'])->name('driver-behavior.statistics');
+    Route::get('/driver-behavior/driver/{id}', [DriverBehaviorController::class, 'getDriverPerformance'])->name('driver-behavior.driver-performance');
+    Route::post('/driver-behavior/release-incentive', [DriverBehaviorController::class, 'releaseIncentive'])->name('driver-behavior.release-incentive');
 
     // Driver Management Resource Routes
     Route::resource('driver-management', DriverManagementController::class);
