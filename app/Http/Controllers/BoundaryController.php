@@ -316,6 +316,11 @@ class BoundaryController extends Controller
                             $repair_desc = $needs_maintenance_half 
                                 ? 'Automatic entry: Reported broken down during boundary turnover (Half Boundary).'
                                 : 'Automatic entry: Reported broken down immediately upon deployment (No Boundary).';
+                            
+                            $dispatcher_notes = trim($request->input('notes', ''));
+                            if (!empty($dispatcher_notes)) {
+                                $repair_desc .= "\n\nDispatcher Notes:\n" . $dispatcher_notes;
+                            }
 
                             $notes = trim($notes . " [Unit Sent to Maintenance - Shift Schedule Paused (" . ($needs_maintenance_half ? "Half Boundary" : "No Boundary") . ")]");
 
