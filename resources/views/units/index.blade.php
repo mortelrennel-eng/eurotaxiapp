@@ -455,30 +455,30 @@
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Make <span class="text-red-500">*</span></label>
-                            <input type="text" name="make" id="editMake" required
+                            <input type="text" name="make" id="editMake"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Model <span class="text-red-500">*</span></label>
-                            <input type="text" name="model" id="editModel" required
+                            <input type="text" name="model" id="editModel"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Year <span class="text-red-500">*</span></label>
-                            <input type="number" name="year" id="editYear" required
+                            <input type="number" name="year" id="editYear"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Motor No <span class="text-red-500">*</span></label>
-                            <input type="text" name="motor_no" id="editMotorNo" required
+                            <input type="text" name="motor_no" id="editMotorNo"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 oninput="this.value = this.value.toUpperCase()">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Chassis No <span class="text-red-500">*</span></label>
-                            <input type="text" name="chassis_no" id="editChassisNo" required
+                            <input type="text" name="chassis_no" id="editChassisNo"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 oninput="this.value = this.value.toUpperCase()">
                         </div>
