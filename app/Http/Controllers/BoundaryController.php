@@ -304,6 +304,17 @@ class BoundaryController extends Controller
                             ]);
                         }
 
+                        // --- NEW: Check for Coding Violations ---
+                        $coding_violation = DB::table('coding_violations')
+                            ->where('unit_id', $unit_id)
+                            ->whereDate('violation_time', $date)
+                            ->exists();
+
+                        if ($coding_violation) {
+                            $has_incentive = false;
+                            $notes = trim($notes . " [Automatic Violation: Coding Violation Detected on Map]");
+                        }
+
                         $update_data = [
                             'current_turn_driver_id' => $next_turn_driver_id,
                             'last_swapping_at' => $now,

@@ -72,6 +72,26 @@ async function updateFleetData() {
                 apiStatus.className = 'api-status-text text-[10px] font-black text-green-600 uppercase';
             }
 
+            // Sync Notification Bell (Real-time Notif)
+            if (data.alerts) {
+                const bell = document.getElementById('notificationBell');
+                if (bell) {
+                    let badge = bell.querySelector('span');
+                    const count = data.alerts.length;
+                    
+                    if (count > 0) {
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] leading-[18px] rounded-full text-center';
+                            bell.appendChild(badge);
+                        }
+                        badge.textContent = count;
+                    } else if (badge) {
+                        badge.remove();
+                    }
+                }
+            }
+
             // Auto-follow logic
             if (followingUnitId && markers[followingUnitId]) {
                 const latlng = markers[followingUnitId].getLatLng();

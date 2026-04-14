@@ -192,7 +192,7 @@ class LiveTrackingController extends Controller
                 ->leftJoin('drivers as d1', 'u.driver_id', '=', 'd1.id')
                 ->leftJoin('drivers as d2', 'u.secondary_driver_id', '=', 'd2.id')
                 ->select(
-                    'u.id', 'u.plate_number', 'u.imei', 'u.status',
+                    'u.id', 'u.plate_number', 'u.imei', 'u.status', 'u.driver_id',
             DB::raw("TRIM(CONCAT(COALESCE(d1.first_name,''), ' ', COALESCE(d1.last_name,''))) as driver_name"),
             DB::raw("TRIM(CONCAT(COALESCE(d2.first_name,''), ' ', COALESCE(d2.last_name,''))) as secondary_driver"),
                     'd1.contact_number as driver_phone'
@@ -248,6 +248,7 @@ class LiveTrackingController extends Controller
 
                 return [
                     'unit_id'         => $unit->id,
+                    'driver_id'       => $unit->driver_id,
                     'plate_number'    => $unit->plate_number,
                     'driver_name'     => $unit->driver_name ?? 'None',
                     'secondary_driver'=> $unit->secondary_driver,
@@ -293,7 +294,7 @@ class LiveTrackingController extends Controller
                 $realtimeDist = max(0, $currentOdo - $startMileage);
                 $unitData['daily_dist'] = round($realtimeDist, 2);
 
-                // --- NEW: MMDA Coding Violation Check ---
+                // --- MMDA Coding Violation Check ---
                 $unitData['violation'] = null;
                 if ($unitData['latitude'] !== null && $unitData['longitude'] !== null) {
                     $violation = $this->coding->checkViolation($unitData['plate_number'], $unitData['latitude'], $unitData['longitude']);
@@ -301,10 +302,16 @@ class LiveTrackingController extends Controller
                     if ($violation) {
                         $unitData['violation'] = $violation;
                         
-                        // Database Logging with 30-minute cool-down
+                        // Strict Date/Time normalization for Manila
+                        $nowManila = now()->timezone('Asia/Manila');
+                        $localViolationTime = $unitData['last_update'] 
+                            ? \Carbon\Carbon::parse($unitData['last_update'], 'UTC')->timezone('Asia/Manila') 
+                            : $nowManila;
+
+                        // Database Logging with 30-minute cool-down (Corrected Timezone Logic)
                         $recentViolation = CodingViolation::where('unit_id', $unitData['unit_id'])
                             ->where('violation_type', $violation['type'])
-                            ->where('violation_time', '>=', now()->subMinutes(30))
+                            ->where('violation_time', '>=', $nowManila->copy()->subMinutes(30))
                             ->first();
                             
                         if (!$recentViolation) {
@@ -320,21 +327,46 @@ class LiveTrackingController extends Controller
                                 if ($response->successful()) {
                                     $address = $response->json()['display_name'] ?? $address;
                                 }
-                            } catch (\Exception $e) {
-                                // Fallback to road name if geocoding fails
-                            }
+                            } catch (\Exception $e) { /* Geocoding fallback */ }
 
+                            // 1. Log to Coding Violations (Historical)
                             CodingViolation::create([
                                 'unit_id' => $unitData['unit_id'],
                                 'violation_type' => $violation['type'],
-                                'location_name' => $address, // Use accurate address
+                                'location_name' => $address,
                                 'latitude' => $unitData['latitude'],
                                 'longitude' => $unitData['longitude'],
-                                'violation_time' => $unitData['last_update'] ? \Carbon\Carbon::parse($unitData['last_update'])->timezone('Asia/Manila') : now()->timezone('Asia/Manila')
+                                'violation_time' => $localViolationTime
+                            ]);
+
+                            // 2. Log to Driver Behavior (Performance)
+                            if ($unitData['driver_id']) {
+                                DB::table('driver_behavior')->insert([
+                                    'unit_id' => $unitData['unit_id'],
+                                    'driver_id' => $unitData['driver_id'],
+                                    'incident_type' => 'Coding Violation',
+                                    'severity' => 'High',
+                                    'description' => "Caught moving during coding hours in {$violation['location']} ({$violation['type']}). Address: {$address}",
+                                    'latitude' => $unitData['latitude'],
+                                    'longitude' => $unitData['longitude'],
+                                    'timestamp' => $localViolationTime,
+                                    'created_at' => now()
+                                ]);
+                            }
+
+                            // 3. Log to System Alerts (Real-time Notification)
+                            DB::table('system_alerts')->insert([
+                                'title' => "Coding Violation: {$unitData['plate_number']}",
+                                'message' => "Unit detected in {$violation['location']} restricted area. Driver: {$unitData['driver_name']}.",
+                                'type' => 'danger',
+                                'is_resolved' => false,
+                                'created_at' => now(),
+                                'updated_at' => now()
                             ]);
                         }
                     }
                 }
+
 
                 // Update DB only if coordinates are valid
                 if ($unitData['latitude'] !== null && $unitData['longitude'] !== null) {
@@ -364,7 +396,12 @@ class LiveTrackingController extends Controller
                     'idle'    => collect($gps_data)->where('gps_status', 'idle')->count(),
                     'stopped' => collect($gps_data)->where('gps_status', 'stopped')->count(),
                     'offline' => collect($gps_data)->where('gps_status', 'offline')->count()
-                ]
+                ],
+                'alerts' => DB::table('system_alerts')
+                    ->where('is_resolved', false)
+                    ->orderByDesc('created_at')
+                    ->limit(10)
+                    ->get()
             ]);
 
         } catch (\Exception $e) {

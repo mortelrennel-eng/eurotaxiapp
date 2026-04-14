@@ -68,7 +68,25 @@
             // Notifications for header bell
             $headerNotifications = [];
             
-            // Merge specialized notifications from views if they exist
+            // 1. Fetch System Alerts from DB
+            $dbAlerts = DB::table('system_alerts')
+                ->where('is_resolved', false)
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get();
+
+            foreach($dbAlerts as $alert) {
+                $headerNotifications[] = [
+                    'id' => $alert->id,
+                    'title' => $alert->title,
+                    'message' => $alert->message,
+                    'type' => 'system',
+                    'severity' => $alert->type, // e.g., 'danger', 'warning'
+                    'url' => route('driver-behavior.index') // Link coding violations to behavior page
+                ];
+            }
+            
+            // 2. Merge specialized notifications from views if they exist
             if(isset($maintNotifs)) { $headerNotifications = array_merge($headerNotifications, $maintNotifs); }
             if(isset($expiringFranchise)) { $headerNotifications = array_merge($headerNotifications, $expiringFranchise); }
             
