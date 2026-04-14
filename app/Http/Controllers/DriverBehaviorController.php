@@ -349,16 +349,22 @@ class DriverBehaviorController extends Controller
                 while ($firstSunday->dayOfWeek !== Carbon::SUNDAY) { $firstSunday->addDay(); }
                 
                 if ($now->gt($firstSunday->endOfDay())) {
-                    // Passed -> Next payout is in 2 months
+                    // Passed -> Next natural payout is in 2 months
                     $targetMonth = $now->copy()->addMonths(2)->startOfMonth();
                 } else {
-                    // Not passed -> Payout is THIS month
+                    // Not passed -> Natural payout is THIS month
                     $targetMonth = $now->copy()->startOfMonth();
                 }
             } else {
                 // Not the payout month -> Payout is NEXT month
                 $targetMonth = $now->copy()->addMonth()->startOfMonth();
             }
+
+            // [NEW] Skip logic: If there are violations, jump one more 2-month cycle
+            if ($violations > 0) {
+                $targetMonth->addMonths(2);
+            }
+
         } else {
             // Solo Driver: Strictly 1 month cycle. Payout is every 1st Sunday.
             $firstSunday = $now->copy()->startOfMonth();
@@ -368,6 +374,11 @@ class DriverBehaviorController extends Controller
                 $targetMonth = $now->copy()->addMonth()->startOfMonth();
             } else {
                 $targetMonth = $now->copy()->startOfMonth();
+            }
+
+            // [NEW] Skip logic: If there are violations, jump one more month
+            if ($violations > 0) {
+                $targetMonth->addMonth();
             }
         }
 
