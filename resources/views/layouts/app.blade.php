@@ -68,11 +68,11 @@
             // Notifications for header bell
             $headerNotifications = [];
             
-            // 1. Fetch System Alerts from DB
+            // 1. Fetch System Alerts from DB (REAL-TIME VIOLATIONS FIRST)
             $dbAlerts = DB::table('system_alerts')
                 ->where('is_resolved', false)
                 ->orderByDesc('created_at')
-                ->limit(10)
+                ->limit(15)
                 ->get();
 
             foreach($dbAlerts as $alert) {
@@ -80,13 +80,13 @@
                     'id' => $alert->id,
                     'title' => $alert->title,
                     'message' => $alert->message,
-                    'type' => 'system',
+                    'type' => 'violation_alert', // Custom type for special handling
                     'severity' => $alert->type, // e.g., 'danger', 'warning'
-                    'url' => route('driver-behavior.index') // Link coding violations to behavior page
+                    'url' => route('driver-behavior.index') 
                 ];
             }
             
-            // 2. Merge specialized notifications from views if they exist
+            // 2. Merge specialized notifications from views if they exist (BOTTOM)
             if(isset($maintNotifs)) { $headerNotifications = array_merge($headerNotifications, $maintNotifs); }
             if(isset($expiringFranchise)) { $headerNotifications = array_merge($headerNotifications, $expiringFranchise); }
             
@@ -288,6 +288,8 @@
                                                                 <i data-lucide="file-warning" class="w-4 h-4 text-yellow-600"></i>
                                                             @elseif($n['type'] === 'coding_today')
                                                                 <i data-lucide="car-front" class="w-4 h-4 text-blue-600"></i>
+                                                            @elseif($n['type'] === 'violation_alert')
+                                                                <i data-lucide="shield-alert" class="w-4 h-4 text-red-600"></i>
                                                             @else
                                                                 <i data-lucide="alert-circle" class="w-4 h-4 text-red-600"></i>
                                                             @endif
