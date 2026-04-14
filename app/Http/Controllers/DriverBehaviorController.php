@@ -412,9 +412,11 @@ class DriverBehaviorController extends Controller
         $bySev = (clone $base)->selectRaw('severity, COUNT(*) as count')->groupBy('severity')->get()->pluck('count', 'severity')->toArray();
         $byType = (clone $base)->selectRaw('incident_type, COUNT(*) as count')->groupBy('incident_type')->orderByDesc('count')->limit(8)->get();
 
-        $totalViolators = DB::table('driver_behavior')->whereDate('timestamp', '>=', $from)
-            ->where(function($q) { $q->where('severity', 'high')->orWhere('severity', 'critical')->orWhere('is_driver_fault', true); })
-            ->distinct('driver_id')->count('driver_id');
+        $totalViolators = DB::table('driver_behavior')
+            ->whereDate('timestamp', '>=', $from)
+            ->whereDate('timestamp', '<=', $to)
+            ->distinct('driver_id')
+            ->count('driver_id');
 
         $totalCharges   = DB::table('driver_behavior')->sum('total_charge_to_driver');
         $pendingCharges = DB::table('driver_behavior')->where('charge_status', 'pending')->sum('total_charge_to_driver');

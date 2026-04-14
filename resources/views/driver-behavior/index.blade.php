@@ -15,36 +15,34 @@
 </style>
 
 {{-- ════════ HEADER STATS ════════ --}}
-<div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="stat-card col-span-1">
-        <div class="p-3 bg-slate-100 rounded-xl"><i data-lucide="activity" class="w-5 h-5 text-slate-600"></i></div>
-        <div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Incidents Period</p>
-        <p class="text-xl font-black text-gray-800">{{ $stats['incidents_period'] ?? 0 }}</p></div>
+        <div class="p-3 bg-red-100 rounded-xl"><i data-lucide="activity" class="w-5 h-5 text-red-600"></i></div>
+        <div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Incidents</p>
+            <p class="text-2xl font-black text-gray-800">{{ $stats['incidents_period'] ?? 0 }}</p>
+        </div>
     </div>
     <div class="stat-card col-span-1">
-        <div class="p-3 bg-red-100 rounded-xl"><i data-lucide="shield-alert" class="w-5 h-5 text-red-600"></i></div>
-        <div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Critical</p>
-        <p class="text-xl font-black text-red-600">{{ $stats['by_severity']['critical'] ?? 0 }}</p></div>
-    </div>
-    <div class="stat-card col-span-1">
-        <div class="p-3 bg-orange-100 rounded-xl"><i data-lucide="alert-triangle" class="w-5 h-5 text-orange-600"></i></div>
-        <div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">High</p>
-        <p class="text-xl font-black text-orange-600">{{ $stats['by_severity']['high'] ?? 0 }}</p></div>
-    </div>
-    <div class="stat-card col-span-1">
-        <div class="p-3 bg-red-50 rounded-xl"><i data-lucide="users" class="w-5 h-5 text-red-500"></i></div>
-        <div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Violators</p>
-        <p class="text-xl font-black text-gray-800">{{ $stats['total_violators'] ?? 0 }}</p></div>
+        <div class="p-3 bg-orange-100 rounded-xl"><i data-lucide="users" class="w-5 h-5 text-orange-600"></i></div>
+        <div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Violators</p>
+            <p class="text-2xl font-black text-gray-800">{{ $stats['total_violators'] ?? 0 }}</p>
+        </div>
     </div>
     <div class="stat-card col-span-1">
         <div class="p-3 bg-purple-100 rounded-xl"><i data-lucide="banknote" class="w-5 h-5 text-purple-600"></i></div>
-        <div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Charges</p>
-        <p class="text-xl font-black text-gray-800">₱{{ number_format($stats['total_charges'] ?? 0, 0) }}</p></div>
+        <div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Charges</p>
+            <p class="text-2xl font-black text-gray-800">₱{{ number_format($stats['total_charges'] ?? 0, 0) }}</p>
+        </div>
     </div>
-    <div class="stat-card col-span-1">
+    <div class="stat-card col-span-1 border-yellow-200 bg-yellow-50/30">
         <div class="p-3 bg-yellow-100 rounded-xl"><i data-lucide="trophy" class="w-5 h-5 text-yellow-600"></i></div>
-        <div><p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Eligible Incentive</p>
-        <p class="text-xl font-black text-yellow-600">{{ count($incentive_summary['eligible'] ?? []) }}</p></div>
+        <div>
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Eligible Incentive</p>
+            <p class="text-2xl font-black text-yellow-600">{{ count($incentive_summary['eligible'] ?? []) }}</p>
+        </div>
     </div>
 </div>
 
