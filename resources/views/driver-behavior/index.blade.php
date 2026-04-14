@@ -271,10 +271,20 @@
         <div class="bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl p-5 text-white shadow-lg">
             <i data-lucide="calendar-check" class="w-6 h-6 mb-2 opacity-80"></i>
             @php
-                $nextSunday = now()->timezone('Asia/Manila');
-                while($nextSunday->dayOfWeek !== \Carbon\Carbon::SUNDAY) { $nextSunday->addDay(); }
+                $now = now()->timezone('Asia/Manila');
+                $firstSundayThisMonth = $now->copy()->startOfMonth();
+                while($firstSundayThisMonth->dayOfWeek !== \Carbon\Carbon::SUNDAY) { $firstSundayThisMonth->addDay(); }
+                
+                if ($now->gt($firstSundayThisMonth->endOfDay())) {
+                    // Already passed this month's, target next month
+                    $targetDate = $now->copy()->addMonth()->startOfMonth();
+                } else {
+                    $targetDate = $now->copy()->startOfMonth();
+                }
+
+                while($targetDate->dayOfWeek !== \Carbon\Carbon::SUNDAY) { $targetDate->addDay(); }
             @endphp
-            <p class="text-xl font-black">{{ $nextSunday->format('M d, Y') }}</p>
+            <p class="text-xl font-black">{{ $targetDate->format('M d, Y') }}</p>
             <p class="text-xs font-black uppercase tracking-widest opacity-80 mt-1">Next Payout Sunday</p>
         </div>
     </div>
