@@ -291,4 +291,42 @@ class MaintenanceController extends Controller
         $maintenance->delete();
         return redirect()->route('maintenance.index')->with('success', 'Maintenance record archived.');
     }
+
+    public function toggleComplete($id)
+    {
+        $maint = Maintenance::findOrFail($id);
+        
+        DB::transaction(function () use ($maint) {
+            if ($maint->date_completed) {
+                // Uncomplete: Set back to pending and clear date
+                $maint->update([
+                    'date_completed' => null,
+                    'status' => 'pending',
+                    'updated_by' => Auth::id()
+                ]);
+                
+                // Set unit status back to maintenance
+                DB::table('units')->where('id', $maint->unit_id)->update([
+                    'status' => 'maintenance',
+                    'updated_at' => now()
+                ]);
+            } else {
+                // Complete: Set status to completed and date to today
+                $maint->update([
+                    'date_completed' => date('Y-m-d'),
+                    'status' => 'completed',
+                    'updated_by' => Auth::id()
+                ]);
+                
+                // Set unit status back to active
+                DB::table('units')->where('id', $maint->unit_id)->update([
+                    'status' => 'active',
+                    'updated_at' => now()
+                ]);
+            }
+        });
+
+        $statusMessage = $maint->date_completed ? 'Maintenance marked as completed.' : 'Maintenance marked as incomplete.';
+        return back()->with('success', $statusMessage);
+    }
 }

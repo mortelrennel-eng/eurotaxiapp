@@ -140,6 +140,15 @@
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
                                     {{ ucfirst($boundary['status']) }}
                                 </span>
+                                @if (isset($boundary['has_incentive']))
+                                    <div class="mt-1">
+                                        @if ($boundary['has_incentive'])
+                                            <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded border border-green-200 uppercase tracking-tight" title="Recorded within 24 hours of last shift">Incentive Earned</span>
+                                        @else
+                                            <span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded border border-red-200 uppercase tracking-tight" title="Recorded after 24 hours limit - Late Turn">Late Turn / No Incentive</span>
+                                        @endif
+                                    </div>
+                                @endif
                                 @if ($boundary['shortage'] > 0)
                                     <div class="text-xs text-red-600 mt-1">Shortage: {{ formatCurrency($boundary['shortage']) }}</div>
                                 @elseif ($boundary['excess'] > 0)
@@ -252,7 +261,9 @@
                                      data-rate="{{ $unit['boundary_rate'] ?? 0 }}"
                                      data-coding-day="{{ $unit['coding_day'] ?? '' }}"
                                      data-primary-id="{{ $unit['driver_id'] }}"
-                                     data-secondary-id="{{ $unit['secondary_driver_id'] }}">
+                                     data-secondary-id="{{ $unit['secondary_driver_id'] }}"
+                                     data-expected-id="{{ $unit['current_turn_driver_id'] }}"
+                                     data-deadline="{{ $unit['shift_deadline_at'] }}">
                                     <div class="font-medium text-xs">{{ $unit['plate_number'] }}</div>
                                     <div class="text-xs text-gray-500">{{ $unit['make_model'] ?? 'N/A' }}</div>
                                 </div>
@@ -325,6 +336,23 @@
                         Pay Full Balance & Clear Debt
                     </button>
                     <input type="hidden" id="rawShortageAmount" value="0">
+                </div>
+
+                {{-- Shift Turn & Incentive Info --}}
+                <div id="shiftInfoGroup" class="hidden mt-2 p-2 rounded-lg border flex flex-col gap-1 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-black tracking-widest text-gray-400">Current Turn</span>
+                        <div id="incentiveStatusBadge"></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-yellow-100 rounded-lg">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-yellow-600" id="turnIcon"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span id="expectedDriverName" class="text-sm font-bold text-gray-900 leading-tight">Driver Name</span>
+                            <span id="shiftTimer" class="text-[10px] text-gray-500 font-medium tracking-tight">Shift started 0h ago</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
@@ -532,6 +560,9 @@ function initializeUnitDropdown() {
                     boundaryInput.value = suggestedRate;
                     document.getElementById('actualBoundary').value = suggestedRate;
                 }
+
+                // New: Handle Swapping & Shift turn data
+                updateShiftInfo(this);
 
                 unitDisplay.setAttribute('data-primary-id', primaryId || '');
                 unitDisplay.setAttribute('data-secondary-id', secondaryId || '');
@@ -863,6 +894,87 @@ function deriveCodingDay(plate) {
         if (digits.includes(lastDigit)) return day;
     }
     return null;
+}
+
+function updateShiftInfo(unitElement) {
+    const expectedId = unitElement.getAttribute('data-expected-id') || '0';
+    const deadline = unitElement.getAttribute('data-deadline');
+    
+    const shiftInfoGroup = document.getElementById('shiftInfoGroup');
+    const driverNameLabel = document.getElementById('expectedDriverName');
+    const shiftTimerLabel = document.getElementById('shiftTimer');
+    const badgeContainer = document.getElementById('incentiveStatusBadge');
+    
+    // Find expected driver name
+    const driverOption = document.querySelector(`.driver-option[data-id="${expectedId}"]`);
+    const expectedName = driverOption ? driverOption.getAttribute('data-name') : 'Unknown Driver';
+    
+    // Auto-select expected driver
+    if (expectedId && expectedId !== '0') {
+        document.getElementById('driverId').value = expectedId;
+        document.getElementById('driverDisplay').value = expectedName;
+        
+        // Trigger alerts check
+        const shortage = parseFloat(driverOption ? driverOption.getAttribute('data-shortage') : 0);
+        if (typeof triggerDriverAlerts === 'function') {
+            triggerDriverAlerts(expectedId, shortage);
+        }
+    }
+
+    // Calculate precision time based on STRICT DEADLINE
+    if (deadline) {
+        const deadlineDate = new Date(deadline);
+        const now = new Date();
+        const diffMs = deadlineDate - now;
+        const isPast = diffMs < 0;
+        const absDiff = Math.abs(diffMs);
+        
+        const diffHours = Math.floor(absDiff / (1000 * 60 * 60));
+        const diffMins = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (isPast) {
+            shiftTimerLabel.innerHTML = `<span class="text-red-600 font-black">OVERDUE BY ${diffHours}h ${diffMins}m</span>`;
+            shiftInfoGroup.classList.add('border-red-200', 'bg-red-50');
+            shiftInfoGroup.classList.remove('border-green-200', 'bg-green-50');
+            badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded-full border border-red-300 uppercase tracking-tighter shadow-sm animate-pulse">NO INCENTIVE</span>';
+        } else {
+            shiftTimerLabel.innerHTML = `<span class="text-green-600 font-bold">${diffHours}h ${diffMins}m remaining</span> until deadline`;
+            shiftInfoGroup.classList.add('border-green-200', 'bg-green-50');
+            shiftInfoGroup.classList.remove('border-red-200', 'bg-red-50');
+            badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded-full border border-green-300 uppercase tracking-tighter shadow-sm">INCENTIVE ELIGIBLE</span>';
+        }
+    } else {
+        shiftTimerLabel.textContent = 'Shift schedule not yet initialized';
+        badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold rounded-full border border-blue-300 uppercase tracking-tighter">NEW PATTERN</span>';
+    }
+
+    shiftInfoGroup.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function triggerDriverAlerts(driverId, shortage) {
+    const unitId = document.getElementById('unitId').value;
+    const unitOption = document.querySelector(`.unit-option[data-id="${unitId}"]`);
+    const primaryId = unitOption ? unitOption.getAttribute('data-primary-id') : '';
+    const secondaryId = unitOption ? unitOption.getAttribute('data-secondary-id') : '';
+
+    const extraAlert = document.getElementById('extraDriverAlert');
+    if (driverId && driverId !== 'all' && primaryId && driverId !== primaryId && driverId !== secondaryId) {
+        if (extraAlert) extraAlert.classList.remove('hidden');
+    } else {
+        if (extraAlert) extraAlert.classList.add('hidden');
+    }
+
+    const shortageAlert = document.getElementById('shortageBalanceAlert');
+    const shortageAmountSpan = document.getElementById('shortageBalanceAmount');
+    if (shortage > 0) {
+        if (shortageAlert) shortageAlert.classList.remove('hidden');
+        if (shortageAmountSpan) shortageAmountSpan.textContent = "₱" + shortage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const rawInput = document.getElementById('rawShortageAmount');
+        if (rawInput) rawInput.value = shortage;
+    } else {
+        if (shortageAlert) shortageAlert.classList.add('hidden');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

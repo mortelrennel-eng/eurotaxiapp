@@ -14,6 +14,7 @@ class Boundary extends Model
     protected $fillable = [
         'unit_id',
         'driver_id',
+        'expected_driver_id',
         'date',
         'boundary_amount',
         'actual_boundary',
@@ -23,6 +24,7 @@ class Boundary extends Model
         'notes',
         'recorded_by',
         'is_extra_driver',
+        'has_incentive',
     ];
 
     protected $casts = [

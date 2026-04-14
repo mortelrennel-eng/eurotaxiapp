@@ -184,6 +184,13 @@
                     </td>
                     <td class="px-4 py-3" onclick="event.stopPropagation()">
                         <div class="flex gap-2">
+                            <form method="POST" action="{{ route('maintenance.toggle-complete', $r->id) }}">
+                                @csrf
+                                <button type="submit" title="{{ $r->date_completed ? 'Mark as Incomplete' : 'Mark as Complete' }}" 
+                                    class="{{ $r->date_completed ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50' }} p-1 rounded transition">
+                                    <i data-lucide="{{ $r->date_completed ? 'rotate-ccw' : 'check-circle' }}" class="w-4 h-4"></i>
+                                </button>
+                            </form>
                             <button onclick="openEditMaint(this)" data-id="{{ $r->id }}" class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition"><i data-lucide="edit" class="w-4 h-4"></i></button>
                             <form method="POST" action="{{ route('maintenance.destroy', $r->id) }}" onsubmit="return confirm('Delete?')">
                                 @csrf @method('DELETE')

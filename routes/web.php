@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
     // Maintenance Resource Routes
     Route::resource('maintenance', MaintenanceController::class);
     Route::get('/maintenance/{id}/parts', [MaintenanceController::class, 'getParts'])->name('maintenance.parts');
+    Route::post('/maintenance/{id}/toggle-complete', [MaintenanceController::class, 'toggleComplete'])->name('maintenance.toggle-complete');
 
     // Coding Management
     Route::get('/coding', [CodingController::class, 'index'])->name('coding.index');

@@ -70,7 +70,7 @@ class BoundaryController extends Controller
         $units = DB::table('units')
             ->whereNull('deleted_at')
             ->where('status', '!=', 'retired')
-            ->select('id', 'plate_number', 'make', 'model', 'year', 'boundary_rate', 'coding_day', 'driver_id', 'secondary_driver_id')
+            ->select('id', 'plate_number', 'make', 'model', 'year', 'boundary_rate', 'coding_day', 'driver_id', 'secondary_driver_id', 'current_turn_driver_id', 'last_swapping_at', 'shift_deadline_at')
             ->orderBy('plate_number')
             ->get()
             ->map(function ($unit) {
@@ -227,13 +227,54 @@ class BoundaryController extends Controller
 
                     $unit = \App\Models\Unit::find($unit_id);
                     $is_extra_driver = false;
-                    if ($unit && $unit->driver_id !== $driver_id && $unit->secondary_driver_id !== $driver_id) {
-                        $is_extra_driver = true;
+                    $expected_driver_id = $unit ? $unit->current_turn_driver_id : $driver_id;
+                    $has_incentive = true;
+
+                    if ($unit) {
+                        $now = now();
+                        $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : $now;
+                        $has_incentive = true;
+
+                        // Strict Incentive Check: Must be before or exactly on the fixed deadline
+                        if ($now->greaterThan($current_deadline)) {
+                            $has_incentive = false;
+                        }
+
+                        if ($unit->driver_id !== $driver_id && $unit->secondary_driver_id !== $driver_id) {
+                            $is_extra_driver = true;
+                        }
+
+                        // Determine Next Turn Driver (Toka)
+                        $next_turn_driver_id = $unit->current_turn_driver_id;
+                        if (!empty($unit->secondary_driver_id)) {
+                            if ($driver_id === $unit->driver_id) {
+                                $next_turn_driver_id = $unit->secondary_driver_id;
+                            } else {
+                                $next_turn_driver_id = $unit->driver_id;
+                            }
+                        } else {
+                            $next_turn_driver_id = $unit->driver_id;
+                        }
+
+                        // Strict Deadline Pivot Logic:
+                        // New deadline is Old Deadline + 24h.
+                        // If the unit was offline for > 48h (e.g. maintenance), we reset the rhythm to Start Now + 24h.
+                        $next_deadline = $current_deadline->copy()->addHours(24);
+                        if ($now->diffInHours($current_deadline) > 48) {
+                            $next_deadline = $now->copy()->addHours(24);
+                        }
+
+                        $unit->update([
+                            'current_turn_driver_id' => $next_turn_driver_id,
+                            'last_swapping_at' => $now, // actual record timestamp
+                            'shift_deadline_at' => $next_deadline,
+                        ]);
                     }
 
                     Boundary::create([
                         'unit_id'         => $unit_id,
                         'driver_id'       => $driver_id,
+                        'expected_driver_id' => $expected_driver_id,
                         'date'            => $date,
                         'boundary_amount' => $boundary_amount,
                         'actual_boundary' => $actual_boundary,
@@ -242,6 +283,8 @@ class BoundaryController extends Controller
                         'status'          => $status,
                         'notes'           => $notes,
                         'is_extra_driver' => $is_extra_driver,
+                        'has_incentive'   => $has_incentive,
+                        'recorded_by'     => Auth::id(),
                     ]);
                     return redirect()->route('boundaries.index')->with('success', 'Boundary record added successfully');
                 }
