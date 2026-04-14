@@ -77,6 +77,10 @@ class CodingController extends Controller
             'total_rules' => DB::table('coding_rules')->count(),
             'active_rules' => DB::table('coding_rules')->where('status', 'active')->count(),
             'today_coding' => $today_units->count(),
+            'today_violators' => DB::table('coding_violations')
+                ->whereDate('violation_time', now()->timezone('Asia/Manila')->toDateString())
+                ->distinct('unit_id')
+                ->count('unit_id'),
         ];
 
         // Build coding calendar
