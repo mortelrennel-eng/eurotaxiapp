@@ -271,7 +271,16 @@ class DriverManagementController extends Controller
             ->where('created_at', '>=', $lookbackFrom)
             ->count();
 
-        // Rule 5: Must have at least some shifts recorded in the period
+        // Rule 5: No absences in lookback period 
+        // (Expected to drive, but someone else drove)
+        $violations_absences = DB::table('boundaries')
+            ->where('expected_driver_id', $id)
+            ->where('driver_id', '!=', $id)
+            ->where('date', '>=', $lookbackFrom->toDateString())
+            ->whereNull('deleted_at')
+            ->count();
+
+        // Rule 6: Must have at least some shifts recorded in the period
         $has_shifts = $allBoundaries->count() > 0;
 
         // Is fully clean?
@@ -279,6 +288,7 @@ class DriverManagementController extends Controller
             && $violations_damage === 0
             && $violations_breakdown === 0
             && $violations_incidents === 0
+            && $violations_absences === 0
             && $has_shifts;
 
         // Is it the 1st week of the month? (days 1-7)
@@ -301,6 +311,7 @@ class DriverManagementController extends Controller
             if ($dmgVio > 0) $blocking_violations[] = "{$dmgVio} vehicle damage incident(s)";
             if ($brkVio > 0) $blocking_violations[] = "{$brkVio} breakdown incident(s)";
         }
+        if ($violations_absences > 0) $blocking_violations[] = "{$violations_absences} unattended shift(s) (Absent)";
         if ($violations_incidents > 0) $blocking_violations[] = "{$violations_incidents} behavior incident(s) on record";
 
         $driver->monthly_incentive        = round($total_incentive, 2);
@@ -318,6 +329,18 @@ class DriverManagementController extends Controller
         $driver->blocking_violations      = $blocking_violations;
         $driver->violations_no_incentive  = $violations_no_incentive;
         $driver->violations_incidents     = $violations_incidents;
+        $driver->violations_absences      = $violations_absences;
+
+        // Fetch actual absentee dates with the name of who substituted them
+        $driver->absentee_logs = DB::table('boundaries as b')
+            ->where('b.expected_driver_id', $id)
+            ->where('b.driver_id', '!=', $id)
+            ->whereNull('b.deleted_at')
+            ->leftJoin('drivers as actual', 'b.driver_id', '=', 'actual.id')
+            ->select('b.date', 'actual.first_name', 'actual.last_name')
+            ->orderByDesc('b.date')
+            ->limit(10)
+            ->get();
 
         // Per-shift incentive breakdown (last 15 records)
         $driver->incentive_breakdown = DB::table('boundaries as b')

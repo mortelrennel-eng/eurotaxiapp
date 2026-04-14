@@ -765,7 +765,7 @@ function openDriverDetails(id) {
                 const sevColors = {critical:'bg-red-100 text-red-700',high:'bg-orange-100 text-orange-700',medium:'bg-yellow-100 text-yellow-700',low:'bg-blue-100 text-blue-700'};
                 data.incidents.forEach(i => {
                     incidentRowsHtml += `
-                    <tr class="border-b border-gray-50">
+                    <tr class="border-b border-gray-50 hover:bg-gray-50">
                         <td class="p-2">${new Date(i.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</td>
                         <td class="p-2 font-bold">${i.plate_number||'—'}</td>
                         <td class="p-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">${(i.incident_type||'').replace('_',' ').toUpperCase()}</span></td>
@@ -774,7 +774,22 @@ function openDriverDetails(id) {
                     </tr>`;
                 });
             } else {
-                incidentRowsHtml = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No incidents recorded.</td></tr>';
+                incidentRowsHtml = '<tr><td colspan="5" class="p-4 text-center text-gray-400">No behavior incidents recorded.</td></tr>';
+            }
+
+            // Absences section
+            let absenceRowsHtml = '';
+            if (data.absentee_logs && data.absentee_logs.length > 0) {
+                data.absentee_logs.forEach(a => {
+                    absenceRowsHtml += `
+                    <tr class="border-b border-gray-50 hover:bg-red-50/50">
+                        <td class="p-2 text-red-600 font-bold">${new Date(a.date).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})}</td>
+                        <td class="p-2 text-gray-600"><span class="px-2 py-0.5 bg-gray-100 rounded text-xs">Covered by: <strong>${a.first_name||''} ${a.last_name||''}</strong></span></td>
+                        <td class="p-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">ABSENT</span></td>
+                    </tr>`;
+                });
+            } else {
+                absenceRowsHtml = '<tr><td colspan="3" class="p-4 text-center text-gray-400">No unattended shifts (absences) on record.</td></tr>';
             }
 
             document.getElementById('performanceContent').innerHTML = `
@@ -792,6 +807,17 @@ function openDriverDetails(id) {
                         <p class="text-lg font-black text-orange-600">${data.high_severity_incidents||0}</p>
                     </div>
                 </div>
+                
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Unattended Shifts / Absences (Last 10)</p>
+                <div class="overflow-x-auto rounded-xl border border-gray-100 mb-5">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-gray-50 text-gray-500 font-bold">
+                            <tr><th class="p-2">Expected Date</th><th class="p-2">Actual Driver</th><th class="p-2">Status</th></tr>
+                        </thead>
+                        <tbody>${absenceRowsHtml}</tbody>
+                    </table>
+                </div>
+
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Boundary History (Last 10)</p>
                 <div class="overflow-x-auto rounded-xl border border-gray-100 mb-5">
                     <table class="w-full text-xs text-left">
@@ -801,6 +827,7 @@ function openDriverDetails(id) {
                         <tbody>${perfRowsHtml}</tbody>
                     </table>
                 </div>
+
                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Behavior Incidents (Last 10)</p>
                 <div class="overflow-x-auto rounded-xl border border-gray-100">
                     <table class="w-full text-xs text-left">
@@ -827,6 +854,7 @@ function openDriverDetails(id) {
                 : '<div class="bg-red-100 border border-red-300 text-red-800 p-4 rounded-xl mb-4 text-center"><h3 class="text-lg font-black uppercase mb-1">❌ Not Eligible for Grand Incentive</h3><p class="text-sm font-bold">Driver has violations in the evaluation period.</p></div>';
 
             const reqList = [
+                { passed: (data.violations_absences||0) === 0, text: 'No unattended shifts (Zero Absences)' },
                 { passed: data.violations_no_incentive === 0, text: 'No skipped / late boundary returns' },
                 { passed: (!data.damage_missed && data.damage_missed === 0) && data.violations_incidents === 0, text: 'Zero vehicle damage incidents' },
                 { passed: (!data.breakdown_missed && data.breakdown_missed === 0), text: 'Zero breakdown incidents' },

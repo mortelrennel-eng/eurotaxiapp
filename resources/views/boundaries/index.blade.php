@@ -1099,29 +1099,58 @@ function editBoundary(id) {
         document.getElementById('actualBoundary').value = boundary.actual_boundary || '';
         document.getElementById('notes').value = boundary.notes || '';
         
-        // Find unit data to set primary/secondary driver IDs for suggestion
-        const unitOption = document.querySelector(`.unit-option[data-id="${boundary.unit_id}"]`);
+        // Hide alerts on fresh open
+        const extraAlert = document.getElementById('extraDriverAlert');
+        const shortageAlert = document.getElementById('shortageBalanceAlert');
+        if (extraAlert) extraAlert.classList.add('hidden');
+        if (shortageAlert) shortageAlert.classList.add('hidden');
+
+        // Set Unit Display (guaranteed to fill required field even if inactive)
         const unitDisplay = document.getElementById('unitDisplay');
-        if (unitOption && unitDisplay) {
-            const unitName = unitOption.getAttribute('data-name');
-            const unitPlate = unitOption.getAttribute('data-plate');
-            unitDisplay.value = `${unitPlate}`;
-            
+        unitDisplay.value = boundary.plate_number || 'Unknown Unit';
+        
+        const unitOption = document.querySelector(`.unit-option[data-id="${boundary.unit_id}"]`);
+        if (unitOption) {
             const pId = unitOption.getAttribute('data-primary-driver');
             const sId = unitOption.getAttribute('data-secondary-driver');
             unitDisplay.setAttribute('data-primary-id', pId || '');
             unitDisplay.setAttribute('data-secondary-id', sId || '');
         }
 
-        // Set driver display name
-        const driverOption = document.querySelector(`.driver-option[data-id="${boundary.driver_id}"]`);
-        if (driverOption) {
-            const name = driverOption.getAttribute('data-name');
-            document.getElementById('driverDisplay').value = name;
-        }
-        
+        // Set Driver Display (guaranteed to fill required field even if inactive)
+        const driverDisplay = document.getElementById('driverDisplay');
+        driverDisplay.value = boundary.driver_name || 'Unknown Driver';
+
         // Keep boundary amount read-only as per source-of-truth requirement
         document.getElementById('boundaryAmount').readOnly = true;
+
+        // Parse existing exception rules from notes
+        const notesLc = (boundary.notes || '').toLowerCase();
+        
+        // Uncheck all first
+        const pastCutoffEl = document.getElementById('past_cutoff');
+        const damagedEl = document.querySelector('input[name="vehicle_damaged"]');
+        const halfMaintEl = document.getElementById('needsMaintenanceHalfCheck');
+        const zeroMaintEl = document.getElementById('needsMaintenanceZeroCheck');
+        
+        if (pastCutoffEl) pastCutoffEl.checked = false;
+        if (damagedEl) damagedEl.checked = false;
+        if (halfMaintEl) halfMaintEl.checked = false;
+        if (zeroMaintEl) zeroMaintEl.checked = false;
+
+        // Re-check based on existing data
+        if (notesLc.includes('past 10:00 am') && pastCutoffEl) {
+            pastCutoffEl.checked = true;
+        }
+        if (notesLc.includes('vehicle damaged') && damagedEl) {
+            damagedEl.checked = true;
+        }
+        if ((notesLc.includes('half boundary') || notesLc.includes('broke down during')) && halfMaintEl) {
+            halfMaintEl.checked = true;
+        }
+        if ((notesLc.includes('no boundary') || notesLc.includes('immediately')) && notesLc.includes('maintenance') && zeroMaintEl) {
+            zeroMaintEl.checked = true;
+        }
         
         document.getElementById('boundaryModal').classList.remove('hidden');
         lucide.createIcons();
