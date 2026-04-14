@@ -868,12 +868,12 @@ async function openViewMaint(id) {
         const result = await res.json();
         if (result.success && result.data.length > 0) {
             breakdown.innerHTML = result.data.map(item => `
-                <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
-                    <div>
-                        <div class="text-xs font-bold text-gray-800">${item.part_name}</div>
+                <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm gap-4">
+                    <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-gray-800 break-words">${item.part_name}</div>
                         <div class="text-[10px] text-gray-400">${item.part_id ? `Qty: ${item.quantity} &times; &#8369;${parseFloat(item.price).toFixed(2)}` : 'Additional Service / Labor'}</div>
                     </div>
-                    <div class="text-xs font-black text-gray-900 tabular-nums">&#8369;${parseFloat(item.total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                    <div class="text-xs font-black text-gray-900 tabular-nums shrink-0 whitespace-nowrap">&#8369;${parseFloat(item.total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
                 </div>
             `).join('');
         } else {
