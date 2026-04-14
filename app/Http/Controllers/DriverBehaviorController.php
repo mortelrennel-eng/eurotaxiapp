@@ -327,24 +327,46 @@ class DriverBehaviorController extends Controller
 
         // Compute next payout Sunday
         $now = Carbon::now('Asia/Manila');
+        
         if ($is_dual) {
-            // 1st Sunday of every 2nd month
-            $month_offset = ($now->month % 2 === 1) ? 0 : 1;
-            $baseDate     = $now->copy()->addMonths($month_offset)->startOfMonth();
+            // Dual Driver: 2-month cycle. 
+            // We use fixed bi-monthly windows: Jan-Feb (Pay Mar), Mar-Apr (Pay May), May-Jun (Pay Jul), etc.
+            // Payout happens in ODD months (1, 3, 5, 7, 9, 11) on the 1st Sunday.
+            $currentMonth = $now->month;
+            if ($currentMonth % 2 === 0) {
+                // We are in an EVEN month (e.g., April) -> Payout is next month (May)
+                $targetMonth = $now->copy()->addMonth()->startOfMonth();
+            } else {
+                // We are in an ODD month (e.g., May)
+                // Check if 1st Sunday of THIS month has passed
+                $firstSunday = $now->copy()->startOfMonth();
+                while ($firstSunday->dayOfWeek !== Carbon::SUNDAY) { $firstSunday->addDay(); }
+                
+                if ($now->gt($firstSunday->endOfDay())) {
+                    // Already past this month's 1st Sunday -> Next payout is 2 months from now
+                    $targetMonth = $now->copy()->addMonths(2)->startOfMonth();
+                } else {
+                    // Today is before or is the 1st Sunday of this ODD month 
+                    $targetMonth = $now->copy()->startOfMonth();
+                }
+            }
         } else {
-            // 1st Sunday of current month (or next month if already past)
-            $baseDate = $now->copy()->startOfMonth();
+            // Solo Driver: Monthly cycle. 
+            // Payout is the 1st Sunday of the very next month (or this month if not yet passed).
+            $firstSunday = $now->copy()->startOfMonth();
+            while ($firstSunday->dayOfWeek !== Carbon::SUNDAY) { $firstSunday->addDay(); }
+            
+            if ($now->gt($firstSunday->endOfDay())) {
+                $targetMonth = $now->copy()->addMonth()->startOfMonth();
+            } else {
+                $targetMonth = $now->copy()->startOfMonth();
+            }
         }
 
-        $next_sunday = $baseDate->copy();
-        while ($next_sunday->dayOfWeek !== Carbon::SUNDAY) {
-            $next_sunday->addDay();
-        }
-        if ($next_sunday->isPast()) {
-            $next_sunday->addWeeks(4);
-            while ($next_sunday->dayOfWeek !== Carbon::SUNDAY) {
-                $next_sunday->addDay();
-            }
+        // Find the 1st Sunday of the target month
+        $payoutDate = $targetMonth->copy();
+        while ($payoutDate->dayOfWeek !== Carbon::SUNDAY) {
+            $payoutDate->addDay();
         }
 
         return [
@@ -352,7 +374,7 @@ class DriverBehaviorController extends Controller
             'valid_days'       => $valid_days,
             'violations'       => $violations,
             'eligible'         => $eligible,
-            'next_payout_date' => $next_sunday->format('M d, Y'),
+            'next_payout_date' => $payoutDate->format('M d, Y'),
             'required_days'    => $required_days,
             'driver_type'      => $is_dual ? 'Dual Driver' : 'Solo Driver',
         ];
