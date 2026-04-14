@@ -516,36 +516,39 @@ class BoundaryController extends Controller
                 $clean_notes = preg_replace('/\[Automatic Violation:.*?\]/i', '', $notes);
                 $clean_notes = preg_replace('/\[Unit Sent to Maintenance.*?\]/i', '', $clean_notes);
                 $clean_notes = trim($clean_notes);
+                $boundary = Boundary::find($id);
+                if ($boundary) {
+                    $is_absent = $request->has('is_absent');
+                    $has_incentive = true;
 
-                $has_incentive = true;
+                    if ($is_absent) {
+                        $has_incentive = false;
+                        $clean_notes .= " [Automatic Violation: Absent / No Show]";
+                    }
+                    if ($past_cutoff) {
+                        $has_incentive = false;
+                        $clean_notes .= " [Automatic Violation: Late Boundary (Past 10:00 AM)]";
+                    }
+                    if ($vehicle_damaged) {
+                        $has_incentive = false;
+                        $clean_notes .= " [Automatic Violation: Vehicle Damaged]";
+                    }
+                    if ($needs_maintenance_half) {
+                        $clean_notes .= " [Unit Sent to Maintenance - Shift Schedule Paused (Half Boundary)]";
+                    }
+                    if ($needs_maintenance_zero) {
+                        $clean_notes .= " [Unit Sent to Maintenance - Shift Schedule Paused (No Boundary)]";
+                    }
+                    
+                    $clean_notes = trim($clean_notes);
 
-                if ($is_absent) {
-                    $has_incentive = false;
-                    $clean_notes .= " [Automatic Violation: Absent / No Show]";
-                }
-                if ($past_cutoff) {
-                    $has_incentive = false;
-                    $clean_notes .= " [Automatic Violation: Late Boundary (Past 10:00 AM)]";
-                }
-                if ($vehicle_damaged) {
-                    $has_incentive = false;
-                    $clean_notes .= " [Automatic Violation: Vehicle Damaged]";
-                }
-                if ($needs_maintenance_half) {
-                    $clean_notes .= " [Unit Sent to Maintenance - Shift Schedule Paused (Half Boundary)]";
-                }
-                if ($needs_maintenance_zero) {
-                    $clean_notes .= " [Unit Sent to Maintenance - Shift Schedule Paused (No Boundary)]";
-                }
-                
-                $clean_notes = trim($clean_notes);
+                    $shortage = max(0, $boundary_amount - $actual_boundary);
+                    $excess   = max(0, $actual_boundary - $boundary_amount);
+                    $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
-                $shortage = max(0, $boundary_amount - $actual_boundary);
-                $excess   = max(0, $actual_boundary - $boundary_amount);
-                $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
-
-                            $has_incentive = false; // Kept late status from original stamp
-                        }
+                    // Retain false if previously set to false by other automatic checks like past 10AM
+                    if (!$boundary->has_incentive) {
+                        $has_incentive = false;
                     }
 
                     $boundary->update([
