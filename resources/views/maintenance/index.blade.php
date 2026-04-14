@@ -638,7 +638,14 @@
                         <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                             <i data-lucide="info" class="w-3 h-3 text-yellow-600"></i> Service Description
                         </h4>
-                        <div id="viewDescription" class="p-4 bg-gray-50 rounded-xl text-gray-700 text-sm italic border-l-4 border-yellow-200 leading-relaxed shadow-sm max-h-[100px] overflow-y-auto custom-scrollbar"></div>
+                        <div id="viewDescription" class="p-4 bg-gray-50 rounded-xl text-gray-700 text-sm italic border-l-4 border-yellow-200 leading-relaxed shadow-sm max-h-[76px] overflow-y-auto custom-scrollbar whitespace-pre-wrap"></div>
+                    </div>
+
+                    <div id="dispatcherNotesContainer" class="hidden">
+                        <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-4 mb-3 flex items-center gap-2">
+                            <i data-lucide="message-square" class="w-3 h-3 text-blue-500"></i> Dispatcher Notes
+                        </h4>
+                        <div id="viewDispatcherNotes" class="p-4 bg-blue-50/50 rounded-xl text-gray-700 text-sm italic border-l-4 border-blue-400 leading-relaxed shadow-sm max-h-[76px] overflow-y-auto custom-scrollbar whitespace-pre-wrap"></div>
                     </div>
                     
                     <div>
@@ -814,7 +821,21 @@ async function openViewMaint(id) {
     document.getElementById('viewDriverName').innerText = r.driver_name || 'No Driver Assigned';
     document.getElementById('viewMaintType').innerText = r.maintenance_type;
     document.getElementById('viewMaintStatus').innerText = (r.status || '').replace('_', ' ');
-    document.getElementById('viewDescription').innerText = r.description || 'No description provided.';
+    let fullDesc = r.description || 'No description provided.';
+    let splitIdx = fullDesc.indexOf('Dispatcher Notes:');
+    
+    const descEl = document.getElementById('viewDescription');
+    const dispatchEl = document.getElementById('viewDispatcherNotes');
+    const dispatchContainer = document.getElementById('dispatcherNotesContainer');
+    
+    if (splitIdx !== -1) {
+        descEl.innerText = fullDesc.substring(0, splitIdx).trim();
+        dispatchEl.innerText = fullDesc.substring(splitIdx + 'Dispatcher Notes:'.length).trim();
+        dispatchContainer.classList.remove('hidden');
+    } else {
+        descEl.innerText = fullDesc;
+        dispatchContainer.classList.add('hidden');
+    }
     
     const toReadable = v => v ? String(v).substring(0, 10) : '—';
     document.getElementById('viewDateStarted').innerText   = toReadable(r.date_started);
