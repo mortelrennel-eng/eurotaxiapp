@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('maintenance', MaintenanceController::class);
     Route::get('/maintenance/{id}/parts', [MaintenanceController::class, 'getParts'])->name('maintenance.parts');
     Route::post('/maintenance/{id}/toggle-complete', [MaintenanceController::class, 'toggleComplete'])->name('maintenance.toggle-complete');
+    Route::post('/maintenance/{id}/toggle-in-progress', [MaintenanceController::class, 'toggleInProgress'])->name('maintenance.toggle-in-progress');
 
     // Coding Management
     Route::get('/coding', [CodingController::class, 'index'])->name('coding.index');

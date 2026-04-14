@@ -24,6 +24,7 @@ class Boundary extends Model
         'notes',
         'recorded_by',
         'is_extra_driver',
+        'vehicle_damaged',
         'has_incentive',
     ];
 

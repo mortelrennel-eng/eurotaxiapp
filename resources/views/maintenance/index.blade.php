@@ -184,6 +184,7 @@
                     </td>
                     <td class="px-4 py-3" onclick="event.stopPropagation()">
                         <div class="flex gap-2">
+                            {{-- Toggle Complete --}}
                             <form method="POST" action="{{ route('maintenance.toggle-complete', $r->id) }}">
                                 @csrf
                                 <button type="submit" title="{{ $r->date_completed ? 'Mark as Incomplete' : 'Mark as Complete' }}" 
@@ -191,6 +192,19 @@
                                     <i data-lucide="{{ $r->date_completed ? 'rotate-ccw' : 'check-circle' }}" class="w-4 h-4"></i>
                                 </button>
                             </form>
+
+                            {{-- Toggle In Progress (only for non-completed records) --}}
+                            @if(!$r->date_completed)
+                            <form method="POST" action="{{ route('maintenance.toggle-in-progress', $r->id) }}">
+                                @csrf
+                                <button type="submit"
+                                    title="{{ $r->status === 'in_progress' ? 'Revert to Pending' : 'Mark as In Progress / Ongoing' }}"
+                                    class="{{ $r->status === 'in_progress' ? 'text-gray-500 hover:text-gray-800 hover:bg-gray-100' : 'text-blue-500 hover:text-blue-800 hover:bg-blue-50' }} p-1 rounded transition">
+                                    <i data-lucide="{{ $r->status === 'in_progress' ? 'pause-circle' : 'play-circle' }}" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                            @endif
+
                             <button onclick="openEditMaint(this)" data-id="{{ $r->id }}" class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition"><i data-lucide="edit" class="w-4 h-4"></i></button>
                             <form method="POST" action="{{ route('maintenance.destroy', $r->id) }}" onsubmit="return confirm('Delete?')">
                                 @csrf @method('DELETE')

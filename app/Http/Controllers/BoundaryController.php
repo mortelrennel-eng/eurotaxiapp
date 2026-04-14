@@ -214,8 +214,16 @@ class BoundaryController extends Controller
             $boundary_amount = (float) $request->input('boundary_amount', 0);
             $actual_boundary = (float) $request->input('actual_boundary', 0);
             $notes           = $request->input('notes', '');
+            $reset_schedule  = $request->has('reset_schedule');
+            $vehicle_damaged = $request->has('vehicle_damaged');
+            $needs_maintenance_half = $request->has('needs_maintenance_half');
+            $needs_maintenance_zero = $request->has('needs_maintenance_zero');
+            $needs_maintenance = $needs_maintenance_half || $needs_maintenance_zero;
             
-            if ($unit_id > 0 && $driver_id > 0 && $boundary_amount > 0) {
+            // Allow $boundary_amount to be 0 ONLY if $needs_maintenance_zero is true
+                    $is_valid_amount = $needs_maintenance_zero ? ($boundary_amount >= 0) : ($boundary_amount > 0);
+
+            if ($unit_id > 0 && $driver_id > 0 && $is_valid_amount) {
                 // Check duplicate
                 $existing = DB::table('boundaries')->where('unit_id', $unit_id)->where('date', $date)->first();
                 if ($existing) {
@@ -230,21 +238,35 @@ class BoundaryController extends Controller
                     $expected_driver_id = $unit ? $unit->current_turn_driver_id : $driver_id;
                     $has_incentive = true;
 
+                    // Manual strict 10 AM Cut-off override from form
+                    $past_cutoff = $request->has('past_cutoff');
+                    if ($past_cutoff) {
+                        $has_incentive = false;
+                        $notes = trim($notes . " [Automatic Violation: Late Boundary (Past 10:00 AM)]");
+                    }
+
                     if ($unit) {
                         $now = now();
-                        $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : $now;
-                        $has_incentive = true;
-
-                        // Strict Incentive Check: Must be before or exactly on the fixed deadline
-                        if ($now->greaterThan($current_deadline)) {
-                            $has_incentive = false;
+                        
+                        // Legacy safety check (in case past_cutoff wasn't manually overridden but deadline passed)
+                        if (!$past_cutoff) {
+                            if (!$unit->shift_deadline_at || $reset_schedule) {
+                                $rounded_hour = $now->minute >= 30 ? $now->copy()->addHour()->startOfHour() : $now->copy()->startOfHour();
+                                $current_deadline = $rounded_hour;
+                            } else {
+                                $current_deadline = Carbon::parse($unit->shift_deadline_at);
+                                if ($now->greaterThan($current_deadline)) {
+                                    $has_incentive = false;
+                                }
+                            }
+                        } else {
+                            $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : $now->copy();
                         }
 
                         if ($unit->driver_id !== $driver_id && $unit->secondary_driver_id !== $driver_id) {
                             $is_extra_driver = true;
                         }
 
-                        // Determine Next Turn Driver (Toka)
                         $next_turn_driver_id = $unit->current_turn_driver_id;
                         if (!empty($unit->secondary_driver_id)) {
                             if ($driver_id === $unit->driver_id) {
@@ -256,19 +278,78 @@ class BoundaryController extends Controller
                             $next_turn_driver_id = $unit->driver_id;
                         }
 
-                        // Strict Deadline Pivot Logic:
-                        // New deadline is Old Deadline + 24h.
-                        // If the unit was offline for > 48h (e.g. maintenance), we reset the rhythm to Start Now + 24h.
+                        // Strict Deadline Pivot Logic: Always advance by at least 24h for next shift.
                         $next_deadline = $current_deadline->copy()->addHours(24);
-                        if ($now->diffInHours($current_deadline) > 48) {
-                            $next_deadline = $now->copy()->addHours(24);
+                        while ($next_deadline->lessThanOrEqualTo($now)) {
+                            $next_deadline->addHours(24);
                         }
 
-                        $unit->update([
+                        if ($vehicle_damaged) {
+                            $has_incentive = false;
+                            $notes = trim($notes . " [Automatic Violation: Vehicle Damaged]");
+
+                            // Auto-log to Driver Performance
+                            DB::table('driver_behavior')->insert([
+                                'unit_id'       => $unit_id,
+                                'driver_id'     => $driver_id,
+                                'incident_type' => 'vehicle_damage',
+                                'severity'      => 'high',
+                                'description'   => 'Auto-logged: Driver returned unit with damage reported during boundary turnover.',
+                                'latitude'      => 0,
+                                'longitude'     => 0,
+                                'video_url'     => '',
+                                'created_at'    => $now,
+                                'updated_at'    => $now,
+                            ]);
+                        }
+
+                        $update_data = [
                             'current_turn_driver_id' => $next_turn_driver_id,
-                            'last_swapping_at' => $now, // actual record timestamp
+                            'last_swapping_at' => $now,
                             'shift_deadline_at' => $next_deadline,
-                        ]);
+                        ];
+
+                        // Pause shifting schedule if unit is going to maintenance
+                        if ($needs_maintenance) {
+                            $update_data['shift_deadline_at'] = null; // Clears the anchor so it auto-learns again next time
+                            $update_data['status'] = 'maintenance'; // Automatically flag the unit status
+                            
+                            $repair_desc = $needs_maintenance_half 
+                                ? 'Automatic entry: Reported broken down during boundary turnover (Half Boundary).'
+                                : 'Automatic entry: Reported broken down immediately upon deployment (No Boundary).';
+
+                            $notes = trim($notes . " [Unit Sent to Maintenance - Shift Schedule Paused (" . ($needs_maintenance_half ? "Half Boundary" : "No Boundary") . ")]");
+
+                            // Automatically create a Pending Maintenance record
+                            \App\Models\Maintenance::create([
+                                'unit_id' => $unit_id,
+                                'driver_id' => $driver_id,
+                                'maintenance_type' => 'corrective',
+                                'description' => $repair_desc,
+                                'status' => 'pending',
+                                'date_started' => $date,
+                                'cost' => 0,
+                                'created_by' => Auth::id(),
+                            ]);
+
+                            // Auto-log to Driver Performance
+                            DB::table('driver_behavior')->insert([
+                                'unit_id'       => $unit_id,
+                                'driver_id'     => $driver_id,
+                                'incident_type' => 'vehicle_breakdown',
+                                'severity'      => $needs_maintenance_half ? 'medium' : 'high',
+                                'description'   => $needs_maintenance_half
+                                    ? 'Auto-logged: Unit broke down mid-shift. Driver completed partial run (Half Boundary).'
+                                    : 'Auto-logged: Unit broke down immediately upon deployment. No boundary collected (No Boundary).',
+                                'latitude'      => 0,
+                                'longitude'     => 0,
+                                'video_url'     => '',
+                                'created_at'    => $now,
+                                'updated_at'    => $now,
+                            ]);
+                        }
+
+                        $unit->update($update_data);
                     }
 
                     Boundary::create([
@@ -283,8 +364,9 @@ class BoundaryController extends Controller
                         'status'          => $status,
                         'notes'           => $notes,
                         'is_extra_driver' => $is_extra_driver,
+                        'vehicle_damaged' => $vehicle_damaged,
                         'has_incentive'   => $has_incentive,
-                        'recorded_by'     => Auth::id(),
+                        'created_by'      => Auth::id(),
                     ]);
                     return redirect()->route('boundaries.index')->with('success', 'Boundary record added successfully');
                 }

@@ -329,4 +329,33 @@ class MaintenanceController extends Controller
         $statusMessage = $maint->date_completed ? 'Maintenance marked as completed.' : 'Maintenance marked as incomplete.';
         return back()->with('success', $statusMessage);
     }
+
+    public function toggleInProgress($id)
+    {
+        $maint = Maintenance::findOrFail($id);
+
+        DB::transaction(function () use ($maint) {
+            if ($maint->status === 'in_progress') {
+                // Revert back to pending
+                $maint->update([
+                    'status'     => 'pending',
+                    'updated_by' => Auth::id(),
+                ]);
+            } else {
+                // Mark as in_progress
+                $maint->update([
+                    'status'       => 'in_progress',
+                    'date_completed' => null,
+                    'updated_by'   => Auth::id(),
+                ]);
+                // Unit remains in maintenance status while ongoing
+                DB::table('units')->where('id', $maint->unit_id)->update([
+                    'status'     => 'maintenance',
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+
+        return back()->with('success', $maint->status === 'in_progress' ? 'Marked as In Progress.' : 'Reverted to Pending.');
+    }
 }

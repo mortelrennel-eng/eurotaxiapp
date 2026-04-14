@@ -178,7 +178,6 @@ class DriverManagementController extends Controller
                 DB::raw("(SELECT boundary_rate FROM units WHERE (driver_id = d.id OR secondary_driver_id = d.id) AND deleted_at IS NULL LIMIT 1) as assigned_boundary_rate"),
                 DB::raw("(SELECT coding_day FROM units WHERE (driver_id = d.id OR secondary_driver_id = d.id) AND deleted_at IS NULL LIMIT 1) as assigned_coding_day"),
                 DB::raw("(SELECT year FROM units WHERE (driver_id = d.id OR secondary_driver_id = d.id) AND deleted_at IS NULL LIMIT 1) as assigned_unit_year"),
-                DB::raw("(SELECT COALESCE(SUM(actual_boundary * 0.05), 0) FROM boundaries WHERE driver_id = d.id AND status IN ('paid', 'excess') AND MONTH(date) = MONTH(CURRENT_DATE()) AND YEAR(date) = YEAR(CURRENT_DATE()) AND deleted_at IS NULL) as monthly_incentive"),
                 DB::raw("(SELECT CASE
                     WHEN COUNT(*) >= 25 THEN 'Excellent'
                     WHEN COUNT(*) >= 15 THEN 'Good'
@@ -200,15 +199,165 @@ class DriverManagementController extends Controller
             $driver->current_pricing = null;
         }
 
-        // Recent performance logs for the modal tab
+        // --- Incentive Eligibility Logic ---
+        // Determine if unit has 1 driver (solo) or 2 drivers (dual)
+        $assignedUnit = DB::table('units')
+            ->where(function($q) use ($id) {
+                $q->where('driver_id', $id)->orWhere('secondary_driver_id', $id);
+            })
+            ->whereNull('deleted_at')
+            ->select('id', 'driver_id', 'secondary_driver_id', 'plate_number')
+            ->first();
+
+        $isDualDriver = $assignedUnit && !empty($assignedUnit->driver_id) && !empty($assignedUnit->secondary_driver_id);
+        $lookbackDays = $isDualDriver ? 60 : 30;   // 2 months if dual, 1 month if solo
+        $lookbackFrom = now()->subDays($lookbackDays);
+
+        $currentMonth = now()->month;
+        $currentYear  = now()->year;
+
+        // All boundaries in lookback period
+        $allBoundaries = DB::table('boundaries')
+            ->where('driver_id', $id)
+            ->whereNull('deleted_at')
+            ->where('date', '>=', $lookbackFrom->toDateString())
+            ->get();
+
+        $thisMonthBoundaries = DB::table('boundaries')
+            ->where('driver_id', $id)
+            ->whereNull('deleted_at')
+            ->whereMonth('date', $currentMonth)
+            ->whereYear('date', $currentYear)
+            ->get();
+
+        $earned_count  = $thisMonthBoundaries->where('has_incentive', 1)->count();
+        $missed_count  = $thisMonthBoundaries->where('has_incentive', 0)->count();
+        $total_shifts  = $thisMonthBoundaries->count();
+
+        // Monthly incentive (5% of actual collections on eligible shifts)
+        $total_incentive = $thisMonthBoundaries
+            ->where('has_incentive', 1)
+            ->whereIn('status', ['paid', 'excess'])
+            ->sum(fn($b) => $b->actual_boundary * 0.05);
+
+        // Missed reason breakdown (current month)
+        $late_turn_missed  = 0;
+        $damage_missed     = 0;
+        $breakdown_missed  = 0;
+        foreach ($thisMonthBoundaries->where('has_incentive', 0) as $b) {
+            $n = strtolower($b->notes ?? '');
+            if (str_contains($n, 'vehicle damaged')) $damage_missed++;
+            elseif (str_contains($n, 'maintenance')) $breakdown_missed++;
+            else $late_turn_missed++;
+        }
+
+        // --- Full Eligibility Check (lookback period) ---
+        // Rule 1: No skipped/late boundary (has_incentive = 0) in the entire period
+        $violations_no_incentive = $allBoundaries->where('has_incentive', 0)->count();
+
+        // Rule 2: No vehicle damage in lookback period
+        $violations_damage = $allBoundaries->filter(fn($b) =>
+            str_contains(strtolower($b->notes ?? ''), 'vehicle damaged')
+        )->count();
+
+        // Rule 3: No breakdown in lookback period
+        $violations_breakdown = $allBoundaries->filter(fn($b) =>
+            str_contains(strtolower($b->notes ?? ''), 'maintenance')
+        )->count();
+
+        // Rule 4: No driver behavior incidents in lookback period
+        $violations_incidents = DB::table('driver_behavior')
+            ->where('driver_id', $id)
+            ->where('created_at', '>=', $lookbackFrom)
+            ->count();
+
+        // Rule 5: Must have at least some shifts recorded in the period
+        $has_shifts = $allBoundaries->count() > 0;
+
+        // Is fully clean?
+        $is_eligible = $violations_no_incentive === 0
+            && $violations_damage === 0
+            && $violations_breakdown === 0
+            && $violations_incidents === 0
+            && $has_shifts;
+
+        // Is it the 1st week of the month? (days 1-7)
+        $is_first_week = now()->day <= 7;
+
+        // Build violations blocking list
+        $blocking_violations = [];
+        if ($violations_no_incentive > 0) {
+            $lateVio = $allBoundaries->where('has_incentive', 0)->filter(fn($b) =>
+                !str_contains(strtolower($b->notes ?? ''), 'vehicle damaged') &&
+                !str_contains(strtolower($b->notes ?? ''), 'maintenance')
+            )->count();
+            $dmgVio = $allBoundaries->where('has_incentive', 0)->filter(fn($b) =>
+                str_contains(strtolower($b->notes ?? ''), 'vehicle damaged')
+            )->count();
+            $brkVio = $allBoundaries->where('has_incentive', 0)->filter(fn($b) =>
+                str_contains(strtolower($b->notes ?? ''), 'maintenance')
+            )->count();
+            if ($lateVio > 0) $blocking_violations[] = "{$lateVio} late/skipped boundary turn(s)";
+            if ($dmgVio > 0) $blocking_violations[] = "{$dmgVio} vehicle damage incident(s)";
+            if ($brkVio > 0) $blocking_violations[] = "{$brkVio} breakdown incident(s)";
+        }
+        if ($violations_incidents > 0) $blocking_violations[] = "{$violations_incidents} behavior incident(s) on record";
+
+        $driver->monthly_incentive        = round($total_incentive, 2);
+        $driver->incentive_earned_count   = $earned_count;
+        $driver->incentive_missed_count   = $missed_count;
+        $driver->total_shifts_month       = $total_shifts;
+        $driver->incentive_rate           = $total_shifts > 0 ? round($earned_count / $total_shifts * 100, 1) : 0;
+        $driver->late_turn_missed         = $late_turn_missed;
+        $driver->damage_missed            = $damage_missed;
+        $driver->breakdown_missed         = $breakdown_missed;
+        $driver->is_dual_driver           = $isDualDriver;
+        $driver->lookback_days            = $lookbackDays;
+        $driver->is_eligible              = $is_eligible;
+        $driver->is_first_week            = $is_first_week;
+        $driver->blocking_violations      = $blocking_violations;
+        $driver->violations_no_incentive  = $violations_no_incentive;
+        $driver->violations_incidents     = $violations_incidents;
+
+        // Per-shift incentive breakdown (last 15 records)
+        $driver->incentive_breakdown = DB::table('boundaries as b')
+            ->where('b.driver_id', $id)
+            ->whereNull('b.deleted_at')
+            ->leftJoin('units as u', 'b.unit_id', '=', 'u.id')
+            ->select('b.date', 'b.actual_boundary', 'b.boundary_amount', 'b.status', 'b.shortage', 'b.has_incentive', 'b.notes', 'u.plate_number')
+            ->orderByDesc('b.date')
+            ->limit(15)
+            ->get();
+
+        // Recent performance logs for Performance tab (last 10)
         $driver->recent_performance = DB::table('boundaries as b')
             ->where('b.driver_id', $id)
             ->whereNull('b.deleted_at')
             ->leftJoin('units as u', 'b.unit_id', '=', 'u.id')
-            ->select('b.date', 'b.actual_boundary', 'b.boundary_amount', 'b.status', 'b.shortage', 'u.plate_number')
+            ->select('b.date', 'b.actual_boundary', 'b.boundary_amount', 'b.status', 'b.shortage', 'b.excess', 'b.has_incentive', 'u.plate_number')
             ->orderByDesc('b.date')
             ->limit(10)
             ->get();
+
+        // Driver Behavior incidents (last 10)
+        $driver->incidents = DB::table('driver_behavior as db')
+            ->where('db.driver_id', $id)
+            ->leftJoin('units as u', 'db.unit_id', '=', 'u.id')
+            ->select('db.created_at', 'db.incident_type', 'db.severity', 'db.description', 'u.plate_number')
+            ->orderByDesc('db.created_at')
+            ->limit(10)
+            ->get();
+
+        $driver->total_incidents_30d = DB::table('driver_behavior')
+            ->where('driver_id', $id)
+            ->where('created_at', '>=', now()->subDays(30))
+            ->count();
+
+        $driver->high_severity_incidents = DB::table('driver_behavior')
+            ->where('driver_id', $id)
+            ->whereIn('severity', ['high', 'critical'])
+            ->where('created_at', '>=', now()->subDays(30))
+            ->count();
 
         return response()->json($driver);
     }

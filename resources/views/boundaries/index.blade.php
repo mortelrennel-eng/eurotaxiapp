@@ -94,12 +94,16 @@
                     </tr>
                 @else
                     @foreach ($boundariesArray as $boundary)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <tr class="hover:bg-yellow-50 cursor-pointer transition-all border-l-4 border-transparent hover:border-yellow-400 group"
+                            onclick="openViewBoundary({{ $boundary['id'] }})">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 group-hover:text-yellow-700 font-medium transition-colors">
                                 {{ formatDate($boundary['date']) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $boundary['plate_number'] }}</div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-sm font-bold text-gray-900 group-hover:text-yellow-700 transition-colors">{{ $boundary['plate_number'] }}</span>
+                                    <i data-lucide="external-link" class="w-3 h-3 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-900">{{ $boundary['driver_name'] ?? 'Unassigned' }}
@@ -143,9 +147,17 @@
                                 @if (isset($boundary['has_incentive']))
                                     <div class="mt-1">
                                         @if ($boundary['has_incentive'])
-                                            <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded border border-green-200 uppercase tracking-tight" title="Recorded within 24 hours of last shift">Incentive Earned</span>
+                                            <span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded border border-green-200 uppercase tracking-tight" title="Incentive eligible">Incentive Earned</span>
                                         @else
-                                            <span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded border border-red-200 uppercase tracking-tight" title="Recorded after 24 hours limit - Late Turn">Late Turn / No Incentive</span>
+                                            @php
+                                                $notes_lc = strtolower($boundary['notes'] ?? '');
+                                                $is_damage_case = str_contains($notes_lc, 'vehicle damaged') || str_contains($notes_lc, 'maintenance') || str_contains($notes_lc, 'breakdown');
+                                            @endphp
+                                            @if ($is_damage_case)
+                                                <span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded border border-red-200 uppercase tracking-tight" title="No incentive due to vehicle damage or breakdown">No Incentive</span>
+                                            @else
+                                                <span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded border border-red-200 uppercase tracking-tight" title="Recorded after the shift deadline — Late Turn">Late Turn / No Incentive</span>
+                                            @endif
                                         @endif
                                     </div>
                                 @endif
@@ -155,11 +167,11 @@
                                     <div class="text-xs text-blue-600 mt-1">Excess: {{ formatCurrency($boundary['excess']) }}</div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" onclick="event.stopPropagation()">
                                 <button
                                     type="button"
                                     onclick="editBoundary({{ $boundary['id'] }})"
-                                    class="text-yellow-600 hover:text-yellow-900 mr-3"
+                                    class="text-yellow-600 hover:text-yellow-900 p-1 rounded hover:bg-yellow-100 transition"
                                     title="Edit Boundary"
                                 >
                                     <i data-lucide="edit" class="w-4 h-4"></i>
@@ -389,6 +401,59 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                     <textarea name="notes" id="notes" rows="2" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"></textarea>
                 </div>
+
+                <div class="mt-3 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Exception Controls</span>
+                    </div>
+                    <div class="p-2 space-y-0.5">
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-orange-50 transition-colors group">
+                            <input type="checkbox" name="past_cutoff" id="past_cutoff" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-orange-700 leading-none mb-0.5 transition-colors">Past 10:00 AM Cut-off (Late / No Incentive)</span>
+                                <span class="text-[10px] text-orange-600 leading-tight">Remittance recorded past the 10:00 AM deadline. Voids driver incentive.</span>
+                            </div>
+                        </label>
+
+                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
+                            <input type="checkbox" name="reset_schedule" value="1" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Set New Boundary Schedule</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Change shifting time to right now. Prevents late violation for current driver.</span>
+                            </div>
+                        </label>
+
+                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
+                            <input type="checkbox" name="needs_maintenance_half" id="needsMaintenanceHalfCheck" value="1" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 needs-maintenance-opt">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down During Shift (Half Boundary)</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down mid-shift. Halves target boundary and pauses schedule.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
+                            <input type="checkbox" name="needs_maintenance_zero" id="needsMaintenanceZeroCheck" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 needs-maintenance-opt">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down Immediately (No Boundary)</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down upon deployment. Sets target boundary to 0 and pauses schedule.</span>
+                            </div>
+                        </label>
+
+                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
+                            <input type="checkbox" name="vehicle_damaged" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Vehicle Damaged (No Incentive)</span>
+                                <span class="text-[10px] text-red-500 leading-tight">Automatic violation: Voids driver incentive due to vehicle damage.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
             </div>
             
             <div class="mt-4 flex gap-3">
@@ -403,10 +468,224 @@
     </div>
 </div>
 
+{{-- View Boundary Info Modal --}}
+<div id="viewBoundaryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
+        {{-- Header --}}
+        <div class="bg-yellow-600 p-6 text-white shrink-0">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="vb_statusBadge" class="px-2 py-0.5 bg-black/20 rounded text-[10px] font-black uppercase tracking-widest"></span>
+                        <span id="vb_incentiveBadge" class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest"></span>
+                    </div>
+                    <h3 id="vb_plate" class="text-3xl font-black tracking-tighter uppercase"></h3>
+                    <p id="vb_driver" class="text-yellow-100 font-bold text-sm uppercase mt-1"></p>
+                </div>
+                <button onclick="closeViewBoundary()" class="p-2 hover:bg-white/10 rounded-full transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- Body --}}
+        <div class="p-6 overflow-y-auto flex-1">
+            <div class="grid grid-cols-2 gap-4 mb-5">
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Date</p>
+                    <p id="vb_date" class="text-sm font-bold text-gray-800"></p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Submitted By</p>
+                    <p id="vb_creator" class="text-sm font-bold text-gray-800"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-5">
+                <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-100">
+                    <p class="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">Target Boundary</p>
+                    <p id="vb_boundaryAmount" class="text-xl font-black text-yellow-800"></p>
+                    <p id="vb_rateLabel" class="text-[10px] text-yellow-600 font-bold mt-0.5"></p>
+                </div>
+                <div class="bg-green-50 rounded-xl p-4 border border-green-100">
+                    <p class="text-[10px] font-black text-green-600 uppercase tracking-widest mb-1">Actual Collected</p>
+                    <p id="vb_actualBoundary" class="text-xl font-black text-green-800"></p>
+                </div>
+            </div>
+
+            <div id="vb_differenceRow" class="mb-5 p-4 rounded-xl border hidden">
+                <p class="text-[10px] font-black uppercase tracking-widest mb-1" id="vb_diffLabel"></p>
+                <p id="vb_diffAmount" class="text-lg font-black"></p>
+            </div>
+
+            {{-- Exception Details (parsed from system flags) --}}
+            <div id="vb_exceptionsRow" class="mb-5 hidden">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Exception Details</p>
+                <div id="vb_exceptionCards" class="space-y-2"></div>
+            </div>
+
+            {{-- Dispatcher Notes (user-typed only) --}}
+            <div id="vb_notesRow" class="mb-5 hidden">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dispatcher Notes</p>
+                <div id="vb_notes" class="p-4 bg-gray-50 rounded-xl text-sm text-gray-700 italic border-l-4 border-yellow-300 leading-relaxed"></div>
+            </div>
+        </div>
+
+        {{-- Footer --}}
+        <div class="bg-gray-50 p-4 shrink-0 flex justify-end gap-3 border-t">
+            <button onclick="closeViewBoundary()"
+                class="px-6 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-100 text-sm font-bold uppercase tracking-tight transition shadow-sm">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
+// Boundary records keyed by ID for the view modal
+const boundaryRecords = @json(collect($boundariesArray)->keyBy('id'));
+
+function openViewBoundary(id) {
+    const r = boundaryRecords[id];
+    if (!r) return;
+
+    // Header
+    document.getElementById('vb_plate').innerText = r.plate_number || '—';
+    document.getElementById('vb_driver').innerText = (r.driver_name || 'Unassigned') + (r.is_extra_driver ? ' • Extra Driver' : '');
+
+    // Status badge
+    const statusColors = { paid: 'bg-green-500', shortage: 'bg-red-500', excess: 'bg-blue-500' };
+    const sBadge = document.getElementById('vb_statusBadge');
+    sBadge.className = 'px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ' + (statusColors[r.status] || 'bg-gray-500');
+    sBadge.innerText = r.status || 'unknown';
+
+    // Incentive badge
+    const iBadge = document.getElementById('vb_incentiveBadge');
+    if (r.has_incentive !== null && r.has_incentive !== undefined) {
+        iBadge.className = 'px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ' + (r.has_incentive ? 'bg-white/30' : 'bg-red-700');
+        iBadge.innerText = r.has_incentive ? 'Incentive Earned' : 'No Incentive';
+    } else {
+        iBadge.className = 'hidden';
+        iBadge.innerText = '';
+    }
+
+    // Details
+    document.getElementById('vb_date').innerText = r.date || '—';
+    document.getElementById('vb_creator').innerText = r.creator_name || 'System';
+    document.getElementById('vb_boundaryAmount').innerText = '₱' + parseFloat(r.boundary_amount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('vb_actualBoundary').innerText = '₱' + parseFloat(r.actual_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('vb_rateLabel').innerText = r.rate_label || '';
+
+    // Shortage / Excess
+    const diffRow = document.getElementById('vb_differenceRow');
+    const shortage = parseFloat(r.shortage || 0);
+    const excess = parseFloat(r.excess || 0);
+    if (shortage > 0) {
+        diffRow.className = 'mb-5 p-4 rounded-xl border bg-red-50 border-red-200';
+        document.getElementById('vb_diffLabel').className = 'text-[10px] font-black uppercase tracking-widest mb-1 text-red-500';
+        document.getElementById('vb_diffLabel').innerText = 'Shortage';
+        document.getElementById('vb_diffAmount').className = 'text-lg font-black text-red-700';
+        document.getElementById('vb_diffAmount').innerText = '₱' + shortage.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    } else if (excess > 0) {
+        diffRow.className = 'mb-5 p-4 rounded-xl border bg-blue-50 border-blue-200';
+        document.getElementById('vb_diffLabel').className = 'text-[10px] font-black uppercase tracking-widest mb-1 text-blue-500';
+        document.getElementById('vb_diffLabel').innerText = 'Excess / Overpaid';
+        document.getElementById('vb_diffAmount').className = 'text-lg font-black text-blue-700';
+        document.getElementById('vb_diffAmount').innerText = '₱' + excess.toLocaleString('en-PH', {minimumFractionDigits: 2});
+    } else {
+        diffRow.className = 'mb-5 p-4 rounded-xl border hidden';
+    }
+
+    // Parse and display exception flags + clean user notes
+    const rawNotes = (r.notes || '').trim();
+
+    // --- Map of bracket tags → display info ---
+    const exceptionDefs = [
+        {
+            tag: '[Automatic Violation: Vehicle Damaged]',
+            label: 'Vehicle Damaged',
+            sub: 'Driver incentive automatically voided.',
+            icon: '⚠️',
+            color: 'bg-red-50 border-red-300 text-red-800',
+        },
+        {
+            tag: '[Unit Sent to Maintenance - Shift Schedule Paused (No Boundary)]',
+            label: 'Broke Down Immediately (No Boundary)',
+            sub: 'Unit broke down upon deployment. Boundary set to ₱0.00. Shift schedule paused. Pending maintenance created.',
+            icon: '🔧',
+            color: 'bg-orange-50 border-orange-300 text-orange-800',
+        },
+        {
+            tag: '[Unit Sent to Maintenance - Shift Schedule Paused (Half Boundary)]',
+            label: 'Broke Down During Shift (Half Boundary)',
+            sub: 'Unit broke down mid-shift. Boundary halved. Shift schedule paused. Pending maintenance created.',
+            icon: '🔧',
+            color: 'bg-yellow-50 border-yellow-300 text-yellow-800',
+        },
+        {
+            tag: '[Set New Boundary Schedule]',
+            label: 'Boundary Schedule Reset',
+            sub: 'Shift schedule was manually reset to the current time.',
+            icon: '🔄',
+            color: 'bg-blue-50 border-blue-300 text-blue-800',
+        },
+    ];
+
+    let cleanNotes = rawNotes;
+    const foundExceptions = [];
+
+    exceptionDefs.forEach(def => {
+        if (rawNotes.includes(def.tag)) {
+            foundExceptions.push(def);
+            cleanNotes = cleanNotes.replace(def.tag, '').trim();
+        }
+    });
+
+    // Show exception cards
+    const exceptRow = document.getElementById('vb_exceptionsRow');
+    const exceptionCards = document.getElementById('vb_exceptionCards');
+    if (foundExceptions.length > 0) {
+        exceptionCards.innerHTML = foundExceptions.map(ex => `
+            <div class="flex items-start gap-3 p-3 rounded-xl border ${ex.color}">
+                <span class="text-lg leading-none mt-0.5">${ex.icon}</span>
+                <div>
+                    <p class="text-xs font-black uppercase tracking-wide leading-none mb-1">${ex.label}</p>
+                    <p class="text-[11px] leading-snug opacity-80">${ex.sub}</p>
+                </div>
+            </div>
+        `).join('');
+        exceptRow.classList.remove('hidden');
+    } else {
+        exceptionCards.innerHTML = '';
+        exceptRow.classList.add('hidden');
+    }
+
+    // Show user notes (cleaned)
+    const notesRow = document.getElementById('vb_notesRow');
+    const userNotes = cleanNotes.replace(/^\s+|\s+$/g, '');
+    if (userNotes) {
+        notesRow.classList.remove('hidden');
+        document.getElementById('vb_notes').innerText = userNotes;
+    } else {
+        notesRow.classList.add('hidden');
+    }
+
+    document.getElementById('viewBoundaryModal').classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function closeViewBoundary() {
+    document.getElementById('viewBoundaryModal').classList.add('hidden');
+}
+
+// Close on backdrop click
+document.getElementById('viewBoundaryModal').addEventListener('click', function(e) {
+    if (e.target === this) closeViewBoundary();
+});
+
 // Search and filter functionality
 document.getElementById('search').addEventListener('input', function() {
     applyFilters();
@@ -558,7 +837,21 @@ function initializeUnitDropdown() {
                 const boundaryInput = document.getElementById('boundaryAmount');
                 if (boundaryInput) {
                     boundaryInput.value = suggestedRate;
-                    document.getElementById('actualBoundary').value = suggestedRate;
+                    boundaryInput.dataset.originalTarget = suggestedRate;
+                    
+                    const needsMaintenanceHalfCheck = document.getElementById('needsMaintenanceHalfCheck');
+                    const needsMaintenanceZeroCheck = document.getElementById('needsMaintenanceZeroCheck');
+                    
+                    if (needsMaintenanceZeroCheck && needsMaintenanceZeroCheck.checked) {
+                        boundaryInput.value = '0.00';
+                        document.getElementById('actualBoundary').value = '0.00';
+                    } else if (needsMaintenanceHalfCheck && needsMaintenanceHalfCheck.checked) {
+                        const halfLimit = (parseFloat(suggestedRate) / 2).toFixed(2);
+                        boundaryInput.value = halfLimit;
+                        document.getElementById('actualBoundary').value = halfLimit;
+                    } else {
+                        document.getElementById('actualBoundary').value = suggestedRate;
+                    }
                 }
 
                 // New: Handle Swapping & Shift turn data
@@ -779,6 +1072,13 @@ function addBoundary() {
     if (shortageAlert) shortageAlert.classList.add('hidden');
 
     document.getElementById('date').value = new Date().toLocaleDateString('en-CA');
+
+    // Auto-check the Past 10:00 AM Cut-off if current time is >= 10:00 AM
+    const pastCutoffCheckbox = document.getElementById('past_cutoff');
+    if (pastCutoffCheckbox) {
+        pastCutoffCheckbox.checked = new Date().getHours() >= 10;
+    }
+
     document.getElementById('boundaryModal').classList.remove('hidden');
     lucide.createIcons();
 }
@@ -924,6 +1224,10 @@ function updateShiftInfo(unitElement) {
     // Calculate precision time based on STRICT DEADLINE
     if (deadline) {
         const deadlineDate = new Date(deadline);
+        // Format absolute shifting time (e.g., 2:00 PM)
+        const formatOptions = { hour: 'numeric', minute: 'numeric', hour12: true };
+        const absoluteTimeStr = deadlineDate.toLocaleTimeString('en-US', formatOptions);
+
         const now = new Date();
         const diffMs = deadlineDate - now;
         const isPast = diffMs < 0;
@@ -933,18 +1237,18 @@ function updateShiftInfo(unitElement) {
         const diffMins = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
         
         if (isPast) {
-            shiftTimerLabel.innerHTML = `<span class="text-red-600 font-black">OVERDUE BY ${diffHours}h ${diffMins}m</span>`;
+            shiftTimerLabel.innerHTML = `<span class="flex flex-col"><span class="text-red-600 font-black">LATE RETURN: ${diffHours}h ${diffMins}m Ago</span><span class="text-gray-400">Shifting Time: <strong>${absoluteTimeStr}</strong></span></span>`;
             shiftInfoGroup.classList.add('border-red-200', 'bg-red-50');
             shiftInfoGroup.classList.remove('border-green-200', 'bg-green-50');
             badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded-full border border-red-300 uppercase tracking-tighter shadow-sm animate-pulse">NO INCENTIVE</span>';
         } else {
-            shiftTimerLabel.innerHTML = `<span class="text-green-600 font-bold">${diffHours}h ${diffMins}m remaining</span> until deadline`;
+            shiftTimerLabel.innerHTML = `<span class="flex flex-col"><span class="text-green-600 font-bold">${diffHours}h ${diffMins}m remaining</span><span class="text-gray-400 mt-0.5">Shifting Time: <strong>${absoluteTimeStr}</strong></span></span>`;
             shiftInfoGroup.classList.add('border-green-200', 'bg-green-50');
             shiftInfoGroup.classList.remove('border-red-200', 'bg-red-50');
             badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded-full border border-green-300 uppercase tracking-tighter shadow-sm">INCENTIVE ELIGIBLE</span>';
         }
     } else {
-        shiftTimerLabel.textContent = 'Shift schedule not yet initialized';
+        shiftTimerLabel.innerHTML = '<span class="text-gray-500">Shift schedule not yet initialized</span>';
         badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold rounded-full border border-blue-300 uppercase tracking-tighter">NEW PATTERN</span>';
     }
 
@@ -992,6 +1296,47 @@ document.addEventListener('DOMContentLoaded', function() {
             const actualInput = document.getElementById('actualBoundary');
             if (actualInput) actualInput.value = val;
         });
+    }
+
+    // Handle Needs Maintenance logic dynamically (Half vs Zero)
+    const needsMaintenanceHalfCheck = document.getElementById('needsMaintenanceHalfCheck');
+    const needsMaintenanceZeroCheck = document.getElementById('needsMaintenanceZeroCheck');
+    
+    function applyMaintenanceLogic(triggerElem) {
+        if (!amtInput || !amtInput.dataset.originalTarget) return;
+        const actInput = document.getElementById('actualBoundary');
+        let original = parseFloat(amtInput.dataset.originalTarget);
+        let currentAmt = parseFloat(amtInput.value) || 0;
+        let actVal = parseFloat(actInput.value) || 0;
+        
+        // Ensure mutual exclusivity
+        if (triggerElem === needsMaintenanceHalfCheck && needsMaintenanceHalfCheck.checked) {
+            if(needsMaintenanceZeroCheck) needsMaintenanceZeroCheck.checked = false;
+        } else if (triggerElem === needsMaintenanceZeroCheck && needsMaintenanceZeroCheck.checked) {
+            if(needsMaintenanceHalfCheck) needsMaintenanceHalfCheck.checked = false;
+        }
+
+        let isMatchingTarget = Math.abs(currentAmt - actVal) < 0.01;
+
+        if (needsMaintenanceZeroCheck && needsMaintenanceZeroCheck.checked) {
+            amtInput.value = '0.00';
+            if (isMatchingTarget) actInput.value = '0.00';
+        } else if (needsMaintenanceHalfCheck && needsMaintenanceHalfCheck.checked) {
+            let half = (original / 2).toFixed(2);
+            amtInput.value = half;
+            if (isMatchingTarget) actInput.value = half;
+        } else {
+            let full = original.toFixed(2);
+            amtInput.value = full;
+            if (isMatchingTarget) actInput.value = full;
+        }
+    }
+
+    if (needsMaintenanceHalfCheck) {
+        needsMaintenanceHalfCheck.addEventListener('change', function() { applyMaintenanceLogic(this); });
+    }
+    if (needsMaintenanceZeroCheck) {
+        needsMaintenanceZeroCheck.addEventListener('change', function() { applyMaintenanceLogic(this); });
     }
 });
 </script>
