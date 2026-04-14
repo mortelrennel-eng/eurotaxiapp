@@ -422,29 +422,32 @@ class DriverBehaviorController extends Controller
 
         $profiles = [];
         foreach ($drivers as $d) {
+            $unit_obj  = (object)['driver_id' => $d->driver_id ?? null, 'secondary_driver_id' => $d->secondary_driver_id ?? null, 'plate_number' => $d->plate_number ?? null];
+            $incentive = $this->computeIncentiveForDriver($d->id, $unit_obj);
+            $is_dual   = $incentive['is_dual'];
+
+            // For "Accurate" statistics in the profile card:
+            // We only show UNRELEASED stats for the current cycle to match the progress bar.
+            
             $incidents = DB::table('driver_behavior')
                 ->where('driver_id', $d->id)
-                ->whereDate('timestamp', '>=', $from)
-                ->whereDate('timestamp', '<=', $to)
+                ->whereNull('incentive_released_at')
                 ->count();
 
             $boundaries = DB::table('boundaries')
                 ->where('driver_id', $d->id)
-                ->whereDate('date', '>=', $from)
-                ->whereDate('date', '<=', $to)
+                ->whereNull('incentive_released_at')
                 ->count();
 
             $shortages = DB::table('boundaries')
                 ->where('driver_id', $d->id)
-                ->whereDate('date', '>=', $from)
+                ->whereNull('incentive_released_at')
                 ->sum('shortage');
 
             $charges = DB::table('driver_behavior')
                 ->where('driver_id', $d->id)
+                ->whereNull('incentive_released_at')
                 ->sum('total_charge_to_driver');
-
-            $unit_obj    = (object)['driver_id' => $d->driver_id ?? null, 'secondary_driver_id' => $d->secondary_driver_id ?? null, 'plate_number' => $d->plate_number ?? null];
-            $incentive   = $this->computeIncentiveForDriver($d->id, $unit_obj);
 
             $profiles[] = [
                 'id'          => $d->id,
