@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('driver_behavior', function (Blueprint $table) {
-            // Change enum/small columns to varchar(191) to prevent truncation and strict validation mismatches
-            $table->string('incident_type', 191)->change();
-            $table->string('severity', 191)->change();
-            $table->string('charge_status', 191)->default('none')->change(); // Also relaxing charge status
-        });
+        // Use raw SQL to avoid doctrine/dbal dependency for column changes
+        DB::statement("ALTER TABLE `driver_behavior` MODIFY `incident_type` VARCHAR(191) NULL");
+        DB::statement("ALTER TABLE `driver_behavior` MODIFY `severity` VARCHAR(191) NULL");
+        DB::statement("ALTER TABLE `driver_behavior` MODIFY `charge_status` VARCHAR(191) NULL DEFAULT 'none'");
     }
 
     /**
@@ -24,9 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('driver_behavior', function (Blueprint $table) {
-            // Rollback is tricky for enums, but we'll try to restore the basics if needed
-            // However, since we're relaxing, rollback shouldn't be urgent.
-        });
+        // Rollback not strictly necessary since we're relaxing constraints
     }
 };
