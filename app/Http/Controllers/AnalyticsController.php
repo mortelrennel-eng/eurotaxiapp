@@ -70,7 +70,7 @@ class AnalyticsController extends Controller
                 SUM(b.excess) - SUM(b.shortage) as net_excess
             ')
             ->whereBetween('b.date', [$date_from, $date_to])
-            ->groupBy('d.id')
+            ->groupBy('d.id', 'full_name')
             ->orderByDesc('avg_daily')
             ->limit(10)
             ->get();
