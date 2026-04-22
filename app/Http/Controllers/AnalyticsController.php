@@ -118,7 +118,7 @@ class AnalyticsController extends Controller
         
         // Get top performing units
         $top_units = DB::table('units')
-            ->whereNull('deleted_at')
+            ->whereNull('units.deleted_at')
             ->leftJoin('drivers as d', 'units.driver_id', '=', 'd.id')
             ->select('units.*', DB::raw("CONCAT(COALESCE(d.first_name,''), ' ', COALESCE(d.last_name,'')) as driver_name"))
             ->addSelect(DB::raw('0 as total_collected, 0 as days_operated')) // Placeholder values
