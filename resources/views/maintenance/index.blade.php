@@ -1396,13 +1396,30 @@ document.addEventListener('DOMContentLoaded', () => {
         filterDriverSuggestions('addDriverDisplay', 'addDriverDropdown', suggestions);
     });
 
-    // Add Driver Input - refine suggestion on type
+    // Add Driver Input - show list on click/type + apply suggestion filter
     const addDriverInput = document.getElementById('addDriverDisplay');
+    addDriverInput.addEventListener('mousedown', () => {
+        closeAllDropdowns();
+        document.getElementById('addDriverDropdown').classList.remove('hidden');
+        filterDriverSuggestions('addDriverDisplay', 'addDriverDropdown', addDriverInput.dataset.suggestedIds);
+    });
     addDriverInput.addEventListener('input', () => {
+        document.getElementById('addDriverDropdown').classList.remove('hidden');
         filterDriverSuggestions('addDriverDisplay', 'addDriverDropdown', addDriverInput.dataset.suggestedIds);
     });
     addDriverInput.addEventListener('focus', () => {
+        document.getElementById('addDriverDropdown').classList.remove('hidden');
         filterDriverSuggestions('addDriverDisplay', 'addDriverDropdown', addDriverInput.dataset.suggestedIds);
+    });
+
+    // Wire up click selection for Add Driver dropdown
+    document.getElementById('addDriverDropdown').addEventListener('click', (e) => {
+        const opt = e.target.closest('.driver-option');
+        if (opt) {
+            addDriverInput.value = opt.dataset.name;
+            document.getElementById('addDriverId').value = opt.dataset.id;
+            document.getElementById('addDriverDropdown').classList.add('hidden');
+        }
     });
     
     initSearchableDropdown('addMechDisplay1', 'addMechDropdown1', 'mech-option');
@@ -1424,20 +1441,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // Store suggestions and trigger filter
         const suggestions = [driverId, secondaryId].filter(id => id && id !== 'null').join(',');
         driverDisplay.dataset.suggestedIds = suggestions;
+        document.getElementById('editDriverDropdown').classList.remove('hidden');
         filterDriverSuggestions('editDriverDisplay', 'editDriverDropdown', suggestions);
     });
 
+    // Edit Driver Input - show list on click/type + apply suggestion filter
     const editDriverInput = document.getElementById('editDriverDisplay');
+    editDriverInput.addEventListener('mousedown', () => {
+        closeAllDropdowns();
+        document.getElementById('editDriverDropdown').classList.remove('hidden');
+        filterDriverSuggestions('editDriverDisplay', 'editDriverDropdown', editDriverInput.dataset.suggestedIds);
+    });
     editDriverInput.addEventListener('input', () => {
+        document.getElementById('editDriverDropdown').classList.remove('hidden');
         filterDriverSuggestions('editDriverDisplay', 'editDriverDropdown', editDriverInput.dataset.suggestedIds);
     });
     editDriverInput.addEventListener('focus', () => {
+        document.getElementById('editDriverDropdown').classList.remove('hidden');
         filterDriverSuggestions('editDriverDisplay', 'editDriverDropdown', editDriverInput.dataset.suggestedIds);
     });
 
-    initSearchableDropdown('editDriverDisplay', 'editDriverDropdown', 'driver-option');
-    initSearchableDropdown('editMechDisplay', 'editMechDropdown', 'mech-option');
-    
+    // Wire up click selection for Edit Driver dropdown
+    document.getElementById('editDriverDropdown').addEventListener('click', (e) => {
+        const opt = e.target.closest('.driver-option');
+        if (opt) {
+            editDriverInput.value = opt.dataset.name;
+            document.getElementById('editDriverId').value = opt.dataset.id;
+            document.getElementById('editDriverDropdown').classList.add('hidden');
+        }
+    });
+
     initPartSelectors();
 });
 </script>
