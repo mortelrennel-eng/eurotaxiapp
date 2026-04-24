@@ -87,12 +87,19 @@ class DashboardController extends Controller
         }
 
         // Auto-generate notifications for Missing Units (> 24 hours overdue)
+        // RULE: Only units with at least one assigned driver are flagged as missing.
+        // Vacant units (no driver_id and no secondary_driver_id) are exempt.
         $missingUnits = DB::table('units')
             ->leftJoin('drivers', 'units.current_turn_driver_id', '=', 'drivers.id')
             ->whereNull('units.deleted_at')
-            ->whereRaw('LOWER(units.status) != ?', ['maintenance'])
+            ->whereRaw('LOWER(units.status) NOT IN (?, ?, ?)', ['maintenance', 'surveillance', 'retired'])
             ->whereNotNull('units.shift_deadline_at')
             ->where('units.shift_deadline_at', '<', now()->subHours(24))
+            ->where(function($q) {
+                // Must have at least one driver assigned
+                $q->whereNotNull('units.driver_id')
+                  ->orWhereNotNull('units.secondary_driver_id');
+            })
             ->select('units.id', 'units.plate_number', 'drivers.first_name', 'drivers.last_name', 'units.shift_deadline_at')
             ->get();
 

@@ -67,7 +67,24 @@
             // Notifications for header bell
             $headerNotifications = [];
             
-            // 1. Fetch System Alerts from DB (REAL-TIME VIOLATIONS FIRST)
+            // 1. HIGHEST PRIORITY: Manually flagged 'Surveillance' units
+            $flaggedUnits = DB::table('units')
+                ->whereNull('deleted_at')
+                ->where('status', 'surveillance')
+                ->get();
+                
+            foreach($flaggedUnits as $fu) {
+                $headerNotifications[] = [
+                    'id' => 'surveillance_' . $fu->id,
+                    'title' => '🚨 Flagged: ' . $fu->plate_number,
+                    'message' => 'This unit is currently flagged as Missing/Surveillance.',
+                    'type' => 'surveillance',
+                    'url' => route('units.index') . '?open_flagged=1',
+                    'time' => 'Action Required'
+                ];
+            }
+            
+            // 2. Fetch System Alerts from DB (REAL-TIME VIOLATIONS)
             $dbAlerts = DB::table('system_alerts')
                 ->where('is_resolved', false)
                 ->orderByDesc('created_at')
@@ -86,7 +103,7 @@
                 ];
             }
             
-            // 2. Merge specialized notifications from views if they exist (BOTTOM)
+            // 3. Merge specialized notifications from views if they exist
             if(isset($maintNotifs)) {
                 foreach($maintNotifs as $n) {
                     $n['time'] = $n['time'] ?? 'Today';
@@ -99,7 +116,7 @@
                     $headerNotifications[] = $n;
                 }
             }
-            
+
             $headerNotificationCount = count($headerNotifications);
         @endphp
 

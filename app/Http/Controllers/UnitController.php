@@ -659,6 +659,69 @@ class UnitController extends Controller
         return redirect()->route('units.index')->with('success', 'Unit status updated!');
     }
 
+    public function getFlaggedUnits()
+    {
+        // 1. Manually flagged units (status = surveillance) — always shown regardless of driver
+        $surveillanceUnits = DB::table('units')
+            ->whereNull('deleted_at')
+            ->where('status', 'surveillance')
+            ->select('id', 'plate_number', 'make', 'model', 'status', 'driver_id', 'secondary_driver_id')
+            ->get();
+
+        // 2. Auto-detected missing units: has a driver, overdue boundary (>48h), NOT already surveillance
+        $autoMissingUnits = DB::table('units')
+            ->whereNull('deleted_at')
+            ->whereNotIn('status', ['maintenance', 'surveillance', 'retired', 'coding'])
+            ->whereNotNull('shift_deadline_at')
+            ->where('shift_deadline_at', '<', now()->subHours(48))
+            ->where(function($q) {
+                $q->whereNotNull('driver_id')
+                  ->orWhereNotNull('secondary_driver_id');
+            })
+            ->select('id', 'plate_number', 'make', 'model', 'status', 'driver_id', 'secondary_driver_id')
+            ->get();
+
+        // Merge and de-duplicate by id
+        $allFlagged = $surveillanceUnits->merge($autoMissingUnits)->unique('id')->values();
+
+        foreach ($allFlagged as $unit) {
+            // Get the most recent boundary record for this unit
+            $lastBoundary = DB::table('boundaries')
+                ->where('unit_id', $unit->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+                
+            if ($lastBoundary) {
+                $lastDate = \Carbon\Carbon::parse($lastBoundary->created_at);
+                $unit->last_boundary_date = $lastDate->format('M d, Y g:i A');
+                $unit->days_inactive = max(0, $lastDate->diffInDays(now()));
+                
+                // Identify the last driver who held the unit from the boundary record
+                if ($lastBoundary->driver_id) {
+                    $lastDriver = DB::table('drivers')
+                        ->where('id', $lastBoundary->driver_id)
+                        ->select('first_name', 'last_name', 'contact_number')
+                        ->first();
+                    $unit->last_known_driver = $lastDriver 
+                        ? trim($lastDriver->first_name . ' ' . $lastDriver->last_name)
+                        : 'Unknown';
+                    $unit->last_driver_contact = $lastDriver->contact_number ?? null;
+                } else {
+                    $unit->last_known_driver = 'Not recorded';
+                    $unit->last_driver_contact = null;
+                }
+            } else {
+                $unit->last_boundary_date = null;
+                $unit->days_inactive = null;
+                $unit->last_known_driver = 'No boundary record';
+                $unit->last_driver_contact = null;
+            }
+            $unit->is_surveillance = ($unit->status === 'surveillance');
+        }
+        
+        return response()->json($allFlagged);
+    }
+
     public function showImport()
     {
         return view('units.import');

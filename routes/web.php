@@ -78,6 +78,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Units - Specific routes MUST come before resource (to prevent /units/{id} catching them)
+    Route::get('/units/flagged', [UnitController::class, 'getFlaggedUnits'])->name('units.flagged');
     Route::get('/units/details', [UnitController::class, 'getDetails'])->name('units.details');
     Route::get('/units/details-html', [UnitController::class, 'getDetailsHtml'])->name('units.detailsHtml');
     Route::post('/units/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');

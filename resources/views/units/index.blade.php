@@ -54,6 +54,9 @@
                 </select>
             </div>
             <div class="flex gap-2">
+                <button type="button" onclick="showFlaggedUnitsModal()" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 text-xs font-semibold shadow-sm">
+                    <i data-lucide="siren" class="w-3.5 h-3.5"></i> Flagged Units
+                </button>
                 <a href="{{ route('units.print') }}" target="_blank"
                     class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 text-xs font-semibold">
                     <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print to PDF
@@ -489,9 +492,11 @@
                             <select name="status" id="editStatus"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="active">Active</option>
+                                <option value="surveillance">Surveillance / Missing</option>
                                 <option value="maintenance">Maintenance</option>
                                 <option value="coding">Coding</option>
                                 <option value="retired">Retired</option>
+                                <option value="vacant">Vacant</option>
                             </select>
                         </div>
                         <div class="space-y-2">
@@ -760,6 +765,37 @@
         </div>
     </div>
 
+    {{-- Flagged Units Modal --}}
+    <div id="flaggedUnitsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 p-4 shrink-0">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <i data-lucide="siren" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (Missing/Surveillance)</h3>
+                            <p class="text-sm text-red-100 leading-tight">Units that are under monitoring and their inactive days</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('flaggedUnitsModal').classList.add('hidden')" class="text-white hover:text-gray-200 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4 overflow-y-auto flex-1 bg-gray-50">
+                <div id="flaggedUnitsContainer" class="space-y-4">
+                    <div class="text-center py-8">
+                        <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-4 text-gray-300 animate-spin"></i>
+                        <p class="text-gray-500">Loading flagged units...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @push('scripts')
 <script>
     let searchTimer;
@@ -808,6 +844,118 @@
         performSearch(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    window.showFlaggedUnitsModal = function() {
+        const modal = document.getElementById('flaggedUnitsModal');
+        const container = document.getElementById('flaggedUnitsContainer');
+        modal.classList.remove('hidden');
+        
+        container.innerHTML = `
+            <div class="text-center py-8">
+                <i data-lucide="loader-2" class="w-8 h-8 mx-auto mb-4 text-gray-300 animate-spin"></i>
+                <p class="text-gray-500">Loading flagged units...</p>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        fetch('{{ route("units.flagged") }}')
+            .then(res => res.json())
+            .then(data => {
+                if(data.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-500"></i>
+                            <h4 class="text-lg font-bold text-gray-900">All Clear!</h4>
+                            <p class="text-gray-500">There are no units currently flagged as missing or under surveillance.</p>
+                        </div>
+                    `;
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                    return;
+                }
+                
+                let html = '<div class="flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2">';
+                data.forEach(unit => {
+                    const daysMissing = unit.days_inactive !== null && unit.days_inactive !== undefined ? unit.days_inactive : '?';
+                    const daysColor = (daysMissing === '?' || daysMissing > 2) ? 'text-red-600 font-bold' : 'text-orange-600 font-bold';
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
+                    const badge = unit.is_surveillance 
+                        ? `<span class="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-bold uppercase tracking-wide">🚨 Manually Flagged</span>`
+                        : `<span class="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded font-bold uppercase tracking-wide">⚠️ Auto-Detected</span>`;
+                    const borderColor = unit.is_surveillance ? 'border-red-500' : 'border-orange-400';
+                    const driverDisplay = unit.last_known_driver || 'Unknown';
+                    const contactDisplay = unit.last_driver_contact 
+                        ? `<a href="tel:${unit.last_driver_contact}" class="text-blue-600 font-semibold hover:underline">${unit.last_driver_contact}</a>`
+                        : `<span class="text-gray-400 italic">No contact</span>`;
+
+                    html += `
+                        <div class="bg-white border-l-4 ${borderColor} shadow-sm rounded-lg p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                                        <h5 class="font-bold text-base text-gray-900 leading-none">${unit.plate_number}</h5>
+                                        ${badge}
+                                    </div>
+                                    <p class="text-[10px] text-gray-400">${unit.make || ''} ${unit.model || ''}</p>
+                                    
+                                    <div class="mt-2 bg-gray-50 rounded p-2 border border-gray-100 space-y-1">
+                                        <div class="flex items-center gap-1.5 text-[11px]">
+                                            <span class="text-gray-400 w-20 flex-shrink-0">Last Driver:</span>
+                                            <span class="font-semibold text-gray-800">${driverDisplay}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px]">
+                                            <span class="text-gray-400 w-20 flex-shrink-0">Contact:</span>
+                                            ${contactDisplay}
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[11px]">
+                                            <span class="text-gray-400 w-20 flex-shrink-0">Last Boundary:</span>
+                                            <span class="text-gray-600">${unit.last_boundary_date || '<span class="italic text-gray-400">No record</span>'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-center gap-2 flex-shrink-0">
+                                    <div class="text-center">
+                                        <div class="text-[10px] uppercase font-bold text-gray-400">Missing For</div>
+                                        <div class="text-lg ${daysColor} leading-none mt-0.5 font-bold">${daysMissing}</div>
+                                        <div class="text-[10px] text-gray-400">day(s)</div>
+                                    </div>
+                                    <form method="POST" action="/units/toggle-status" class="m-0" onsubmit="return confirm('Clear MISSING flag on ${unit.plate_number}?');">
+                                        <input type="hidden" name="_token" value="${csrfToken}">
+                                        <input type="hidden" name="id" value="${unit.id}">
+                                        <input type="hidden" name="new_status" value="active">
+                                        <button type="submit" class="p-2 bg-green-100 text-green-700 hover:bg-green-200 rounded-lg transition shadow-sm" title="Clear Flag">
+                                            <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            })
+            .catch(err => {
+                container.innerHTML = '<div class="text-red-500 p-4 text-center"><i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2"></i>Failed to load units.</div>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
+    }
+
+    window.closeFlaggedUnitsModalAndEdit = function(id) {
+        document.getElementById('flaggedUnitsModal').classList.add('hidden');
+        editUnit(id);
+    }
+
+    // Auto-open flagged units modal if 'open_flagged' parameter is present
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('open_flagged')) {
+            showFlaggedUnitsModal();
+            // Remove the parameter from URL without refreshing for a cleaner Look
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    });
 </script>
     <!-- Leaflet JS for Map -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1244,6 +1392,7 @@
                                     <h3 class="text-sm font-bold leading-none">${unit.plate_number || ''}</h3>
                                     <span class="px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-[9px] font-medium uppercase tracking-wider">${unit.status || ''}</span>
                                     <span class="px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-[9px] font-medium uppercase tracking-wider">${unit.unit_type || 'Standard'}</span>
+                                    ${unit.status === 'surveillance' ? `<span class="px-1.5 py-0.5 bg-red-500 text-white rounded-full text-[9px] font-bold uppercase tracking-wider animate-pulse">🚨 Under Surveillance</span>` : ''}
                                 </div>
                                 <p class="text-[10px] text-blue-100 leading-tight">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
                             </div>
