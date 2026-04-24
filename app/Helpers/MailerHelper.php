@@ -25,7 +25,7 @@ if (!function_exists('send_custom_email')) {
 
         try {
             // Server settings
-            $mail->SMTPDebug = SMTP::DEBUG_OFF; // Set to DEBUG_SERVER for troubleshooting
+            $mail->SMTPDebug = SMTP::DEBUG_OFF;
             $mail->isSMTP();
             $mail->Host = config('mail.mailers.smtp.host', 'smtp.hostinger.com');
             $mail->SMTPAuth = true;
@@ -33,6 +33,15 @@ if (!function_exists('send_custom_email')) {
             $mail->Password = config('mail.mailers.smtp.password');
             $mail->SMTPSecure = config('mail.mailers.smtp.encryption', PHPMailer::ENCRYPTION_SMTPS);
             $mail->Port = config('mail.mailers.smtp.port', 465);
+
+            // Hostinger/Shared Hosting SSL Fix
+            $mail->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
+                )
+            );
 
             // Anti-Spam Headers
             $mail->CharSet = 'UTF-8';
@@ -50,11 +59,19 @@ if (!function_exists('send_custom_email')) {
             $mail->addCustomHeader('X-Priority', '3');
             $mail->addCustomHeader('X-Mailer', 'EurotaxisystemPHPMailer');
 
-            \Log::info("Attempting to send email to: {$to} using Host: {$mail->Host}, Port: {$mail->Port}");
+            \Log::info("Attempting to send email to: {$to} using Host: {$mail->Host} Port: {$mail->Port}");
 
-            return $mail->send();
+            $sent = $mail->send();
+            if ($sent) {
+                \Log::info("Email successfully sent to: {$to}");
+            }
+            return $sent;
         } catch (Exception $e) {
-            \Log::error("Mail Error to {$to}: {$mail->ErrorInfo} | Exception: {$e->getMessage()}");
+            \Log::error("PHPMailer Exception for {$to}: " . $e->getMessage());
+            \Log::error("SMTP Error: " . $mail->ErrorInfo);
+            return false;
+        } catch (\Throwable $t) {
+            \Log::error("Fatal Error sending email to {$to}: " . $t->getMessage());
             return false;
         }
     }
