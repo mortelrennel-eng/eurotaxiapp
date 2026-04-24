@@ -71,71 +71,63 @@ class DashboardController extends Controller
             }
         }
 
-        // --- Auto-notify: Units with overdue boundaries ---
-        // Find all active units where shift_deadline_at has passed and no boundary was recorded today or yesterday
-        $overdueUnits = DB::table('units as u')
-            ->whereNull('u.deleted_at')
-            ->whereNotNull('u.shift_deadline_at')
-            ->where('u.shift_deadline_at', '<', now())
-            ->whereRaw("LOWER(u.status) NOT IN ('maintenance','vacant','inactive')")
-            ->leftJoin('boundaries as b', function($join) {
-                $join->on('b.unit_id', '=', 'u.id')
-                     ->whereNull('b.deleted_at')
-                     ->whereDate('b.date', '>=', now()->subDay()->toDateString());
-            })
-            ->whereNull('b.id') // No boundary in the past 24 hours
-            ->select('u.id', 'u.plate_number', 'u.shift_deadline_at', 'u.current_turn_driver_id')
+        // Auto-resolve missing unit alerts that are no longer applicable
+        $activeMissingAlerts = DB::table('system_alerts')
+            ->where('type', 'missing_unit')
+            ->where('is_resolved', false)
             ->get();
 
-        foreach ($overdueUnits as $overdueUnit) {
-            $deadline  = Carbon::parse($overdueUnit->shift_deadline_at);
-            $hoursLate = $deadline->diffInHours(now());
-            $daysLate  = floor($hoursLate / 24);
-
-            // Only alert if > 24 hours late (1+ day missing)
-            if ($hoursLate < 24) continue;
-
-            // Lookup driver name
-            $driverName = 'Unknown Driver';
-            if ($overdueUnit->current_turn_driver_id) {
-                $driver = DB::table('drivers')
-                    ->where('id', $overdueUnit->current_turn_driver_id)
-                    ->whereNull('deleted_at')
-                    ->select(DB::raw("CONCAT(first_name, ' ', last_name) as full_name"))
-                    ->first();
-                if ($driver) $driverName = $driver->full_name;
+        foreach ($activeMissingAlerts as $ama) {
+            $plateStr = str_replace("🚨 Missing Unit: ", "", $ama->title);
+            $u = DB::table('units')->where('plate_number', $plateStr)->whereNull('deleted_at')->first();
+            
+            if (!$u || strtolower($u->status) === 'maintenance' || !$u->shift_deadline_at || Carbon::parse($u->shift_deadline_at)->diffInHours(now(), false) < 24) {
+                DB::table('system_alerts')->where('id', $ama->id)->update(['is_resolved' => true, 'updated_at' => now()]);
             }
+        }
 
-            $alertType = 'missing_boundary_' . $overdueUnit->id;
-            $severity  = $hoursLate >= 48 ? 'critical' : 'warning';
+        // Auto-generate notifications for Missing Units (> 24 hours overdue)
+        $missingUnits = DB::table('units')
+            ->leftJoin('drivers', 'units.current_turn_driver_id', '=', 'drivers.id')
+            ->whereNull('units.deleted_at')
+            ->whereRaw('LOWER(units.status) != ?', ['maintenance'])
+            ->whereNotNull('units.shift_deadline_at')
+            ->where('units.shift_deadline_at', '<', now()->subHours(24))
+            ->select('units.id', 'units.plate_number', 'drivers.first_name', 'drivers.last_name', 'units.shift_deadline_at')
+            ->get();
 
-            $title   = $hoursLate >= 48
-                ? "🚨 MISSING UNIT — {$overdueUnit->plate_number} ({$daysLate} days no boundary)"
-                : "⚠️ No Boundary — {$overdueUnit->plate_number} (1+ day overdue)";
-
-            $message = "Unit {$overdueUnit->plate_number} has not submitted a boundary for {$daysLate} day(s). "
-                     . "Last known driver: {$driverName}. "
-                     . "Deadline was: {$deadline->timezone('Asia/Manila')->format('M d, Y h:i A')}.";
-
-            // Upsert: update or create alert (one per unit, refresh message each visit)
-            $existing = DB::table('system_alerts')
-                ->where('type', $alertType)
+        foreach ($missingUnits as $unit) {
+            $diffHours = now()->diffInHours(Carbon::parse($unit->shift_deadline_at));
+            $diffDays = floor($diffHours / 24);
+            $driverName = $unit->first_name ? trim($unit->first_name . ' ' . $unit->last_name) : 'Unknown Driver';
+            
+            $alertTitle = "🚨 Missing Unit: {$unit->plate_number}";
+            
+            $existingAlert = DB::table('system_alerts')
+                ->where('type', 'missing_unit')
+                ->where('title', $alertTitle)
                 ->where('is_resolved', false)
                 ->first();
 
-            if ($existing) {
-                DB::table('system_alerts')
-                    ->where('id', $existing->id)
-                    ->update(['title' => $title, 'message' => $message, 'updated_at' => now()]);
-            } else {
+            // Note: Explicitly mentioning the last driver holds the unit
+            $msg = "Unit {$unit->plate_number} has not remitted a boundary for {$diffDays} day(s). The last driver on record is {$driverName}. Need to locate this unit before another driver can use it.";
+
+            if (!$existingAlert) {
                 DB::table('system_alerts')->insert([
-                    'type'        => $alertType,
-                    'title'       => $title,
-                    'message'     => $message,
+                    'type' => 'missing_unit',
+                    'title' => $alertTitle,
+                    'message' => $msg,
                     'is_resolved' => false,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ]);
+            } else {
+                DB::table('system_alerts')
+                    ->where('id', $existingAlert->id)
+                    ->update([
+                        'message' => $msg,
+                        'updated_at' => now()
+                    ]);
             }
         }
 
