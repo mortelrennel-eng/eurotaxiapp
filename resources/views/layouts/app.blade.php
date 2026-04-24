@@ -92,13 +92,18 @@
                 ->get();
 
             foreach($dbAlerts as $alert) {
+                // If it's a missing unit alert, send to units index with open_flagged parameter
+                $targetUrl = ($alert->type === 'missing_unit') 
+                    ? route('units.index') . '?open_flagged=1' 
+                    : route('driver-behavior.index');
+
                 $headerNotifications[] = [
                     'id' => $alert->id,
                     'title' => $alert->title,
                     'message' => $alert->message,
-                    'type' => 'violation_alert', // Custom type for special handling
-                    'severity' => $alert->type, // e.g., 'danger', 'warning'
-                    'url' => route('driver-behavior.index'),
+                    'type' => 'violation_alert', 
+                    'severity' => $alert->type, 
+                    'url' => $targetUrl,
                     'time' => \Carbon\Carbon::parse($alert->created_at)->diffForHumans()
                 ];
             }
