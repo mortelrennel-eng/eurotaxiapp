@@ -1,0 +1,38 @@
+{
+  "name": "eurotaxi-mobile",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "android": "npx cap open android",
+    "sync": "npx cap sync android",
+    "copy": "npx cap copy android"
+  },
+  "dependencies": {
+    "@capacitor/android": "5.0.0",
+    "@capacitor/core": "5.0.0",
+    "@capacitor/splash-screen": "^5.0.0",
+    "@ionic/react": "7.0.0",
+    "@ionic/react-router": "7.0.0",
+    "axios": "1.4.0",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
+    "ionicons": "^7.1.0",
+    "react": "18.2.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "18.2.0",
+    "react-router": "^5.3.4",
+    "react-router-dom": "^5.3.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^5.7.8",
+    "@types/react": "18.2.21",
+    "@types/react-dom": "18.2.7",
+    "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react-swc": "^3.0.0",
+    "typescript": "5.2.2",
+    "vite": "5.0.0"
+  }
+}

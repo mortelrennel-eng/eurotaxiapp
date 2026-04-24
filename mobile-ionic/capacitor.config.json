@@ -1,0 +1,11 @@
+{
+  "appId": "com.eurotaxi.app",
+  "appName": "EuroTaxi Mobile",
+  "bundledWebRuntime": false,
+  "webDir": "dist",
+  "plugins": {},
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}
