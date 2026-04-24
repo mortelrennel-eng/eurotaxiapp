@@ -1121,7 +1121,7 @@
 
                 <div class="text-center mt-6">
                     <p id="mfaTimer" class="text-xs text-gray-400">Code expires in 10:00</p>
-                    <button onclick="resendMfaOtp()" id="mfaResendBtn" class="mt-2 text-sm text-blue-600 font-semibold hover:underline" style="display: none;">
+                    <button onclick="sendMfaOtp(mfaMethod)" id="mfaResendBtn" class="mt-2 text-sm text-blue-600 font-semibold hover:underline" style="display: none;">
                         Resend Code
                     </button>
                 </div>
@@ -1132,6 +1132,30 @@
     <script>
         let currentState = 'login';
         let mfaMethod = '';
+        let mfaCountdownInterval;
+
+        function startMfaCountdown() {
+            if (mfaCountdownInterval) clearInterval(mfaCountdownInterval);
+            let seconds = 600; // 10 minutes
+            const timerDisplay = document.getElementById('mfaTimer');
+            const resendBtn = document.getElementById('mfaResendBtn');
+            
+            resendBtn.style.display = 'none';
+            timerDisplay.style.display = 'block';
+
+            mfaCountdownInterval = setInterval(() => {
+                seconds--;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerDisplay.textContent = `Code expires in ${mins}:${secs.toString().padStart(2, '0')}`;
+
+                if (seconds <= 0) {
+                    clearInterval(mfaCountdownInterval);
+                    timerDisplay.textContent = 'Code has expired.';
+                    resendBtn.style.display = 'inline-block';
+                }
+            }, 1000);
+        }
 
         // Added MFA Functions
         function showMfaModal(data) {
@@ -1175,10 +1199,13 @@
             mfaMethod = method;
             document.getElementById('mfaTargetDesc').textContent = method;
             
-            const btn = event.currentTarget;
-            const originalHTML = btn.innerHTML;
-            btn.style.pointerEvents = 'none';
-            btn.innerHTML += ' <i class="fas fa-spinner fa-spin ml-auto"></i>';
+            const btn = typeof event !== 'undefined' && event ? event.currentTarget : null;
+            let originalHTML = '';
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.style.pointerEvents = 'none';
+                btn.innerHTML += ' <i class="fas fa-spinner fa-spin ml-auto"></i>';
+            }
 
             fetch('{{ route("login.mfa.send") }}', {
                 method: 'POST',
@@ -1198,6 +1225,7 @@
                 if (data.success) {
                     showToast(data.message, 'success');
                     showMfaStep('otp');
+                    startMfaCountdown();
                 } else {
                     showToast(data.message, 'error');
                 }
@@ -1209,8 +1237,10 @@
                 }
             })
             .finally(() => {
-                btn.style.pointerEvents = 'auto';
-                btn.innerHTML = originalHTML;
+                if (btn) {
+                    btn.style.pointerEvents = 'auto';
+                    btn.innerHTML = originalHTML;
+                }
             });
         }
 
