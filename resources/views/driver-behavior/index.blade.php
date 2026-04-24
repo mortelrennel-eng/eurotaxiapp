@@ -5,9 +5,9 @@
 
 @section('content')
 <style>
-    .tab-btn { @apply px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center hover:scale-105 active:scale-95; }
+    .tab-btn { @apply px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center hover:scale-105 active:scale-95 shadow-sm; }
     .tab-btn.active { @apply bg-yellow-500 text-white shadow-lg shadow-yellow-200; }
-    .tab-btn:not(.active) { @apply bg-white text-gray-500 border border-gray-100 hover:bg-gray-50 hover:text-yellow-600 hover:shadow-md hover:border-yellow-200; }
+    .tab-btn:not(.active) { @apply bg-white text-gray-500 border border-gray-100 hover:bg-yellow-50 hover:text-yellow-600 hover:shadow-xl hover:shadow-yellow-100 hover:border-yellow-300; }
     .incident-tag { @apply px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border; }
     .stat-card-premium { @apply transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl cursor-default; }
     .custom-scroll::-webkit-scrollbar { width: 4px; }
