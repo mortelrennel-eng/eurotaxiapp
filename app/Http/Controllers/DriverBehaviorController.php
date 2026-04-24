@@ -560,9 +560,14 @@ class DriverBehaviorController extends Controller
 
         $totalCharges   = DB::table('driver_behavior')->sum('total_charge_to_driver');
         $pendingCharges = DB::table('driver_behavior')->where('charge_status', 'pending')->sum('total_charge_to_driver');
+        
+        $violationsToday = DB::table('driver_behavior')
+            ->whereDate('timestamp', now()->format('Y-m-d'))
+            ->count();
 
         return [
             'incidents_period'  => (clone $base)->count(),
+            'violations_today'  => $violationsToday,
             'by_severity'       => $bySev,
             'incident_types'    => $byType,
             'total_violators'   => $totalViolators,

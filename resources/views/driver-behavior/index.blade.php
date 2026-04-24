@@ -36,6 +36,27 @@
 {{-- ════════ HEADER STATS (COMPACT) ════════ --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
+    {{-- 1. VIOLATIONS TODAY --}}
+    <div class="stat-card-premium relative overflow-hidden bg-gradient-to-br from-red-600 to-rose-700 rounded-2xl p-4 text-white shadow-lg shadow-red-100 group">
+        <div class="absolute right-[-5px] top-[-5px] opacity-10 transition-transform group-hover:scale-110 duration-500">
+            <i data-lucide="alert-circle" class="w-16 h-16"></i>
+        </div>
+        <div class="relative z-10 flex flex-col items-center text-center">
+            <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['violations_today'] ?? 0 }}</p>
+            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Violations Today</p>
+        </div>
+    </div>
+
+    {{-- 2. TOTAL VIOLATORS --}}
+    <div class="stat-card-premium relative overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg shadow-teal-100 group">
+        <div class="absolute right-[-5px] top-[-5px] opacity-10 transition-transform group-hover:scale-110 duration-500">
+            <i data-lucide="users" class="w-16 h-16"></i>
+        </div>
+        <div class="relative z-10 flex flex-col items-center text-center">
+            <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['total_violators'] ?? 0 }}</p>
+             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
+        </div>
+    </div>
 
     {{-- 3. TOTAL CHARGES --}}
     <div class="stat-card-premium relative overflow-hidden bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-4 text-white shadow-lg shadow-purple-100 group">
@@ -54,7 +75,7 @@
             <i data-lucide="trophy" class="w-16 h-16"></i>
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
-            <p class="text-2xl font-black tracking-tighter leading-none">{{ count($incentive_summary['eligible'] ?? []) }}</p>
+            <p class="text-3xl font-black tracking-tighter leading-none">{{ count($incentive_summary['eligible'] ?? []) }}</p>
             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Eligible Incentive</p>
         </div>
     </div>
