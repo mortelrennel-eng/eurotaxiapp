@@ -1,7 +1,12 @@
 node_modules/
 /mobile-ionic/node_modules/
-/mobile-ionic/android/
 /mobile-ionic/.idea/
+/mobile-ionic/android/.gradle/
+/mobile-ionic/android/app/build/
+/mobile-ionic/android/build/
+/mobile-ionic/android/local.properties
+/mobile-ionic/android/jdk17.zip
+/mobile-ionic/android/jdk17/
 
 /public/hot
 /public/storage
