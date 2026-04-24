@@ -234,6 +234,11 @@ class BoundaryController extends Controller
                     $excess   = max(0, $actual_boundary - $boundary_amount);
                     $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
+                    if ($shortage > 0) {
+                        $has_incentive = false;
+                        $notes = trim($notes . " [Automatic Violation: Short Boundary]");
+                    }
+
                     $unit = \App\Models\Unit::find($unit_id);
                     $is_extra_driver = false;
                     $expected_driver_id = $unit ? $unit->current_turn_driver_id : $driver_id;
@@ -564,8 +569,9 @@ class BoundaryController extends Controller
                 $excess   = max(0, $actual_boundary - $boundary_amount);
                 $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
-                if (!$boundary->has_incentive) {
-                    $has_incentive = false; // Kept late status from original stamp
+                if ($shortage > 0) {
+                    $has_incentive = false;
+                    $clean_notes .= " [Automatic Violation: Short Boundary]";
                 }
 
                 $boundary->update([
@@ -574,10 +580,24 @@ class BoundaryController extends Controller
                     'shortage'        => $shortage,
                     'excess'          => $excess,
                     'status'          => $status,
-                    'notes'           => $clean_notes,
+                    'notes'           => trim($clean_notes),
                     'has_incentive'   => $has_incentive,
                     'vehicle_damaged' => $vehicle_damaged ? 1 : 0,
                 ]);
+
+                // --- Auto-log Shortage to Driver Performance for UPDATES ---
+                if ($shortage > 0) {
+                    $now_ts = now();
+                    DB::table('driver_behavior')->insert([
+                        'unit_id'       => $boundary->unit_id,
+                        'driver_id'     => $boundary->driver_id,
+                        'incident_type' => 'short_boundary',
+                        'severity'      => 'low',
+                        'description'   => 'Auto-logged [Shortage/Update]: Boundary update resulted in a ₱' . number_format($shortage, 2) . ' shortage.',
+                        'timestamp'     => $now_ts,
+                        'created_at'    => $now_ts,
+                    ]);
+                }
 
                 return redirect()->route('boundaries.index')->with('success', 'Boundary record updated successfully');
             } else {

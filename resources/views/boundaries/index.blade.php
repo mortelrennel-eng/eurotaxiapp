@@ -399,9 +399,9 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <span class="text-gray-500 text-xs">₱</span>
                         </div>
-                        <input type="number" name="boundary_amount" id="boundaryAmount" required step="0.01" min="0" 
-                               class="w-full pl-7 px-2 py-1.5 border-2 border-yellow-200 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 font-bold"
-                               title="Target boundary for this shift. Defaults to unit rate (adjusted for day).">
+                        <input type="number" name="boundary_amount" id="boundaryAmount" required step="0.01" min="0" readonly
+                               class="w-full pl-7 px-2 py-1.5 border-2 border-yellow-100 bg-gray-50 rounded-lg focus:ring-0 cursor-not-allowed font-bold text-gray-500"
+                               title="Target boundary for this shift. This is fixed based on year-based rules.">
                     </div>
                 </div>
                 
@@ -1271,8 +1271,8 @@ function editBoundary(id) {
         const driverDisplay = document.getElementById('driverDisplay');
         driverDisplay.value = boundary.driver_name || 'Unknown Driver';
 
-        // Allow editing boundary amount if needed
-        document.getElementById('boundaryAmount').readOnly = false;
+        // Keep target boundary amount readonly per user policy
+        document.getElementById('boundaryAmount').readOnly = true;
 
         // Parse existing exception rules from notes
         const notesLc = (boundary.notes || '').toLowerCase();
