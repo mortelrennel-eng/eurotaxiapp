@@ -488,6 +488,16 @@
                             </div>
                         </label>
 
+                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-orange-50 transition-colors group">
+                            <input type="checkbox" name="low_fuel" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-orange-700 leading-none mb-0.5 transition-colors">Low Fuel (No Incentive)</span>
+                                <span class="text-[10px] text-orange-600 leading-tight">Driver returned the unit without refueling (Kulang sa gas). Voids incentive.</span>
+                            </div>
+                        </label>
+
                         <!-- Calculation Transparency Box -->
                         <div id="breakdownComputationDraft" class="hidden mt-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
                             <div class="flex items-center gap-2 mb-1">

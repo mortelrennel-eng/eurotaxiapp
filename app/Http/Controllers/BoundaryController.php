@@ -317,6 +317,27 @@ class BoundaryController extends Controller
                             $notes = trim($notes . " [Automatic Violation: Coding Violation Detected on Map]");
                         }
 
+                        // Low Fuel Violation Check
+                        if ($request->has('low_fuel')) {
+                            $has_incentive = false;
+                            $notes = trim($notes . " [Automatic Violation: Low Fuel on Return]");
+
+                            // Auto-log to Driver Performance
+                            DB::table('driver_behavior')->insert([
+                                'unit_id'       => $unit_id,
+                                'driver_id'     => $driver_id,
+                                'incident_type' => 'other',
+                                'severity'      => 'medium',
+                                'description'   => 'Auto-logged [Low Fuel]: Driver returned the unit without refueling (Kulang sa gas).',
+                                'latitude'      => 0,
+                                'longitude'     => 0,
+                                'video_url'     => '',
+                                'timestamp'     => $now,
+                                'incident_date' => $date,
+                                'created_at'    => $now,
+                            ]);
+                        }
+
                         $update_data = [
                             'current_turn_driver_id' => $next_turn_driver_id,
                             'last_swapping_at' => $now,
