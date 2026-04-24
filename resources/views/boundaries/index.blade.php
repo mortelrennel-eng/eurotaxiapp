@@ -1428,13 +1428,20 @@ function updateBreakdownComputation() {
         return;
     }
 
-    if (!swappedAt) {
-        mathDisplay.innerText = "No handover timestamp found.\nUsing standard rules.";
-        compBox.classList.remove('hidden');
-        return;
+    let swapDate;
+    if (swappedAt) {
+        swapDate = new Date(swappedAt);
+    } else {
+        // FALLBACK: If no handover timestamp exists, assume it started at 10:00 AM of the record date
+        // or 10:00 AM yesterday if it's currently past 10:00 AM today.
+        const recordDateVal = document.getElementById('date').value;
+        swapDate = new Date(recordDateVal + 'T10:00:00');
+        // If the resulting "start" is in the future relative to now, assume it started yesterday
+        if (swapDate > new Date()) {
+            swapDate.setDate(swapDate.getDate() - 1);
+        }
     }
 
-    const swapDate = new Date(swappedAt);
     const now = new Date();
     const diffMs = now - swapDate;
     const rawHours = diffMs / (1000 * 60 * 60);

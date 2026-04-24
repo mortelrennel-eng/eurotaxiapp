@@ -350,10 +350,16 @@ class BoundaryController extends Controller
                             
                             if ($unit->last_swapping_at) {
                                 $swap_time = \Carbon\Carbon::parse($unit->last_swapping_at);
-                                $hours_driven = max(0, $swap_time->diffInMinutes($now) / 60);
-                                $hourly_rate = $unit->boundary_rate / 24;
-                                $comp_note = sprintf("%.2f hrs x ₱%.2f/hr", $hours_driven, $hourly_rate);
+                            } else {
+                                // Fallback: Assume start was 10:00 AM of the record date (or yesterday if currently past 10AM)
+                                $swap_time = \Carbon\Carbon::parse($date . ' 10:00:00');
+                                if ($swap_time->isFuture()) {
+                                    $swap_time->subDay();
+                                }
                             }
+                            $hours_driven = max(0, $swap_time->diffInMinutes($now) / 60);
+                            $hourly_rate = $unit->boundary_rate / 24;
+                            $comp_note = sprintf("%.2f hrs x ₱%.2f/hr", $hours_driven, $hourly_rate);
 
                             $repair_desc = $needs_maintenance_half 
                                 ? "Automatic entry: Reported broken down during boundary turnover (Half Boundary).\nComputation: " . $comp_note
