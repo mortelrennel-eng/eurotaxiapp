@@ -882,9 +882,10 @@
                         ? `<span class="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-bold uppercase tracking-wide">🚨 Manually Flagged</span>`
                         : `<span class="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded font-bold uppercase tracking-wide">⚠️ Auto-Detected</span>`;
                     const borderColor = unit.is_surveillance ? 'border-red-500' : 'border-orange-400';
-                    const driverDisplay = unit.last_known_driver || 'Unknown';
-                    const contactDisplay = unit.last_driver_contact 
-                        ? `<a href="tel:${unit.last_driver_contact}" class="text-blue-600 font-semibold hover:underline">${unit.last_driver_contact}</a>`
+                    
+                    const suspectDisplay = unit.suspect_driver || 'Unknown';
+                    const contactDisplay = unit.suspect_contact 
+                        ? `<a href="tel:${unit.suspect_contact}" class="text-blue-600 font-semibold hover:underline">${unit.suspect_contact}</a>`
                         : `<span class="text-gray-400 italic">No contact</span>`;
 
                     html += `
@@ -899,16 +900,20 @@
                                     
                                     <div class="mt-2 bg-gray-50 rounded p-2 border border-gray-100 space-y-1">
                                         <div class="flex items-center gap-1.5 text-[11px]">
-                                            <span class="text-gray-400 w-20 flex-shrink-0">Last Driver:</span>
-                                            <span class="font-semibold text-gray-800">${driverDisplay}</span>
+                                            <span class="text-red-500 font-bold w-24 flex-shrink-0 uppercase">SUSPECT:</span>
+                                            <span class="font-black text-gray-900">${suspectDisplay}</span>
                                         </div>
                                         <div class="flex items-center gap-1.5 text-[11px]">
-                                            <span class="text-gray-400 w-20 flex-shrink-0">Contact:</span>
+                                            <span class="text-gray-400 w-24 flex-shrink-0">Contact # :</span>
                                             ${contactDisplay}
                                         </div>
-                                        <div class="flex items-center gap-1.5 text-[11px]">
-                                            <span class="text-gray-400 w-20 flex-shrink-0">Last Boundary:</span>
-                                            <span class="text-gray-600">${unit.last_boundary_date || '<span class="italic text-gray-400">No record</span>'}</span>
+                                        <div class="flex items-center gap-1.5 text-[10px] pt-1 mt-1 border-t border-gray-100">
+                                            <span class="text-gray-400 w-24 flex-shrink-0">Last Return By:</span>
+                                            <span class="text-gray-600 italic font-medium">${unit.last_known_driver || 'None'}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[10px]">
+                                            <span class="text-gray-400 w-24 flex-shrink-0">Return Date:</span>
+                                            <span class="text-gray-600">${unit.last_boundary_date || 'No record'}</span>
                                         </div>
                                     </div>
                                 </div>
