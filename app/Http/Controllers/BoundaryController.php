@@ -239,18 +239,28 @@ class BoundaryController extends Controller
                     $expected_driver_id = $unit ? $unit->current_turn_driver_id : $driver_id;
                     $has_incentive = true;
 
-                    $is_absent = $request->has('is_absent');
-                    if ($is_absent) {
-                        $has_incentive = false;
-                        $notes = trim($notes . " [Automatic Violation: Absent / No Show]");
-                    }
-
-                    // Manual strict 10 AM Cut-off override from form
                     $past_cutoff = $request->has('past_cutoff');
                     if ($past_cutoff) {
                         $has_incentive = false;
                         $notes = trim($notes . " [Automatic Violation: Late Boundary (Past 10:00 AM)]");
+
+                        // Auto-log late remittance violation to performance
+                        DB::table('driver_behavior')->insert([
+                            'unit_id'       => $unit_id,
+                            'driver_id'     => $driver_id,
+                            'incident_type' => 'other',
+                            'severity'      => 'medium',
+                            'description'   => 'Auto-logged [Late Remittance]: Driver submitted boundary past the 10:00 AM cut-off.',
+                            'latitude'      => 0,
+                            'longitude'     => 0,
+                            'video_url'     => '',
+                            'timestamp'     => $now,
+                            'incident_date' => $date,
+                            'created_at'    => $now,
+                        ]);
                     }
+
+                    $is_absent = false; // "Absent / No Show" logic removed per user request
 
                     if ($unit) {
                         $now = now();
@@ -349,8 +359,8 @@ class BoundaryController extends Controller
                                 ? "Automatic entry: Reported broken down during boundary turnover (Half Boundary).\nComputation: " . $comp_note
                                 : "Automatic entry: Reported broken down immediately upon deployment (No Boundary).";
                             
-                            if ($needs_maintenance_zero && $hours_driven >= 5) {
-                                $repair_desc .= "\nNote: Driver claimed 'No Boundary' but unit was out for " . number_format($hours_driven, 2) . " hrs.";
+                            if ($needs_maintenance_zero && $hours_driven > 2) {
+                                $repair_desc .= "\nNote: Driver claimed 'Free Boundary' but unit was out for " . number_format($hours_driven, 2) . " hrs.";
                             }
                             
                             $dispatcher_notes = trim($request->input('notes', ''));
@@ -375,9 +385,9 @@ class BoundaryController extends Controller
                             // Auto-log to Driver Performance
                             $behavior_desc = $needs_maintenance_half
                                 ? "Auto-logged [Breakdown]: Unit broke down after " . number_format($hours_driven, 2) . " hrs on shift."
-                                : "Auto-logged [Breakdown]: Unit broke down immediately upon deployment (< 5 hrs).";
+                                : "Auto-logged [Breakdown]: Unit broke down immediately upon deployment (<= 2 hrs).";
                                 
-                            if ($needs_maintenance_zero && $hours_driven >= 5) {
+                            if ($needs_maintenance_zero && $hours_driven > 2) {
                                 $behavior_desc = "Auto-logged [Breakdown]: Unit broke down after " . number_format($hours_driven, 2) . " hrs. No boundary collected.";
                             }
 

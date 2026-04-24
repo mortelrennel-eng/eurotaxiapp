@@ -450,9 +450,9 @@
                             </div>
                         </label>
 
-                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+                        <div class="h-px bg-gray-100 my-1 mx-2 hidden"></div>
 
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
+                        <label class="hidden items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
                             <input type="checkbox" name="is_absent" id="is_absent" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                             <div class="flex flex-col">
                                 <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Absent / No Show</span>
@@ -473,8 +473,8 @@
                         <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
                             <input type="checkbox" name="needs_maintenance_zero" id="needsMaintenanceZeroCheck" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 needs-maintenance-opt">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down Immediately (< 5 hrs)</span>
-                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down within 5 hours of deployment. Sets target boundary to 0.</span>
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down Immediately (<= 2 hrs)</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down within 2 hours of deployment. Sets target boundary to 0 (Free).</span>
                             </div>
                         </label>
 
@@ -1257,21 +1257,17 @@ function editBoundary(id) {
         
         // Uncheck all first
         const pastCutoffEl = document.getElementById('past_cutoff');
-        const absentEl = document.getElementById('is_absent');
         const damagedEl = document.querySelector('input[name="vehicle_damaged"]');
         const halfMaintEl = document.getElementById('needsMaintenanceHalfCheck');
         const zeroMaintEl = document.getElementById('needsMaintenanceZeroCheck');
         
         if (pastCutoffEl) pastCutoffEl.checked = false;
-        if (absentEl) absentEl.checked = false;
         if (damagedEl) damagedEl.checked = false;
         if (halfMaintEl) halfMaintEl.checked = false;
         if (zeroMaintEl) zeroMaintEl.checked = false;
 
         // Re-check based on existing data
-        if (boundary.is_absent || notesLc.includes('absent')) {
-            if (absentEl) absentEl.checked = true;
-        }
+        // Absent check removed per user request
         if (notesLc.includes('past 10:00 am') && pastCutoffEl) {
             pastCutoffEl.checked = true;
         }
@@ -1460,13 +1456,13 @@ function updateBreakdownComputation() {
     document.getElementById('calculatedHours').value = cappedHours.toFixed(2);
 
     if (zeroCheck.checked) {
-        if (cappedHours < 5) {
-            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-green-700">${hoursDisplay} hrs (< 5hr)</span></span>
-                                     <span class="flex justify-between border-t border-blue-100 mt-1 pt-1"><span>Target:</span> <span class="font-bold text-green-700">₱0.00 (No Boundary)</span></span>`;
+        if (cappedHours <= 2) {
+            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-green-700">${hoursDisplay} hrs (<= 2hr)</span></span>
+                                     <span class="flex justify-between border-t border-blue-100 mt-1 pt-1"><span>Target:</span> <span class="font-bold text-green-700">₱0.00 (Free Boundary)</span></span>`;
             amtInput.value = '0.00';
             actInput.value = '0.00';
         } else {
-            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-red-600">${hoursDisplay} hrs (> 5hr)</span></span>
+            mathDisplay.innerHTML = `<span class="flex justify-between"><span>Driven:</span> <span class="font-bold text-red-600">${hoursDisplay} hrs (> 2hr)</span></span>
                                      <span class="flex justify-between border-t border-blue-100 mt-1 pt-1"><span>Target (Hourly):</span> <span class="font-bold text-red-700">₱${parseFloat(proratedStr).toLocaleString()}</span></span>`;
             amtInput.value = proratedStr;
             actInput.value = proratedStr;
