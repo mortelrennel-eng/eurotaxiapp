@@ -1374,7 +1374,8 @@ function updateShiftInfo(unitElement) {
                 shiftTimerLabel.innerHTML = `<span class="flex flex-col"><span class="text-red-600 font-black">LATE RETURN: ${diffHours}h ${diffMins}m Ago</span><span class="text-gray-400">Shifting Time: <strong>${absoluteTimeStr}</strong></span></span>`;
                 shiftInfoGroup.classList.add('border-red-200', 'bg-red-50');
                 shiftInfoGroup.classList.remove('border-green-200', 'bg-green-50', 'border-orange-200', 'bg-orange-50');
-                badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-bold rounded-full border border-red-300 uppercase tracking-tighter shadow-sm animate-pulse">NO INCENTIVE</span>';
+                // Removed red "NO INCENTIVE" badge per user request. Late return is just a note, not an incentive void.
+                badgeContainer.innerHTML = '<span class="px-1.5 py-0.5 bg-green-100 text-green-700 text-[9px] font-bold rounded-full border border-green-300 uppercase tracking-tighter shadow-sm">INCENTIVE ELIGIBLE</span>';
             } else {
                 // Stale schedule (>24h) — hide the shift info block entirely, no confusing labels
                 shiftInfoGroup.classList.add('hidden');

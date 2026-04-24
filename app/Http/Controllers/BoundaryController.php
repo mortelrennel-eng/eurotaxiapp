@@ -265,23 +265,9 @@ class BoundaryController extends Controller
                     if ($unit) {
                         $now = now();
                         
-                        // Legacy safety check (in case past_cutoff wasn't manually overridden but deadline passed)
-                        if (!$past_cutoff && !$is_absent) {
-                            if (!$unit->shift_deadline_at) {
-                                // Default anchor if missing - should be 10 AM next cycle
-                                $current_deadline = Carbon::parse($date)->hour(10)->minute(0)->second(0);
-                                if ($now->greaterThan($current_deadline)) {
-                                     $has_incentive = false;
-                                }
-                            } else {
-                                $current_deadline = Carbon::parse($unit->shift_deadline_at);
-                                if ($now->greaterThan($current_deadline)) {
-                                    $has_incentive = false;
-                                }
-                            }
-                        } else {
-                            $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : Carbon::parse($date)->hour(10);
-                        }
+                        // Shifting Deadline Check: Legacy auto-voiding for late returns removed per user request. 
+                        // Incentives now only focus on the 10:00 AM Cut-off (Late Boundary).
+                        $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : Carbon::parse($date)->hour(10);
 
                         if ($unit->driver_id !== $driver_id && $unit->secondary_driver_id !== $driver_id) {
                             $is_extra_driver = true;
