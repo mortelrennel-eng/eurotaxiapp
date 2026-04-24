@@ -587,39 +587,43 @@ class DriverBehaviorController extends Controller
             ->distinct('d.id')
             ->get();
 
+        // ── OPTIMIZATION: Bulk fetch statistics to avoid N+1 queries ──
+        $incidentCounts = DB::table('driver_behavior')
+            ->select('driver_id', DB::raw('count(*) as aggregate'))
+            ->whereNull('incentive_released_at')
+            ->groupBy('driver_id')
+            ->pluck('aggregate', 'driver_id');
+
+        $debtSum = DB::table('driver_behavior')
+            ->select('driver_id', DB::raw('sum(remaining_balance) as aggregate'))
+            ->where('charge_status', 'pending')
+            ->groupBy('driver_id')
+            ->pluck('aggregate', 'driver_id');
+
+        $boundaryCounts = DB::table('boundaries')
+            ->select('driver_id', DB::raw('count(*) as aggregate'))
+            ->whereNull('incentive_released_at')
+            ->groupBy('driver_id')
+            ->pluck('aggregate', 'driver_id');
+
+        $shortageSum = DB::table('boundaries')
+            ->select('driver_id', DB::raw('sum(shortage) as aggregate'))
+            ->whereNull('incentive_released_at')
+            ->groupBy('driver_id')
+            ->pluck('aggregate', 'driver_id');
+
+        $chargeSum = DB::table('driver_behavior')
+            ->select('driver_id', DB::raw('sum(total_charge_to_driver) as aggregate'))
+            ->whereNull('incentive_released_at')
+            ->groupBy('driver_id')
+            ->pluck('aggregate', 'driver_id');
+
         $profiles = [];
         foreach ($drivers as $d) {
-            $unit_obj  = (object)['driver_id' => $d->driver_id ?? null, 'secondary_driver_id' => $d->secondary_driver_id ?? null, 'plate_number' => $d->plate_number ?? null];
-            $incentive = $this->computeIncentiveForDriver($d->id, $unit_obj);
-            $is_dual   = $incentive['is_dual'];
-
-            // For "Accurate" statistics in the profile card:
-            // We only show UNRELEASED stats for the current cycle to match the progress bar.
+            $unit_obj  = (object)['driver_id' => $d->driver_id ?? null, 'secondary_driver_id' => $d->secondary_driver_id ?? null, 'plate_number' => $d->plate_number ?? null, 'id' => $d->unit_id];
             
-            $incidents = DB::table('driver_behavior')
-                ->where('driver_id', $d->id)
-                ->whereNull('incentive_released_at')
-                ->count();
-
-            $total_debt = DB::table('driver_behavior')
-                ->where('driver_id', $d->id)
-                ->where('charge_status', 'pending')
-                ->sum('remaining_balance');
-
-            $boundaries = DB::table('boundaries')
-                ->where('driver_id', $d->id)
-                ->whereNull('incentive_released_at')
-                ->count();
-
-            $shortages = DB::table('boundaries')
-                ->where('driver_id', $d->id)
-                ->whereNull('incentive_released_at')
-                ->sum('shortage');
-
-            $charges = DB::table('driver_behavior')
-                ->where('driver_id', $d->id)
-                ->whereNull('incentive_released_at')
-                ->sum('total_charge_to_driver');
+            // We still need this for complex date logic, but the statistics are now fast.
+            $incentive = $this->computeIncentiveForDriver($d->id, $unit_obj);
 
             $profiles[] = [
                 'id'          => $d->id,
@@ -627,11 +631,11 @@ class DriverBehaviorController extends Controller
                 'status'      => $d->driver_status,
                 'unit'        => $d->plate_number,
                 'unit_id'     => $d->unit_id,
-                'incidents'   => $incidents,
-                'boundaries'  => $boundaries,
-                'shortages'   => $shortages,
-                'charges'     => $charges,
-                'total_debt'  => $total_debt,
+                'incidents'   => $incidentCounts[$d->id] ?? 0,
+                'boundaries'  => $boundaryCounts[$d->id] ?? 0,
+                'shortages'   => $shortageSum[$d->id] ?? 0,
+                'charges'     => $chargeSum[$d->id] ?? 0,
+                'total_debt'  => $debtSum[$d->id] ?? 0,
                 'incentive'   => $incentive,
             ];
         }
@@ -656,7 +660,11 @@ class DriverBehaviorController extends Controller
 
         foreach ($drivers as $d) {
             $unit = (object)['driver_id' => $d->driver_id ?? null, 'secondary_driver_id' => $d->secondary_driver_id ?? null];
-            $inc  = $this->computeIncentiveForDriver($d->id, $unit);
+            
+            // This method is still called in a loop, but computeIncentiveForDriver 
+            // is the core business logic. The previous optimization in getDriverProfiles 
+            // addressed the most egregious N+1. Here we compute the full incentive status.
+            $inc = $this->computeIncentiveForDriver($d->id, $unit);
 
             $row = [
                 'driver_id'     => $d->id,

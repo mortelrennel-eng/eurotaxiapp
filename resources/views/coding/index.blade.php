@@ -45,21 +45,7 @@
                 </div>
             </div>
 
-            <!-- Violator Summary -->
-            <div class="w-full md:w-auto px-4 py-2 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3">
-                <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white">
-                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-[9px] font-black text-red-600 uppercase tracking-widest">Violator Today</span>
-                    <span class="text-xs font-black text-gray-800">Total: {{ $stats['today_violators'] }}</span>
-                </div>
-            </div>
 
-            <a href="{{ route('coding.violations') }}" class="w-full md:w-auto px-6 py-2 bg-red-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-sm hover:bg-red-700 transition-all flex items-center justify-center gap-2">
-                <i data-lucide="history" class="w-4 h-4"></i>
-                Violation History
-            </a>
         </form>
     </div>
 
