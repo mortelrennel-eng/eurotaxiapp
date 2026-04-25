@@ -774,6 +774,21 @@
             <div id="partsModalToast" class="hidden mb-3 p-3 rounded-xl border flex items-center gap-3 text-sm font-bold shadow-sm"></div>
             </div>{{-- /partsFormSection --}}
 
+            {{-- Real-time search bar --}}
+            <div class="flex items-center gap-2 mb-3 mt-1">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                    <input type="text" id="partsSearchInput"
+                        placeholder="Search parts by name or supplier..."
+                        oninput="filterPartsTable(this.value)"
+                        class="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none transition bg-gray-50">
+                    <button id="btnClearPartsSearch" onclick="clearPartsSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition">
+                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <span id="partsSearchCount" class="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap"></span>
+            </div>
+
             <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 <table class="min-w-full divide-y divide-gray-100">
                     <thead class="bg-gray-50 sticky top-0">
@@ -1268,6 +1283,12 @@ function openPartsModal() {
     if (icon) { icon.style.transform = 'rotate(0deg)'; }
 
     document.getElementById('partsModal').classList.remove('hidden');
+
+    // Reset search bar
+    const si = document.getElementById('partsSearchInput');
+    if (si) { si.value = ''; }
+    filterPartsTable('');
+
     refreshPartsTable();
 }
 function closePartsModal() { document.getElementById('partsModal').classList.add('hidden'); }
@@ -1394,9 +1415,9 @@ function refreshPartsTable() {
         const safeName = (p.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         const safeSupplier = (p.supplier || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         return `
-            <tr class="hover:bg-gray-50/50 transition">
+            <tr class="hover:bg-gray-50/50 transition parts-row" data-name="${(p.name||'').toLowerCase()}" data-supplier="${(p.supplier||'').toLowerCase()}">
                 <td class="px-4 py-3">
-                    <div class="text-sm font-semibold text-gray-800">${p.name}</div>
+                    <div class="text-sm font-semibold text-gray-800 part-name-cell">${p.name}</div>
                 </td>
                 <td class="px-4 py-3">
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">${p.supplier || 'Unspecified'}</div>
@@ -1422,7 +1443,55 @@ function refreshPartsTable() {
         `;
     }).join('');
     lucide.createIcons();
+
+    // Re-apply active search filter after table is rebuilt
+    const searchVal = document.getElementById('partsSearchInput')?.value || '';
+    if (searchVal.trim()) filterPartsTable(searchVal);
 }
+
+function filterPartsTable(query) {
+    const q = (query || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('#partsTableBody .parts-row');
+    const clearBtn = document.getElementById('btnClearPartsSearch');
+    const countEl = document.getElementById('partsSearchCount');
+
+    let visible = 0;
+    rows.forEach(row => {
+        const name     = row.getAttribute('data-name') || '';
+        const supplier = row.getAttribute('data-supplier') || '';
+        const match = !q || name.includes(q) || supplier.includes(q);
+        row.style.display = match ? '' : 'none';
+
+        // Highlight matching text in part name cell
+        const nameCell = row.querySelector('.part-name-cell');
+        if (nameCell && q) {
+            const original = nameCell.textContent;
+            const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            nameCell.innerHTML = original.replace(regex, '<mark class="bg-yellow-200 text-yellow-900 rounded px-0.5">$1</mark>');
+        } else if (nameCell) {
+            nameCell.innerHTML = nameCell.textContent; // strip highlights
+        }
+
+        if (match) visible++;
+    });
+
+    // Show/hide clear button and count
+    if (q) {
+        clearBtn.classList.remove('hidden');
+        countEl.textContent = `${visible} result${visible !== 1 ? 's' : ''}`;
+    } else {
+        clearBtn.classList.add('hidden');
+        countEl.textContent = '';
+    }
+}
+
+function clearPartsSearch() {
+    const input = document.getElementById('partsSearchInput');
+    input.value = '';
+    filterPartsTable('');
+    input.focus();
+}
+
 
 // --- Quick Add Part ---
 function openQuickAddPart() { 
