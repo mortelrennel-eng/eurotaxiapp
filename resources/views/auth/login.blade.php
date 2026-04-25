@@ -122,13 +122,16 @@
             display: block;
         }
 
-        .flipper.state-login .login-panel,
+        .flipper.state-login .front-face .login-panel,
         .flipper.state-register .back-face .register-panel,
-        .flipper.state-forgot .forgot-panel {
-            display: block;
+        .flipper.state-forgot .front-face .forgot-panel {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .flipper.state-login .forgot-panel,
+        .flipper.state-register .front-face,
         .flipper.state-forgot .login-panel {
             display: none;
         }
@@ -695,7 +698,7 @@
                 <div class="flipper state-login" id="flipper" style="position:relative;width:100%;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(0.4,0,0.2,1);">
 
                     <!-- Front Face - Login & Forgot -->
-                    <div style="position:relative;width:100%;backface-visibility:hidden;">
+                    <div class="front-face" style="position:relative;width:100%;backface-visibility:hidden;">
                         <div class="form-wrapper" style="max-width:100%;border-radius:1.25rem;box-shadow:0 30px 70px rgba(0,0,0,0.45),0 0 0 1px rgba(0,0,0,0.06);background:#fff;padding:2.2rem 2.4rem;">
 
                             <!-- Login Panel -->
@@ -899,7 +902,7 @@
                     </div>{{-- /.front face --}}
 
                     <!-- Back Face - Register -->
-                    <div style="position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;transform:rotateY(180deg);">
+                    <div class="back-face" style="position:absolute;top:0;left:0;width:100%;backface-visibility:hidden;transform:rotateY(180deg);">
                         <div class="form-wrapper" style="max-width:100%;box-shadow:0 25px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.08);background:rgba(255,255,255,0.97);">
                             <div class="form-panel register-panel">
                                 <div class="text-center mb-3">
