@@ -15,7 +15,7 @@ class MaintenanceController extends Controller
         $status = $request->input('status', '');
         $type = $request->input('type', '');
         $page = max(1, (int) $request->input('page', 1));
-        $limit = 15;
+        $limit = 10;
         $offset = ($page - 1) * $limit;
 
         $query = DB::table('maintenance')
