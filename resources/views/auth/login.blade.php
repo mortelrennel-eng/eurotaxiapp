@@ -671,20 +671,38 @@
                     <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:380px;max-width:100%;filter:drop-shadow(0 0 40px rgba(59,130,246,0.55));object-fit:contain;">
                 </div>
                 <p style="color:#bfdbfe;font-size:0.95rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 1.5rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
-                
-                <!-- Drivers Lottie Animation -->
-                <div style="display: flex; flex-direction: column; align-items: center; margin-top: 1rem; animation: logoBounce 2s ease-out;">
-                    <lottie-player 
-                        src="{{ asset('animations/drivers.json') }}" 
-                        background="transparent" 
-                        speed="1" 
-                        style="width: 170px; height: 170px; filter: drop-shadow(0 4px 15px rgba(59,130,246,0.3));"
-                        loop 
-                        autoplay>
-                    </lottie-player>
-                    <div style="text-align: center; margin-top: -15px;">
-                        <p style="color:#fff;font-weight:800;font-size:2.2rem;margin:0;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{{ $driversCount ?? '0' }}</p>
-                        <p style="color:#93c5fd;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin:0; margin-top: 5px;">Partner Drivers</p>
+                <!-- Animation Stats Container -->
+                <div style="display: flex; gap: 3rem; margin-top: 1rem; animation: logoBounce 2s ease-out;">
+                    <!-- Drivers Lottie Animation -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <lottie-player 
+                            src="{{ asset('animations/drivers.json') }}" 
+                            background="transparent" 
+                            speed="1" 
+                            style="width: 170px; height: 170px; filter: drop-shadow(0 4px 15px rgba(59,130,246,0.3));"
+                            loop 
+                            autoplay>
+                        </lottie-player>
+                        <div style="text-align: center; margin-top: -15px;">
+                            <p style="color:#fff;font-weight:800;font-size:2.2rem;margin:0;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{{ $driversCount ?? '0' }}</p>
+                            <p style="color:#93c5fd;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin:0; margin-top: 5px;">Partner Drivers</p>
+                        </div>
+                    </div>
+
+                    <!-- Units Lottie Animation -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <lottie-player 
+                            src="{{ asset('animations/taxi_units.json') }}" 
+                            background="transparent" 
+                            speed="1" 
+                            style="width: 170px; height: 170px; filter: drop-shadow(0 4px 15px rgba(52,211,153,0.3));"
+                            loop 
+                            autoplay>
+                        </lottie-player>
+                        <div style="text-align: center; margin-top: -15px;">
+                            <p style="color:#fff;font-weight:800;font-size:2.2rem;margin:0;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{{ $unitsCount ?? '0' }}</p>
+                            <p style="color:#6ee7b7;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin:0; margin-top: 5px;">Taxi Units</p>
+                        </div>
                     </div>
                 </div>
             </div>
