@@ -703,108 +703,68 @@
     </div>
 </div>
 
-    <!-- Inventory Management Modal -->
-    <div id="partsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm transition-all">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
+    <!-- ═══════════════════════════════════════════════════════════
+         SPARE PARTS CATALOG MODAL — Clean list view
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="partsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:88vh">
+
+            {{-- Header --}}
+            <div class="flex items-center justify-between px-6 py-4 border-b">
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900">Spare Parts Catalog</h3>
-                    <p class="text-xs text-gray-500">Manage names and default prices for your inventory</p>
+                    <h3 class="text-lg font-bold text-gray-900">Spare Parts Catalog</h3>
+                    <p class="text-[11px] text-gray-400 mt-0.5">View, restock, and manage your parts inventory</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="openSuppliersModal()" class="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2">
-                        <i data-lucide="users" class="w-3 h-3"></i> Manage Suppliers
+                    <button onclick="openSuppliersModal()" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-3 h-3"></i> Suppliers
                     </button>
-                    {{-- Minimize/Restore toggle --}}
-                    <button id="btnMinimizePartsForm" onclick="togglePartsForm()"
-                        title="Minimize form"
-                        class="p-2 hover:bg-yellow-50 rounded-full transition text-gray-400 hover:text-yellow-600">
-                        <i id="iconMinimize" data-lucide="chevron-up" class="w-5 h-5 transition-transform duration-300"></i>
+                    <button onclick="openPartMiniModal()" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-3 h-3"></i> Add Part
                     </button>
-                    <button onclick="closePartsModal()" class="p-2 hover:bg-gray-100 rounded-full transition text-gray-400 hover:text-gray-600">
-                        <i data-lucide="x" class="w-6 h-6"></i>
+                    <button onclick="closePartsModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-700">
+                        <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
             </div>
 
-            {{-- Collapsible form section --}}
-            <div id="partsFormSection">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                <input type="hidden" id="newPartId">
-                <input type="hidden" id="newPartCurrentStock" value="0">
-                <div class="md:col-span-2">
-                    <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Part Name</label>
-                    <input type="text" id="newPartName" placeholder="e.g., Oil Filter" 
-                        class="w-full px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Price (₱)</label>
-                    <input type="number" id="newPartPrice" placeholder="0.00" min="0"
-                        class="w-full px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">
-                        Add Qty&nbsp;<span id="lblCurrentStock" class="hidden text-gray-400 font-normal normal-case">(stock: <span id="spanCurrentStock">0</span>)</span>
-                    </label>
-                    <input type="number" id="newPartQty" placeholder="Units to add" min="1"
-                        oninput="validateAddQty(this)"
-                        class="w-full px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    <p id="qtyError" class="hidden text-[10px] text-red-600 font-bold mt-1 ml-1 flex items-center gap-1">⚠️ Only adding stock is allowed. Enter a value ≥ 1.</p>
-                </div>
-                <div class="md:col-span-3">
-                    <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Supplier</label>
-                    <select id="newPartSupplier" class="supplier-dropdown w-full px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
-                        <option value="">Select Supplier (Optional)</option>
-                        @foreach($suppliers as $s)
-                            <option value="{{ $s->name }}">{{ $s->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="flex items-end gap-2">
-                    <button id="btnSavePart" onclick="saveNewPart()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-bold transition flex items-center justify-center gap-2">
-                        <i data-lucide="plus" class="w-4 h-4"></i> <span id="txtSavePart">Add to Catalog</span>
-                    </button>
-                    <button id="btnResetPart" onclick="resetPartForm()" class="hidden w-10 h-10 bg-gray-100 text-gray-400 rounded-lg hover:bg-gray-200 flex items-center justify-center transition">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
+            {{-- Toast --}}
+            <div id="partsModalToast" class="hidden mx-6 mt-3 p-3 rounded-xl border flex items-center gap-3 text-sm font-bold shadow-sm"></div>
 
-            {{-- Inline modal toast (appears above the parts table) --}}
-            <div id="partsModalToast" class="hidden mb-3 p-3 rounded-xl border flex items-center gap-3 text-sm font-bold shadow-sm"></div>
-            </div>{{-- /partsFormSection --}}
-
-            {{-- Real-time search bar --}}
-            <div class="flex items-center gap-2 mb-3 mt-1">
-                <div class="relative flex-1">
+            {{-- Search --}}
+            <div class="px-6 pt-3 pb-2">
+                <div class="relative">
                     <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
                     <input type="text" id="partsSearchInput"
                         placeholder="Search parts by name or supplier..."
                         oninput="filterPartsTable(this.value)"
-                        class="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none transition bg-gray-50">
+                        class="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50">
                     <button id="btnClearPartsSearch" onclick="clearPartsSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition">
                         <i data-lucide="x-circle" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <span id="partsSearchCount" class="text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap"></span>
+                <div class="flex justify-end mt-1">
+                    <span id="partsSearchCount" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"></span>
+                </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            {{-- Parts Table --}}
+            <div class="flex-1 overflow-y-auto custom-scrollbar px-2">
                 <table class="min-w-full divide-y divide-gray-100">
                     <thead class="bg-gray-50 sticky top-0">
                         <tr>
                             <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Part Name</th>
                             <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Supplier</th>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Stock</th>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Default Price</th>
+                            <th class="px-4 py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock</th>
+                            <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</th>
                             <th class="px-4 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="partsTableBody" class="divide-y divide-gray-50">
                         @foreach($spare_parts as $p)
-                        <tr class="hover:bg-gray-50/50 transition">
+                        <tr class="hover:bg-gray-50/60 transition parts-row" data-name="{{ strtolower($p->name) }}" data-supplier="{{ strtolower($p->supplier ?? '') }}">
                             <td class="px-4 py-3">
-                                <div class="text-sm font-semibold text-gray-800">{{ $p->name }}</div>
+                                <div class="text-sm font-semibold text-gray-800 part-name-cell">{{ $p->name }}</div>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{{ $p->supplier ?? 'Unspecified' }}</div>
@@ -817,11 +777,14 @@
                             <td class="px-4 py-3 text-sm font-bold text-blue-600">₱{{ number_format($p->price, 2) }}</td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex justify-end gap-1">
-                                    <button onclick="editCatalogPart({{ $p->id }}, '{{ addslashes($p->name) }}', {{ $p->price }}, {{ $p->stock_quantity ?? 0 }}, '{{ addslashes($p->supplier ?? '') }}')" 
+                                    <button onclick="editCatalogPart({{ $p->id }}, '{{ addslashes($p->name) }}', {{ $p->price }}, {{ $p->stock_quantity ?? 0 }}, '{{ addslashes($p->supplier ?? '') }}')"
+                                        title="Add Stock"
                                         class="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                        <i data-lucide="package-plus" class="w-4 h-4"></i>
                                     </button>
-                                    <button onclick="deletePart({{ $p->id }}, this)" class="p-2 text-red-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    <button onclick="deletePart({{ $p->id }}, this)"
+                                        title="Delete"
+                                        class="p-2 text-red-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
@@ -831,14 +794,88 @@
                     </tbody>
                 </table>
             </div>
-            
-            <div class="mt-6 flex justify-end">
-                <button onclick="closePartsModal()" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-black text-sm font-bold transition">
-                    Done
+
+            {{-- Footer --}}
+            <div class="px-6 py-4 border-t flex justify-end">
+                <button onclick="closePartsModal()" class="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-black text-sm font-bold transition">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         ADD / EDIT STOCK MINI-MODAL (overlays on top of catalog)
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="partMiniModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div id="miniModalIcon" class="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
+                        <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h4 id="miniModalTitle" class="text-base font-bold text-gray-900">Add New Part</h4>
+                        <p id="miniModalSubtitle" class="text-[11px] text-gray-400">Fill in the part details below</p>
+                    </div>
+                </div>
+                <button onclick="closePartMiniModal()" class="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            {{-- Hidden fields --}}
+            <input type="hidden" id="newPartId">
+            <input type="hidden" id="newPartCurrentStock" value="0">
+
+            <div class="space-y-4">
+                {{-- Part Name --}}
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Part Name</label>
+                    <input type="text" id="newPartName" placeholder="e.g., Oil Filter"
+                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                </div>
+
+                {{-- Price + Qty row --}}
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Price (₱)</label>
+                        <input type="number" id="newPartPrice" placeholder="0.00" min="0"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">
+                            <span id="lblQtyMode">Initial Qty</span>
+                            <span id="lblCurrentStock" class="hidden text-gray-400 font-normal normal-case ml-1">(now: <span id="spanCurrentStock">0</span>)</span>
+                        </label>
+                        <input type="number" id="newPartQty" placeholder="0" min="0"
+                            oninput="validateAddQty(this)"
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                        <p id="qtyError" class="hidden text-[10px] text-red-500 font-bold mt-1">⚠️ Must be ≥ 1 to add stock.</p>
+                    </div>
+                </div>
+
+                {{-- Supplier --}}
+                <div>
+                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Supplier</label>
+                    <select id="newPartSupplier" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-white">
+                        <option value="">Select Supplier (Optional)</option>
+                        @foreach($suppliers as $s)
+                            <option value="{{ $s->name }}">{{ $s->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            {{-- Actions --}}
+            <div class="flex gap-3 mt-6">
+                <button onclick="closePartMiniModal()" class="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-50 transition">Cancel</button>
+                <button id="btnSavePart" onclick="saveNewPart()" class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span id="txtSavePart">Save Part</span>
                 </button>
             </div>
         </div>
     </div>
+
 
     <!-- Purchase History Modal -->
     <div id="purchaseHistoryModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
@@ -1251,47 +1288,43 @@ function refreshOtherCosts(type) {
 }
 
 // --- Master Parts Catalog ---
-let _partsFormMinimized = false;
-
-function togglePartsForm() {
-    const section = document.getElementById('partsFormSection');
-    const icon    = document.getElementById('iconMinimize');
-    _partsFormMinimized = !_partsFormMinimized;
-    if (_partsFormMinimized) {
-        section.style.maxHeight = '0';
-        section.style.overflow  = 'hidden';
-        section.style.marginBottom = '0';
-        icon.style.transform = 'rotate(180deg)';
-        document.getElementById('btnMinimizePartsForm').title = 'Restore form';
-    } else {
-        section.style.maxHeight = '';
-        section.style.overflow  = '';
-        section.style.marginBottom = '';
-        icon.style.transform = 'rotate(0deg)';
-        document.getElementById('btnMinimizePartsForm').title = 'Minimize form';
-    }
-}
-
 function openPartsModal() {
-    // Always restore form on open
-    _partsFormMinimized = false;
-    const section = document.getElementById('partsFormSection');
-    section.style.maxHeight = '';
-    section.style.overflow  = '';
-    section.style.marginBottom = '';
-    const icon = document.getElementById('iconMinimize');
-    if (icon) { icon.style.transform = 'rotate(0deg)'; }
-
     document.getElementById('partsModal').classList.remove('hidden');
-
-    // Reset search bar
+    // Reset search bar on open
     const si = document.getElementById('partsSearchInput');
     if (si) { si.value = ''; }
     filterPartsTable('');
-
     refreshPartsTable();
 }
-function closePartsModal() { document.getElementById('partsModal').classList.add('hidden'); }
+
+function closePartsModal() { 
+    document.getElementById('partsModal').classList.add('hidden'); 
+}
+
+// Mini-Modal Controls
+function openPartMiniModal(isEdit = false) {
+    const modal = document.getElementById('partMiniModal');
+    modal.classList.remove('hidden');
+    
+    // UI clean up for Add Mode
+    if (!isEdit) {
+        resetPartForm();
+        document.getElementById('miniModalTitle').innerText = 'Add New Part';
+        document.getElementById('miniModalSubtitle').innerText = 'Create a new item in the spare parts catalog';
+        document.getElementById('lblQtyMode').innerText = 'Initial Qty';
+        document.getElementById('txtSavePart').innerText = 'Save Part';
+        document.getElementById('newPartName').readOnly = false;
+        
+        const iconContainer = document.getElementById('miniModalIcon');
+        iconContainer.className = 'w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center';
+        iconContainer.innerHTML = '<i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>';
+        lucide.createIcons();
+    }
+}
+
+function closePartMiniModal() {
+    document.getElementById('partMiniModal').classList.add('hidden');
+}
 
 async function saveNewPart() {
     const id = document.getElementById('newPartId').value;
@@ -1305,10 +1338,9 @@ async function saveNewPart() {
         return;
     }
 
-    // For editing: qty must be > 0 (adding only)
-    if (id && qty_to_add <= 0) {
+    // For updates: qty must be >= 0
+    if (id && qty_to_add < 0) {
         document.getElementById('qtyError').classList.remove('hidden');
-        document.getElementById('newPartQty').classList.add('border-red-400', 'ring-red-300');
         return;
     }
 
@@ -1330,51 +1362,46 @@ async function saveNewPart() {
             refreshPartDropdowns();
             refreshPurchaseHistory();
             showModalToast(result.message, 'success');
-            resetPartForm();
+            closePartMiniModal();
         } else {
             showModalToast(result.message || 'Something went wrong.', 'error');
         }
-    } catch(e) { console.error(e); showModalToast('Server error. Please try again.', 'error'); }
+    } catch(e) { 
+        console.error(e); 
+        showModalToast('Server error. Please try again.', 'error'); 
+    }
 }
 
 function editCatalogPart(id, name, price, qty, supplier) {
-    // ── Auto-restore form if minimized ─────────────────────────────
-    if (_partsFormMinimized) {
-        togglePartsForm();
-    }
+    openPartMiniModal(true); // Open in edit mode
 
     document.getElementById('newPartId').value = id;
     document.getElementById('newPartCurrentStock').value = qty;
     document.getElementById('newPartName').value = name;
     document.getElementById('newPartPrice').value = price;
-    document.getElementById('newPartQty').value = '';  // Always empty — user types qty to ADD
+    document.getElementById('newPartQty').value = ''; 
     document.getElementById('newPartSupplier').value = supplier || '';
 
-    // Show current stock in label
+    // UI Updates for Add Stock mode
+    document.getElementById('miniModalTitle').innerText = 'Add Stock';
+    document.getElementById('miniModalSubtitle').innerText = `Restocking: ${name}`;
+    document.getElementById('lblQtyMode').innerText = 'Qty to Add';
+    document.getElementById('txtSavePart').innerText = 'Update Inventory';
+    document.getElementById('newPartName').readOnly = true; // Protect name on restock
+
+    // Show current stock badge
     document.getElementById('spanCurrentStock').textContent = qty;
     document.getElementById('lblCurrentStock').classList.remove('hidden');
 
-    // Clear any previous error state
-    document.getElementById('qtyError').classList.add('hidden');
-    document.getElementById('newPartQty').classList.remove('border-red-400', 'ring-red-300');
-    
-    document.getElementById('txtSavePart').innerText = 'Add Stock';
-    const btn = document.getElementById('btnSavePart');
-    btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
-    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-    document.getElementById('btnResetPart').classList.remove('hidden');
-    
-    // Scroll to top of modal so form is visible
-    const modalScroll = document.querySelector('#partsModal .overflow-y-auto');
-    if (modalScroll) modalScroll.scrollTo({ top: 0, behavior: 'smooth' });
+    const iconContainer = document.getElementById('miniModalIcon');
+    iconContainer.className = 'w-9 h-9 rounded-xl bg-orange-100 flex items-center justify-center';
+    iconContainer.innerHTML = '<i data-lucide="package-plus" class="w-5 h-5 text-orange-600"></i>';
+    lucide.createIcons();
 
-    // Focus and pulse-highlight the qty input to guide the user
-    setTimeout(() => {
-        const qtyInput = document.getElementById('newPartQty');
-        qtyInput.focus();
-        qtyInput.classList.add('ring-2', 'ring-yellow-400', 'border-yellow-400');
-        setTimeout(() => qtyInput.classList.remove('ring-2', 'ring-yellow-400', 'border-yellow-400'), 1500);
-    }, 200);
+    // Clear error state
+    document.getElementById('qtyError').classList.add('hidden');
+    
+    setTimeout(() => document.getElementById('newPartQty').focus(), 200);
 }
 
 function resetPartForm() {
@@ -1386,13 +1413,6 @@ function resetPartForm() {
     document.getElementById('newPartSupplier').value = '';
     document.getElementById('lblCurrentStock').classList.add('hidden');
     document.getElementById('qtyError').classList.add('hidden');
-    document.getElementById('newPartQty').classList.remove('border-red-400', 'ring-red-300');
-    
-    document.getElementById('txtSavePart').innerText = 'Add to Catalog';
-    const btn = document.getElementById('btnSavePart');
-    btn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
-    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-    document.getElementById('btnResetPart').classList.add('hidden');
 }
 
 function validateAddQty(input) {
@@ -1441,14 +1461,17 @@ function refreshPartsTable() {
                         ${p.stock_quantity || 0}
                     </span>
                 </td>
-                <td class="px-4 py-3 text-sm font-bold text-blue-600">₱${parseFloat(p.price).toFixed(2)}</td>
+                <td class="px-4 py-3 text-sm font-bold text-blue-600">₱${(parseFloat(p.price) || 0).toFixed(2)}</td>
                 <td class="px-4 py-3 text-right">
                     <div class="flex justify-end gap-1">
                         <button onclick="editCatalogPart(${p.id}, '${safeName}', ${p.price}, ${p.stock_quantity || 0}, '${safeSupplier}')" 
+                            title="Add Stock"
                             class="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                            <i data-lucide="package-plus" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="deletePart(${p.id}, this)" class="p-2 text-red-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                        <button onclick="deletePart(${p.id}, this)" 
+                            title="Delete"
+                            class="p-2 text-red-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
