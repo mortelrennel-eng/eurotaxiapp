@@ -672,11 +672,17 @@ function drawRestrictedZones(group) {
 // --- NEW: ONE-CLICK REMOTE COMMAND HANDLER ---
 window.sendRemoteCommand = async function(unitId, commandType) {
     const action = commandType === 'off' ? 'SHUT DOWN ENGINE' : 'RESTORE ENGINE POWER';
+    const btn = event.currentTarget; // Capture the clicked button
     
     // Quick confirm without password (as requested)
     if (!confirm(`Are you sure you want to ${action} for this unit?`)) return;
 
-    // Visual feedback
+    // Visual feedback & Anti-Spam (Disable Button)
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin text-white"></i>`;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
     toastr.info(`Sending ${commandType === 'off' ? 'Kill' : 'Restore'} command...`, 'Remote Control');
 
     try {
@@ -701,5 +707,10 @@ window.sendRemoteCommand = async function(unitId, commandType) {
     } catch (e) {
         console.error('Command UI Error:', e);
         toastr.error('Connection error. Please try again.', 'Error');
+    } finally {
+        // Restore button state
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 };
