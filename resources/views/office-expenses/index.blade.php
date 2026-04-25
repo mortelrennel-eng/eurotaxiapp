@@ -7,7 +7,22 @@
 @section('content')
 
     {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow card-hover border-l-4 border-orange-500">
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Today</p>
+                        <p class="text-2xl font-black text-orange-600">{{ formatCurrency($stats['today'] ?? 0) }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Total today</p>
+                    </div>
+                    <div class="p-3 bg-orange-50 rounded-xl">
+                        <i data-lucide="clock" class="h-8 w-8 text-orange-500"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white rounded-lg shadow card-hover">
             <div class="p-6">
                 <div class="flex items-center justify-between">

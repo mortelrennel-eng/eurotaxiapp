@@ -67,6 +67,10 @@ class OfficeExpenseController extends Controller
         }
 
         $stats = [
+            'today' => DB::table('expenses')
+                ->whereNull('deleted_at')
+                ->whereDate('date', date('Y-m-d'))
+                ->sum('amount') ?? 0,
             'this_month' => $thisMonthAmount,
             'last_month' => $lastMonthAmount,
             'monthly_change' => $changePercent,
