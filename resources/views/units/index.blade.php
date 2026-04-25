@@ -1390,241 +1390,284 @@
                 const roiPrgW = Math.min(100, Math.max(0, roiPct)).toFixed(1);
                 const invPerMonth = parseFloat(roi.total_investment || 0) / 12;
                 const mthBnd = parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0);
-                const bndPrgW = invPerMonth > 0 ? Math.min(100, (mthBnd / invPerMonth) * 100).toFixed(1) : 0;
-
-                document.getElementById('unitDetailsContent').innerHTML = `
-                <div class="space-y-2">
-                    <!-- Unit Header - Miniaturized -->
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-2 rounded-lg text-white">
+                const bndPrgW = invPerMonth > 0 ? Math.min(100, (mthBnd / invPerMo                document.getElementById('unitDetailsContent').innerHTML = `
+                <div class="space-y-4">
+                    <!-- Unit Header -->
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 rounded-xl text-white shadow-lg">
                         <div class="flex justify-between items-start">
                             <div>
-                                <div class="flex items-center gap-2 mb-0.5">
-                                    <h3 class="text-sm font-bold leading-none">${unit.plate_number || ''}</h3>
-                                    <span class="px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-[9px] font-medium uppercase tracking-wider">${unit.status || ''}</span>
-                                    <span class="px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-[9px] font-medium uppercase tracking-wider">${unit.unit_type || 'Standard'}</span>
-                                    ${unit.status === 'surveillance' ? `<span class="px-1.5 py-0.5 bg-red-500 text-white rounded-full text-[9px] font-bold uppercase tracking-wider animate-pulse">🚨 At Risk</span>` : ''}
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="text-xl font-black leading-none tracking-tight">${unit.plate_number || ''}</h3>
+                                    <span class="px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white border-opacity-30">${unit.status || ''}</span>
+                                    <span class="px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white border-opacity-30">${unit.unit_type || 'Standard'}</span>
+                                    ${unit.status === 'surveillance' ? `<span class="px-2 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">🚨 Under Surveillance</span>` : ''}
                                 </div>
-                                <p class="text-[10px] text-blue-100 leading-tight">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
+                                <p class="text-xs text-blue-100 font-medium tracking-wide">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-bold leading-none mb-0.5">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
-                                <p class="text-blue-100 text-[9px]">Daily Boundary Rate</p>
+                                <div class="text-xl font-black leading-none mb-1">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest">Daily Boundary Rate</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tabs Navigation - Miniaturized -->
+                    <!-- Tabs Navigation -->
                     <div class="border-b border-gray-200">
-                        <nav class="-mb-px flex space-x-3 overflow-x-auto pb-1.5 scrollbar-thin">
-                            <button onclick="showTab('overview')" class="tab-btn py-1 px-0.5 border-b-2 border-blue-500 font-medium text-[11px] text-blue-600 whitespace-nowrap" data-tab="overview">Overview</button>
-                            <button onclick="showTab('drivers')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="drivers">Drivers</button>
-                            <button onclick="showTab('coding')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="coding">Coding</button>
-                            <button onclick="showTab('boundary')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="boundary">Boundary</button>
-                            <button onclick="showTab('maintenance')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="maintenance">Maintenance</button>
-                            <button onclick="showTab('roi')" class="tab-btn py-1.5 px-1 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="roi">ROI</button>
-                            <button onclick="showTab('location')" class="tab-btn py-1.5 px-1 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="location">Location</button>
-                            <button onclick="showTab('dashcam')" class="tab-btn py-1.5 px-1 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="dashcam">Dashcam</button>
+                        <nav class="-mb-px flex w-full overflow-x-auto scrollbar-none">
+                            <button onclick="showTab('overview')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-blue-500 font-black text-[11px] uppercase tracking-widest text-blue-600 transition-all duration-200 whitespace-nowrap" data-tab="overview">Overview</button>
+                            <button onclick="showTab('drivers')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="drivers">Drivers</button>
+                            <button onclick="showTab('coding')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="coding">Coding</button>
+                            <button onclick="showTab('boundary')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="boundary">Boundary</button>
+                            <button onclick="showTab('maintenance')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="maintenance">Maintenance</button>
+                            <button onclick="showTab('roi')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="roi">ROI</button>
+                            <button onclick="showTab('location')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="location">Location</button>
+                            <button onclick="showTab('dashcam')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="dashcam">Dashcam</button>
                         </nav>
                     </div>
 
-                    <!-- Tab Content - Miniaturized and Fitted -->
-                    <div id="tabContent" style="min-height: 420px;">
+                    <!-- Tab Content -->
+                    <div id="tabContent" class="pt-2" style="min-height: 450px;">
                         <!-- Overview Tab -->
                         <div id="overview-tab" class="tab-content">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-blue-100 rounded-md"><i data-lucide="users" class="w-3.5 h-3.5 text-blue-600"></i></div><div><p class="text-[10px] text-gray-500">Drivers</p><p class="text-xs font-bold leading-tight">${assignedDrivers.length}/2</p></div></div></div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-green-100 rounded-md"><i data-lucide="calendar" class="w-3.5 h-3.5 text-green-600"></i></div><div><p class="text-[10px] text-gray-500">Next Coding</p><p class="text-xs font-bold leading-tight">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + 'd'}</p></div></div></div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-purple-100 rounded-md"><i data-lucide="trending-up" class="w-3.5 h-3.5 text-purple-600"></i></div><div><p class="text-[10px] text-gray-500">ROI</p><p class="text-xs font-bold leading-tight">${roiPct.toFixed(1)}%</p></div></div></div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-orange-100 rounded-md"><i data-lucide="wrench" class="w-3.5 h-3.5 text-orange-600"></i></div><div><p class="text-[10px] text-gray-500">Maint</p><p class="text-xs font-bold leading-tight">${maint.length}</p></div></div></div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div class="bg-white border border-gray-200 rounded-lg p-2">
-                                    <h4 class="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1"><i data-lucide="info" class="w-3.5 h-3.5"></i> Basic Info</h4>
-                                    <div class="space-y-1 text-[11px]">
-                                        <div class="flex justify-between"><span class="text-gray-600">Plate Number:</span><span class="font-medium">${unit.plate_number || ''}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-600">Vehicle:</span><span class="font-medium">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-600">Year:</span><span class="font-medium">${unit.year || ''}</span></div>
-                                        ${unit.motor_no ? `<div class="flex justify-between"><span class="text-gray-600">Motor No:</span><span class="font-medium font-mono text-[10px]">${unit.motor_no}</span></div>` : ''}
-                                        ${unit.chassis_no ? `<div class="flex justify-between"><span class="text-gray-600">Chassis No:</span><span class="font-medium font-mono text-[10px]">${unit.chassis_no}</span></div>` : ''}
-                                        <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="px-1.5 py-0.5 text-[10px] rounded-full bg-green-100 text-green-800">${unit.status ? unit.status.charAt(0).toUpperCase() + unit.status.slice(1) : ''}</span></div>
-                                        <div class="flex justify-between border-t border-gray-100 pt-1 mt-1"><span class="text-gray-500">Created:</span><span class="text-gray-600">${unit.created_by_name || 'System'} - ${unit.created_at_fmt || 'N/A'}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Updated:</span><span class="text-gray-600">${unit.updated_by_name || 'System'} - ${unit.updated_at_fmt || 'N/A'}</span></div>
-                                        <div class="flex justify-between border-t border-gray-100 pt-1 mt-1"><span class="text-black font-semibold">Boundary:</span><span class="font-bold text-blue-700">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2.5 bg-blue-50 rounded-lg"><i data-lucide="users" class="w-5 h-5 text-blue-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Drivers</p><p class="text-xl font-black text-gray-900">${assignedDrivers.length}/2</p></div>
                                     </div>
                                 </div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2">
-                                    <h4 class="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> Assignment</h4>
-                                    <div class="space-y-1 text-[11px]">
-                                        <div class="flex justify-between"><span class="text-gray-500">Drivers:</span><span class="font-medium">${assignedDrivers.length}/2</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Status:</span><span class="px-1 py-0.5 rounded-full text-[10px] ${assignedDrivers.length >= 2 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${assignedDrivers.length >= 2 ? 'Full' : 'Available'}</span></div>
-                                        ${driversOverviewHtml ? '<div class="mt-1.5 space-y-1">' + driversOverviewHtml.replace(/p-3/g, 'p-1.5').replace(/text-sm/g, 'text-[10px]') + '</div>' : ''}
+                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2.5 bg-green-50 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Next Coding</p><p class="text-xl font-black text-gray-900">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + 'd'}</p></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2.5 bg-purple-50 rounded-lg"><i data-lucide="trending-up" class="w-5 h-5 text-purple-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">ROI</p><p class="text-xl font-black text-gray-900">${roiPct.toFixed(1)}%</p></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2.5 bg-orange-50 rounded-lg"><i data-lucide="wrench" class="w-5 h-5 text-orange-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Maint</p><p class="text-xl font-black text-gray-900">${maint.length}</p></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Drivers Tab -->
-                        <div id="drivers-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Assigned Drivers</h4>
-                                <div class="space-y-2">${driversTabHtml.replace(/p-4/g, 'p-2').replace(/p-6/g, 'p-3').replace(/text-lg/g, 'text-base').replace(/text-sm/g, 'text-xs')}</div>
-                            </div>
-                        </div>
-
-                        <!-- Coding Tab -->
-                        <div id="coding-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-2">MMDA Coding Schedule</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <h5 class="font-medium text-xs text-gray-900 mb-1.5">Current Coding Information</h5>
-                                        <div class="space-y-1 text-xs">
-                                            <div class="flex justify-between"><span class="text-gray-600">Coding Day:</span><span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[10px] font-medium">${codingDay}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Last Digit:</span><span class="font-medium">${lastChar || '-'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Next Coding:</span><span class="font-medium">${nextCodingDate || '-'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Days Until Coding:</span><span class="font-medium ${daysUntilCoding === 0 ? 'text-red-600' : 'text-green-600'}">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + ' days'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Coding Status:</span><span class="px-1.5 py-0.5 text-[10px] rounded-full ${daysUntilCoding === 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${daysUntilCoding === 0 ? 'Coding Today' : 'No Coding'}</span></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-medium text-xs text-gray-900 mb-1.5">MMDA Coding Schedule</h5>
-                                        <div class="space-y-0.5 text-[10px]">
-                                            <div class="flex justify-between p-1 bg-blue-50 rounded"><span>Monday</span><span class="font-medium">1, 2</span></div>
-                                            <div class="flex justify-between p-1 bg-green-50 rounded"><span>Tuesday</span><span class="font-medium">3, 4</span></div>
-                                            <div class="flex justify-between p-1 bg-yellow-50 rounded"><span>Wednesday</span><span class="font-medium">5, 6</span></div>
-                                            <div class="flex justify-between p-1 bg-orange-50 rounded"><span>Thursday</span><span class="font-medium">7, 8</span></div>
-                                            <div class="flex justify-between p-1 bg-red-50 rounded"><span>Friday</span><span class="font-medium">9, 0</span></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Boundary Tab -->
-                        <div id="boundary-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Boundary Collection History</h4>
-                                ${boundaryRowsHtml ? `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">Date</th><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">Driver</th><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">License</th><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">Amount</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">${boundaryRowsHtml.replace(/px-6 py-4/g, 'px-3 py-1.5').replace(/text-sm/g, 'text-xs')}</tbody></table></div>` : '<div class="text-center py-6 text-gray-500"><i data-lucide="dollar-sign" class="w-10 h-10 mx-auto mb-2 text-gray-300"></i><p class="text-xs">No boundary history found</p></div>'}
-                            </div>
-                        </div>
-
-                        <!-- Maintenance Tab -->
-                        <div id="maintenance-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Maintenance Records</h4>
-                                <div class="space-y-2">${maintHtml.replace(/p-4/g, 'p-2').replace(/p-6/g, 'p-3').replace(/text-lg/g, 'text-base').replace(/text-sm/g, 'text-xs')}</div>
-                            </div>
-                        </div>
-
-                        <!-- ROI Tab - Aggressively Miniaturized -->
-                        <div id="roi-tab" class="tab-content hidden">
-                            <div class="space-y-3">
-                                <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-lg text-white">
-                                    <h4 class="text-base font-bold mb-2">ROI Analysis</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                        <div><p class="text-purple-100 text-[10px]">Total Investment</p><p class="text-base font-bold">₱${parseFloat(roi.total_investment || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p></div>
-                                        <div><p class="text-purple-100 text-[10px]">Total Revenue</p><p class="text-base font-bold">₱${parseFloat(roi.total_revenue || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p></div>
-                                        <div><p class="text-purple-100 text-[10px]">Total Expenses</p><p class="text-base font-bold">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p></div>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                        <h4 class="text-xs font-semibold text-gray-900 mb-2">ROI Metrics</h4>
-                                        <div class="space-y-2 text-xs">
-                                            <div class="flex justify-between items-center"><span class="text-gray-600">ROI %</span><span class="font-bold text-${roiColor}-600">${roiPct.toFixed(1)}%</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-gray-600">Payback</span><span class="font-bold text-blue-600">${parseFloat(roi.payback_period || 0).toFixed(1)} mths</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-gray-600">Mth Rev</span><span class="font-bold text-green-600">₱${parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
-                                        </div>
-                                    </div>
-                                    <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                        <h4 class="text-xs font-semibold text-gray-900 mb-2">ROI Progress</h4>
-                                        <div class="space-y-3">
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1"><span class="text-[10px] text-gray-600">Achievement</span><span class="text-[10px] font-medium">${roiPct.toFixed(1)}%</span></div>
-                                                <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-gradient-to-r from-purple-500 to-purple-600 h-2.5 rounded-full" style="width:${roiPrgW}%"></div></div>
-                                            </div>
-                                            <div>
-                                                <div class="flex justify-between items-center mb-1"><span class="text-[10px] text-gray-600">Monthly Target</span><span class="text-[10px] font-medium">₱${invPerMonth.toLocaleString('en-PH', {minimumFractionDigits:0})}</span></div>
-                                                <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-gradient-to-r from-green-500 to-green-600 h-2.5 rounded-full" style="width:${bndPrgW}%"></div></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Location Tab -->
-                        <div id="location-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Location Information</h4>
-                                <div class="space-y-3">
-                                    {{-- Info Row --}}
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
-                                            <span class="text-gray-500 text-[10px]">Location:</span>
-                                            <span class="font-medium text-[10px] text-right">${locInfo.current_location || 'Not Available'}</span>
-                                        </div>
-                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
-                                            <span class="text-gray-500 text-[10px]">Update:</span>
-                                            <span class="font-medium text-[10px] text-right">${locInfo.last_location_update || 'Never'}</span>
-                                        </div>
-                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5 items-center">
-                                            <span class="text-gray-500 text-[10px]">GPS:</span>
-                                            <span class="px-1.5 py-0.5 text-[9px] rounded-full ${locInfo.gps_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                                ${locInfo.gps_enabled ? 'Enabled' : 'Disabled'}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {{-- Tracking Status Display --}}
-                                    <div id="unitDetailMapContainer" class="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex flex-col items-center justify-center p-6 text-center" style="height: 320px;">
-                                        <div class="mb-4 p-4 bg-indigo-100 rounded-full">
-                                            <i data-lucide="satellite" class="w-12 h-12 text-indigo-600"></i>
-                                        </div>
-                                        <h4 class="text-sm font-bold text-gray-900 mb-1">Tracksolid Pro Enterprise</h4>
-                                        <p class="text-xs text-gray-500 mb-4 px-4">This unit is tracked via real-time API using IMEI identification.</p>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {{-- Basic Information Card --}}
+                                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                    <h4 class="text-xs font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
+                                        <i data-lucide="info" class="w-4 h-4 text-blue-600"></i> Basic Information
+                                    </h4>
+                                    <div class="space-y-4 text-xs">
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Plate Number</span><span class="font-black text-gray-900 bg-gray-50 px-2 py-1 rounded">${unit.plate_number || ''}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Vehicle</span><span class="font-black text-gray-700">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Year</span><span class="font-black text-gray-700">${unit.year || ''}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Status</span><span class="px-3 py-1 text-[10px] font-black uppercase rounded-full bg-green-50 text-green-600 border border-green-100">${unit.status ? unit.status.charAt(0).toUpperCase() + unit.status.slice(1) : ''}</span></div>
                                         
-                                        <div class="w-full max-w-xs space-y-2 mb-6">
-                                            <div class="flex justify-between items-center bg-white p-2 border border-gray-200 rounded text-xs">
-                                                <span class="text-gray-500">Device IMEI:</span>
-                                                <span class="font-mono font-bold text-indigo-700">${unit.imei || 'Not Set'}</span>
+                                        <div class="pt-4 border-t border-gray-50 mt-4 space-y-2">
+                                            <div class="flex justify-between items-center"><span class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Created By</span><span class="text-[11px] font-bold text-gray-600">${unit.created_by_name || 'System'} - ${unit.created_at_fmt || 'N/A'}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Last Update</span><span class="text-[11px] font-bold text-gray-600">${unit.updated_by_name || 'System'} - ${unit.updated_at_fmt || 'N/A'}</span></div>
+                                        </div>
+                                        
+                                        <div class="flex justify-between items-center pt-4 border-t border-gray-50 mt-4">
+                                            <span class="text-xs font-black text-gray-900 uppercase tracking-widest">Boundary Rate</span>
+                                            <span class="text-xl font-black text-blue-600">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Driver Assignment Card --}}
+                                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                    <h4 class="text-xs font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
+                                        <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Driver Assignment
+                                    </h4>
+                                    <div class="space-y-4 text-xs">
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Assigned Drivers</span><span class="font-black text-gray-900">${assignedDrivers.length}/2</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Availability</span><span class="px-3 py-1 text-[10px] font-black uppercase rounded-full ${assignedDrivers.length >= 2 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}">${assignedDrivers.length >= 2 ? 'Full' : 'Available'}</span></div>
+                                        
+                                        <div class="mt-6 space-y-3">
+                                            ${assignedDrivers.length > 0 ? assignedDrivers.map(d => `
+                                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 group hover:border-blue-200 transition-colors">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <p class="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors">${d.full_name || ''}</p>
+                                                        <span class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase">Active</span>
+                                                    </div>
+                                                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                                        <p class="text-gray-500 font-medium">${d.license_number || 'No License'}</p>
+                                                        <p class="text-gray-500 font-medium text-right">Contact: ${d.contact_number || 'N/A'}</p>
+                                                    </div>
+                                                </div>
+                                            `).join('') : `
+                                                <div class="py-12 text-center">
+                                                    <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                        <i data-lucide="user-x" class="w-6 h-6 text-gray-300"></i>
+                                                    </div>
+                                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Drivers Assigned</p>
+                                                </div>
+                                            `}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Other Tabs (Preserved structure) -->
+                        <div id="drivers-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Assigned Drivers</h4>
+                                <div class="space-y-4">${driversTabHtml.replace(/p-4/g, 'p-4').replace(/p-6/g, 'p-6')}</div>
+                            </div>
+                        </div>
+
+                        <div id="coding-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">MMDA Coding Schedule</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-4">
+                                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-tight">Current Unit Info</h5>
+                                        <div class="space-y-3 text-xs">
+                                            <div class="flex justify-between"><span class="text-gray-600">Coding Day</span><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">${codingDay}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Last Digit</span><span class="font-black">${lastChar || '-'}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Next Coding</span><span class="font-black">${nextCodingDate || '-'}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-600">Status</span><span class="px-2 py-0.5 rounded font-black uppercase text-[10px] ${daysUntilCoding === 0 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}">${daysUntilCoding === 0 ? 'Coding Today' : 'No Coding'}</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 p-4 rounded-xl">
+                                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-tight mb-3">Schedule Guide</h5>
+                                        <div class="space-y-2 text-[11px]">
+                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Monday</span><span class="font-black">1, 2</span></div>
+                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Tuesday</span><span class="font-black">3, 4</span></div>
+                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Wednesday</span><span class="font-black">5, 6</span></div>
+                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Thursday</span><span class="font-black">7, 8</span></div>
+                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Friday</span><span class="font-black">9, 0</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="boundary-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Boundary History</h4>
+                                ${boundaryRowsHtml ? `<div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver</th><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Remarks</th><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th></tr></thead><tbody class="divide-y divide-gray-100">${boundaryRowsHtml.replace(/px-6 py-4/g, 'px-4 py-3').replace(/text-sm/g, 'text-xs')}</tbody></table></div>` : '<div class="text-center py-12 text-gray-400 font-bold uppercase tracking-widest">No boundary history found</div>'}
+                            </div>
+                        </div>
+
+                        <div id="maintenance-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Maintenance Records</h4>
+                                <div class="space-y-4">${maintHtml.replace(/p-4/g, 'p-4').replace(/p-6/g, 'p-6')}</div>
+                            </div>
+                        </div>
+
+                        <div id="roi-tab" class="tab-content hidden">
+                            <div class="space-y-6">
+                                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-2xl text-white shadow-lg">
+                                    <h4 class="text-lg font-black mb-4 uppercase tracking-widest">ROI Analysis</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div class="bg-white bg-opacity-10 p-4 rounded-xl">
+                                            <p class="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Investment</p>
+                                            <p class="text-xl font-black">₱${parseFloat(roi.total_investment || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        </div>
+                                        <div class="bg-white bg-opacity-10 p-4 rounded-xl">
+                                            <p class="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Revenue</p>
+                                            <p class="text-xl font-black">₱${parseFloat(roi.total_revenue || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        </div>
+                                        <div class="bg-white bg-opacity-10 p-4 rounded-xl">
+                                            <p class="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Expenses</p>
+                                            <p class="text-xl font-black">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                        <h4 class="text-xs font-black text-gray-900 mb-4 uppercase tracking-widest">Metrics</h4>
+                                        <div class="space-y-4 text-xs">
+                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Current ROI</span><span class="font-black text-${roiColor}-600 text-lg">${roiPct.toFixed(1)}%</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Payback Period</span><span class="font-black text-blue-600">${parseFloat(roi.payback_period || 0).toFixed(1)} months</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Monthly Revenue</span><span class="font-black text-green-600">₱${parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                        <h4 class="text-xs font-black text-gray-900 mb-4 uppercase tracking-widest">Target Progress</h4>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <div class="flex justify-between items-center mb-2"><span class="text-[10px] text-gray-400 font-black uppercase">Capital Recovery</span><span class="text-xs font-black text-purple-600">${roiPct.toFixed(1)}%</span></div>
+                                                <div class="w-full bg-gray-100 rounded-full h-3"><div class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full shadow-sm" style="width:${roiPrgW}%"></div></div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between items-center mb-2"><span class="text-[10px] text-gray-400 font-black uppercase">Monthly Target Reach</span><span class="text-xs font-black text-green-600">₱${invPerMonth.toLocaleString('en-PH', {minimumFractionDigits:0})}</span></div>
+                                                <div class="w-full bg-gray-100 rounded-full h-3"><div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full shadow-sm" style="width:${bndPrgW}%"></div></div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                                        <a href="/live-tracking?unit=${unit.id}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
-                                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                                            View on Live Tracking Map
+                        <div id="location-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Real-Time Tracking</h4>
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Current Address</p>
+                                            <p class="text-[11px] font-bold text-gray-900">${locInfo.current_location || 'Not Available'}</p>
+                                        </div>
+                                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Last Update</p>
+                                            <p class="text-[11px] font-bold text-gray-900">${locInfo.last_location_update || 'Never'}</p>
+                                        </div>
+                                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                                            <span class="text-[9px] text-gray-400 font-black uppercase tracking-widest">GPS Status</span>
+                                            <span class="px-2 py-0.5 text-[10px] rounded font-black uppercase ${locInfo.gps_enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${locInfo.gps_enabled ? 'Active' : 'Offline'}</span>
+                                        </div>
+                                    </div>
+                                    <div id="unitDetailMapContainer" class="relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 flex flex-col items-center justify-center p-8 text-center shadow-inner" style="height: 350px;">
+                                        <div class="mb-4 p-5 bg-blue-100 rounded-full shadow-sm">
+                                            <i data-lucide="satellite" class="w-12 h-12 text-blue-600"></i>
+                                        </div>
+                                        <h4 class="text-lg font-black text-gray-900 mb-1">Tracksolid Pro Enterprise</h4>
+                                        <p class="text-xs text-gray-500 mb-6 max-w-sm">Enterprise real-time tracking identification via device IMEI.</p>
+                                        <div class="bg-white px-4 py-2 border border-gray-200 rounded-lg text-sm font-mono font-bold text-blue-700 mb-8 shadow-sm">
+                                            IMEI: ${unit.imei || 'Not Set'}
+                                        </div>
+                                        <a href="/live-tracking?unit=${unit.id}" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                            <i data-lucide="map-pin" class="w-4 h-4"></i> Live Tracking Map
                                         </a>
                                     </div>
-
-                                    ${locInfo.coordinates ? `
-                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
-                                            <span class="text-gray-500 text-[10px]">Coordinates:</span>
-                                            <span class="font-medium text-[10px]">${locInfo.coordinates}</span>
-                                        </div>
-                                    ` : ''}
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Dashcam Tab -->
                         <div id="dashcam-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-200 rounded-lg p-3">
-                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Dashcam Information</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div>
-                                        <div class="space-y-1.5 text-xs">
-                                            <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="px-1.5 py-0.5 text-[9px] rounded-full ${dashcam.dashcam_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${dashcam.dashcam_enabled ? 'Enabled' : 'Disabled'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Connect:</span><span class="px-1.5 py-0.5 text-[9px] rounded-full ${dashcam.dashcam_status === 'Online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${dashcam.dashcam_status || 'Offline'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Storage:</span><span class="font-medium text-[10px]">${parseFloat(dashcam.storage_used || 0).toFixed(1)} / ${parseFloat(dashcam.storage_total || 32).toFixed(0)} GB</span></div>
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Dashcam Fleet Control</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-4">
+                                        <div class="space-y-3 text-xs">
+                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">System Status</span><span class="px-2 py-0.5 rounded font-black uppercase ${dashcam.dashcam_enabled ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}">${dashcam.dashcam_enabled ? 'Online' : 'Disabled'}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Cloud Connection</span><span class="px-2 py-0.5 rounded font-black uppercase ${dashcam.dashcam_status === 'Online' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}">${dashcam.dashcam_status || 'Offline'}</span></div>
+                                            <div class="pt-4 border-t border-gray-50">
+                                                <div class="flex justify-between items-center mb-2"><span class="text-[10px] text-gray-400 font-black uppercase">SD Storage Used</span><span class="text-[10px] font-black text-gray-700">${parseFloat(dashcam.storage_used || 0).toFixed(1)} / ${parseFloat(dashcam.storage_total || 32).toFixed(0)} GB</span></div>
+                                                <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width:${(parseFloat(dashcam.storage_used || 0) / parseFloat(dashcam.storage_total || 32) * 100).toFixed(1)}%"></div></div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="bg-gray-100 rounded-lg h-20 flex items-center justify-center"><div class="text-center text-gray-500"><i data-lucide="video" class="w-6 h-6 mx-auto mb-1"></i><p class="text-[10px]">Video placeholder</p></div></div>
+                                    <div class="bg-gray-900 rounded-2xl aspect-video flex items-center justify-center shadow-2xl relative overflow-hidden group">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+                                        <div class="text-center text-white z-10">
+                                            <i data-lucide="video" class="w-12 h-12 mx-auto mb-2 text-blue-400"></i>
+                                            <p class="text-[10px] font-black uppercase tracking-widest">Fleet Feed Offline</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
                 `;
 
                 // Re-init lucide icons
