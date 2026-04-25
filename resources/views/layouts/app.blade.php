@@ -46,58 +46,6 @@
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-
-        /* Desktop Collapsed Sidebar Restyling */
-        @media (min-width: 1024px) {
-            body.sidebar-collapsed #sidebar { width: 4rem !important; }
-            body.sidebar-collapsed #sidebar .hidden.lg\:block { display: none !important; }
-            body.sidebar-collapsed #sidebar .sidebar-item {
-                justify-content: center !important;
-                padding-left: 0 !important;
-                padding-right: 0 !important;
-            }
-            body.sidebar-collapsed #sidebar .p-2.lg\:p-4.border-b { padding: 1.25rem 0 !important; }
-            body.sidebar-collapsed #sidebar-logo { width: auto !important; height: 1.5rem !important; object-fit: contain; margin-bottom: 0 !important; }
-            body.sidebar-collapsed #sidebar .p-2.lg\:p-4.border-t.bg-white.relative.z-50 { padding: 0.5rem !important; }
-            body.sidebar-collapsed #sidebar .p-1.lg\:p-2 {
-                justify-content: center !important;
-                padding: 0.5rem !important;
-            }
-            body.sidebar-collapsed #sidebar .w-8.h-8 { width: 2rem !important; height: 2rem !important; }
-        }
-
-        /* Mobile Expanded Sidebar Restyling */
-        @media (max-width: 1023px) {
-            body.sidebar-expanded #sidebar {
-                width: 15rem !important;
-                position: absolute;
-                z-index: 50;
-                height: 100%;
-                top: 0;
-                left: 0;
-            }
-            body.sidebar-expanded #sidebar .hidden.lg\:block { display: block !important; }
-            body.sidebar-expanded #sidebar .sidebar-item {
-                justify-content: flex-start !important;
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
-            }
-            body.sidebar-expanded #sidebar .p-1.lg\:p-2 {
-                justify-content: flex-start !important;
-                padding: 0.5rem !important;
-            }
-            body.sidebar-expanded #sidebar .p-1.lg\:p-2 .hidden.lg\:block { 
-                display: block !important; 
-                flex: 1 1 0%;
-            }
-            
-            /* Overlay */
-            body.sidebar-expanded::after {
-                content: '';
-                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(0,0,0,0.5); z-index: 40; pointer-events: none;
-            }
-        }
     </style>
 
     <!-- Lucide Icons -->
@@ -213,12 +161,12 @@
         <!-- Main Layout -->
         <div class="flex h-screen overflow-hidden">
             <!-- Sidebar -->
-            <aside id="sidebar" class="w-16 lg:w-60 bg-white shadow-lg flex-shrink-0 transition-all duration-300 z-40 overflow-x-hidden">
+            <aside class="w-16 lg:w-60 bg-white shadow-lg flex-shrink-0 transition-all duration-300 overflow-x-hidden">
                 <div class="h-full flex flex-col">
                     <!-- Logo -->
                     <div class="p-2 lg:p-4 border-b flex flex-col items-center">
-                        <img id="sidebar-logo" src="{{ asset('uploads/logo.png') }}" alt="Euro System Logo" class="h-8 lg:h-12 w-auto mb-1 transition-all">
-                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold hidden lg:block transition-all">Fleet Management</p>
+                        <img src="{{ asset('uploads/logo.png') }}" alt="Euro System Logo" class="h-8 lg:h-12 w-auto mb-1">
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold hidden lg:block">Fleet Management</p>
                     </div>
 
                     <!-- Navigation -->
@@ -363,16 +311,11 @@
                 <!-- Top Bar -->
                 <header class="bg-white shadow-sm border-b px-6 py-2">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <button id="sidebarToggle" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none">
-                                <i data-lucide="menu" class="w-6 h-6"></i>
-                            </button>
-                            <div>
-                                <h2 class="text-2xl font-semibold text-gray-900">@yield('page-heading', 'Dashboard')</h2>
-                                @hasSection('page-subheading')
-                                    <p class="text-sm text-gray-500 mt-1">@yield('page-subheading')</p>
-                                @endif
-                            </div>
+                        <div>
+                            <h2 class="text-2xl font-semibold text-gray-900">@yield('page-heading', 'Dashboard')</h2>
+                            @hasSection('page-subheading')
+                                <p class="text-sm text-gray-500 mt-1">@yield('page-subheading')</p>
+                            @endif
                         </div>
 
                         <div class="flex items-center gap-4">
@@ -598,29 +541,6 @@
             // Start header clock
             updateHeaderClock();
             setInterval(updateHeaderClock, 1000);
-
-            // Sidebar Toggle Logic
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            const sidebar = document.getElementById('sidebar');
-            if(sidebarToggle && sidebar) {
-                sidebarToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (window.innerWidth >= 1024) {
-                        document.body.classList.toggle('sidebar-collapsed');
-                    } else {
-                        document.body.classList.toggle('sidebar-expanded');
-                    }
-                });
-
-                // Close expanded sidebar on mobile when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (window.innerWidth < 1024 && document.body.classList.contains('sidebar-expanded')) {
-                        if (!sidebar.contains(e.target) && e.target !== sidebarToggle) {
-                            document.body.classList.remove('sidebar-expanded');
-                        }
-                    }
-                });
-            }
         });
     </script>
 
