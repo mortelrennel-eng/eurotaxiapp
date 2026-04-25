@@ -665,7 +665,7 @@
 
         <!-- LEFT HALF: Large Branding -->
         <div class="branding-side" style="position:relative;z-index:10;width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;">
-            <div style="transform: translateY(-20vh); display: flex; flex-direction: column; align-items: center;">
+            <div style="transform: translateY(-5vh); display: flex; flex-direction: column; align-items: center;">
                 <!-- Logo -->
                 <div class="logo-bounce" style="margin-bottom:1rem;">
                     <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:380px;max-width:100%;filter:drop-shadow(0 0 40px rgba(59,130,246,0.55));object-fit:contain;">
