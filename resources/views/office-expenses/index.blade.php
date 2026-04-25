@@ -7,83 +7,84 @@
 @section('content')
 
     {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow card-hover border-l-4 border-orange-500">
-            <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Today</p>
-                        <p class="text-2xl font-black text-orange-600">{{ formatCurrency($stats['today'] ?? 0) }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Total today</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+        {{-- Today --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-hover relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="relative flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Today</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-orange-600 truncate tabular-nums">{{ formatCurrency($stats['today'] ?? 0) }}</h3>
+                    <div class="flex items-center gap-1 mt-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse"></span>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">Real-time</p>
                     </div>
-                    <div class="p-3 bg-orange-50 rounded-xl">
-                        <i data-lucide="clock" class="h-8 w-8 text-orange-500"></i>
-                    </div>
+                </div>
+                <div class="p-3 bg-white shadow-sm border border-orange-100 rounded-xl">
+                    <i data-lucide="clock" class="h-6 w-6 text-orange-500"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover">
-            <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">This Month</p>
-                        <p class="text-2xl font-bold text-red-600">{{ formatCurrency($stats['this_month'] ?? 0) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Total expenses</p>
-                    </div>
-                    <div class="p-3 bg-red-100 rounded-full">
-                        <i data-lucide="dollar-sign" class="h-8 w-8 text-red-600"></i>
-                    </div>
+        {{-- This Month --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-hover relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="relative flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">This Month</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-red-600 truncate tabular-nums">{{ formatCurrency($stats['this_month'] ?? 0) }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">M-T-D Spending</p>
+                </div>
+                <div class="p-3 bg-white shadow-sm border border-red-100 rounded-xl">
+                    <i data-lucide="calendar-days" class="h-6 w-6 text-red-500"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover">
-            <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Last Month</p>
-                        <p class="text-2xl font-bold text-gray-700">{{ formatCurrency($stats['last_month'] ?? 0) }}</p>
-                        <p class="text-xs text-gray-500 mt-1">Previous period</p>
-                    </div>
-                    <div class="p-3 bg-gray-100 rounded-full">
-                        <i data-lucide="calendar" class="h-8 w-8 text-gray-600"></i>
-                    </div>
+        {{-- Last Month --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-hover relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gray-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="relative flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Month</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-gray-600 truncate tabular-nums">{{ formatCurrency($stats['last_month'] ?? 0) }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Previous 30 Days</p>
+                </div>
+                <div class="p-3 bg-white shadow-sm border border-gray-200 rounded-xl">
+                    <i data-lucide="history" class="h-6 w-6 text-gray-500"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover">
-            <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Monthly Change</p>
-                        @php
-                            $change = $stats['monthly_change'] ?? 0;
-                        @endphp
-                        <p class="text-2xl font-bold {{ $change < 0 ? 'text-green-600' : 'text-red-600' }}">
-                            {{ $change > 0 ? '+' : '' }}{{ $change }}%
-                        </p>
-                        <p class="text-xs text-gray-500 mt-1">vs last month</p>
-                    </div>
-                    <div class="p-3 {{ $change < 0 ? 'bg-green-100' : 'bg-red-100' }} rounded-full">
-                        <i data-lucide="{{ $change < 0 ? 'trending-down' : 'trending-up' }}" class="h-8 w-8 {{ $change < 0 ? 'text-green-600' : 'text-red-600' }}"></i>
-                    </div>
+        {{-- Monthly Change --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-hover relative overflow-hidden group">
+            @php $change = $stats['monthly_change'] ?? 0; @endphp
+            <div class="absolute top-0 right-0 w-24 h-24 {{ $change < 0 ? 'bg-green-50' : 'bg-rose-50' }} rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="relative flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Monthly Trend</p>
+                    <h3 class="text-xl sm:text-2xl font-black {{ $change < 0 ? 'text-green-600' : 'text-rose-600' }} truncate">
+                        {{ $change > 0 ? '+' : '' }}{{ $change }}%
+                    </h3>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">{{ $change < 0 ? 'Cost Savings' : 'Spending Increase' }}</p>
+                </div>
+                <div class="p-3 bg-white shadow-sm border {{ $change < 0 ? 'border-green-100' : 'border-rose-100' }} rounded-xl">
+                    <i data-lucide="{{ $change < 0 ? 'trending-down' : 'trending-up' }}" class="h-6 w-6 {{ $change < 0 ? 'text-green-500' : 'text-rose-500' }}"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover">
-            <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-500">Total Records</p>
-                        <p class="text-2xl font-bold text-yellow-600">{{ $stats['total_records'] ?? 0 }}</p>
-                        <p class="text-xs text-gray-500 mt-1">All time</p>
-                    </div>
-                    <div class="p-3 bg-yellow-100 rounded-full">
-                        <i data-lucide="file-text" class="h-8 w-8 text-yellow-600"></i>
-                    </div>
+        {{-- Total Records --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 card-hover relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="relative flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Global History</p>
+                    <h3 class="text-xl sm:text-2xl font-black text-yellow-600 truncate tabular-nums">{{ $stats['total_records'] ?? 0 }}</h3>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Total Entries</p>
+                </div>
+                <div class="p-3 bg-white shadow-sm border border-yellow-100 rounded-xl">
+                    <i data-lucide="layers" class="h-6 w-6 text-yellow-600"></i>
                 </div>
             </div>
         </div>
