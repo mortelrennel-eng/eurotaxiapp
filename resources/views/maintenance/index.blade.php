@@ -1338,11 +1338,16 @@ async function saveNewPart() {
 }
 
 function editCatalogPart(id, name, price, qty, supplier) {
+    // ── Auto-restore form if minimized ─────────────────────────────
+    if (_partsFormMinimized) {
+        togglePartsForm();
+    }
+
     document.getElementById('newPartId').value = id;
     document.getElementById('newPartCurrentStock').value = qty;
     document.getElementById('newPartName').value = name;
     document.getElementById('newPartPrice').value = price;
-    document.getElementById('newPartQty').value = '';  // Always start with empty — user types qty to ADD
+    document.getElementById('newPartQty').value = '';  // Always empty — user types qty to ADD
     document.getElementById('newPartSupplier').value = supplier || '';
 
     // Show current stock in label
@@ -1359,8 +1364,17 @@ function editCatalogPart(id, name, price, qty, supplier) {
     btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
     document.getElementById('btnResetPart').classList.remove('hidden');
     
-    // Smooth scroll to top of modal
-    document.querySelector('#partsModal .overflow-y-auto').scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to top of modal so form is visible
+    const modalScroll = document.querySelector('#partsModal .overflow-y-auto');
+    if (modalScroll) modalScroll.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Focus and pulse-highlight the qty input to guide the user
+    setTimeout(() => {
+        const qtyInput = document.getElementById('newPartQty');
+        qtyInput.focus();
+        qtyInput.classList.add('ring-2', 'ring-yellow-400', 'border-yellow-400');
+        setTimeout(() => qtyInput.classList.remove('ring-2', 'ring-yellow-400', 'border-yellow-400'), 1500);
+    }, 200);
 }
 
 function resetPartForm() {
