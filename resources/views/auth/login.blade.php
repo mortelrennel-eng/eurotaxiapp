@@ -664,11 +664,13 @@
 
         <!-- LEFT HALF: Large Branding -->
         <div class="branding-side" style="position:relative;z-index:10;width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;">
-            <!-- Logo -->
-            <div class="logo-bounce" style="margin-bottom:1rem;">
-                <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:380px;max-width:100%;filter:drop-shadow(0 0 40px rgba(59,130,246,0.55));object-fit:contain;">
+            <div style="transform: translateY(-10vh); display: flex; flex-direction: column; align-items: center;">
+                <!-- Logo -->
+                <div class="logo-bounce" style="margin-bottom:1rem;">
+                    <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:380px;max-width:100%;filter:drop-shadow(0 0 40px rgba(59,130,246,0.55));object-fit:contain;">
+                </div>
+                <p style="color:#bfdbfe;font-size:0.95rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 2.5rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
             </div>
-            <p style="color:#bfdbfe;font-size:0.95rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 2.5rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
 
 
             <!-- Bottom copyright -->
