@@ -1318,8 +1318,11 @@
                                 parts.forEach(p => {
                                     partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
                                         <div class="flex-1">
-                                            <span class="text-xs font-medium text-gray-900">${p.part_name}</span>
-                                            ${p.quantity > 1 ? `<span class="text-xs text-gray-500 ml-1">(x${p.quantity})</span>` : ''}
+                                            <div class="text-xs font-medium text-gray-900">${p.part_name}</div>
+                                            <div class="flex items-center gap-2">
+                                                ${p.supplier ? `<span class="text-[9px] text-gray-400 font-bold uppercase italic">From: ${p.supplier}</span>` : ''}
+                                                ${p.quantity > 1 ? `<span class="text-[9px] text-gray-500 font-black">(x${p.quantity})</span>` : ''}
+                                            </div>
                                         </div>
                                         <div class="text-xs font-bold text-gray-900">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
                                     </div>`;
