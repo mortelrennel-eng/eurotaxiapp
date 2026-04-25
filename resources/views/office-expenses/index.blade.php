@@ -157,7 +157,7 @@
                     @forelse($expenses as $expense)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ \Carbon\Carbon::parse($expense->expense_date)->format('M d, Y') }}
+                                {{ \Carbon\Carbon::parse($expense->date)->format('M d, Y') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {{ $expense->category }}
@@ -346,7 +346,7 @@ function openEditExpenseModal(id) {
         document.getElementById('expenseModalTitle').textContent = 'Edit Expense';
         document.getElementById('expenseFormMethod').value = 'PUT';
         document.getElementById('expenseForm').action = '{{ url('office-expenses') }}/' + id;
-        document.getElementById('expenseDate').value = data.expense_date || '';
+        document.getElementById('expenseDate').value = data.date || '';
         document.getElementById('expenseCategory').value = data.category || '';
         document.getElementById('expenseDescription').value = data.description || '';
         document.getElementById('expenseAmount').value = data.amount || '';

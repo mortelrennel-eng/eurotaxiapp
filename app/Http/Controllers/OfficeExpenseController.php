@@ -48,23 +48,44 @@ class OfficeExpenseController extends Controller
 
         $categories = DB::table('expenses')->whereNull('deleted_at')->distinct()->pluck('category');
 
-        // Calculate statistics
         $thisMonth = date('Y-m');
         $lastMonth = date('Y-m', strtotime('-1 month'));
-        
+
+        $thisMonthAmount = DB::table('expenses')
+            ->whereNull('deleted_at')
+            ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$thisMonth])
+            ->sum('amount') ?? 0;
+            
+        $lastMonthAmount = DB::table('expenses')
+            ->whereNull('deleted_at')
+            ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$lastMonth])
+            ->sum('amount') ?? 0;
+
+        $changePercent = 0;
+        if ($lastMonthAmount > 0) {
+            $changePercent = round((($thisMonthAmount - $lastMonthAmount) / $lastMonthAmount) * 100, 1);
+        }
+
         $stats = [
-            'this_month' => DB::table('expenses')
-                ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$thisMonth])
-                ->sum('amount') ?? 0,
-            'last_month' => DB::table('expenses')
-                ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$lastMonth])
-                ->sum('amount') ?? 0,
+            'this_month' => $thisMonthAmount,
+            'last_month' => $lastMonthAmount,
+            'monthly_change' => $changePercent,
+            'total_records' => DB::table('expenses')->whereNull('deleted_at')->count(),
             'by_category' => DB::table('expenses')
                 ->selectRaw('category, COUNT(*) as count, SUM(amount) as total')
+                ->whereNull('deleted_at')
                 ->whereBetween('date', [$date_from, $date_to])
                 ->groupBy('category')
                 ->get(),
         ];
+
+        if ($request->wantsJson() || $request->input('format') === 'json') {
+            if ($request->route('id')) {
+                $expense = DB::table('expenses')->where('id', $request->route('id'))->first();
+                return response()->json($expense);
+            }
+            return response()->json(['expenses' => $expenses, 'stats' => $stats]);
+        }
 
         $pagination = [
             'page' => $page,
