@@ -167,42 +167,49 @@ class MaintenanceController extends Controller
         }
 
         // Use Eloquent to trigger TrackChanges trait
-        $maintenance = Maintenance::create($data);
+        return DB::transaction(function () use ($data, $parsed) {
+            $maintenance = Maintenance::create($data);
 
-        // Store individual parts for history
-        if (!empty($data['parts_data']) && is_array($parsed)) {
-            // Store Spare Parts
-            if (!empty($parsed['parts'])) {
-                foreach ($parsed['parts'] as $p) {
-                    DB::table('maintenance_parts')->insert([
-                        'maintenance_id' => $maintenance->id,
-                        'part_id' => $p['id'] ?? null,
-                        'part_name' => $p['name'] ?? 'Part',
-                        'quantity' => $p['qty'] ?? 1,
-                        'price' => $p['price'] ?? 0,
-                        'total' => ($p['price'] ?? 0) * ($p['qty'] ?? 1),
-                        'created_at' => now(), 'updated_at' => now()
-                    ]);
+            // Store individual parts for history
+            if (!empty($data['parts_data']) && is_array($parsed)) {
+                // Store Spare Parts
+                if (!empty($parsed['parts'])) {
+                    foreach ($parsed['parts'] as $p) {
+                        DB::table('maintenance_parts')->insert([
+                            'maintenance_id' => $maintenance->id,
+                            'part_id' => $p['id'] ?? null,
+                            'part_name' => $p['name'] ?? 'Part',
+                            'quantity' => $p['qty'] ?? 1,
+                            'price' => $p['price'] ?? 0,
+                            'total' => ($p['price'] ?? 0) * ($p['qty'] ?? 1),
+                            'created_at' => now(), 'updated_at' => now()
+                        ]);
+
+                        // DECREMENT STOCK
+                        if (!empty($p['id'])) {
+                            DB::table('spare_parts')->where('id', $p['id'])->decrement('stock_quantity', $p['qty'] ?? 1);
+                        }
+                    }
+                }
+                // Store Other Costs/Services
+                if (!empty($parsed['others'])) {
+                    foreach ($parsed['others'] as $o) {
+                        if (empty($o['name'])) continue;
+                        DB::table('maintenance_parts')->insert([
+                            'maintenance_id' => $maintenance->id,
+                            'part_id' => null,
+                            'part_name' => $o['name'],
+                            'quantity' => 1,
+                            'price' => $o['price'] ?? 0,
+                            'total' => $o['price'] ?? 0,
+                            'created_at' => now(), 'updated_at' => now()
+                        ]);
+                    }
                 }
             }
-            // Store Other Costs/Services
-            if (!empty($parsed['others'])) {
-                foreach ($parsed['others'] as $o) {
-                    if (empty($o['name'])) continue;
-                    DB::table('maintenance_parts')->insert([
-                        'maintenance_id' => $maintenance->id,
-                        'part_id' => null,
-                        'part_name' => $o['name'],
-                        'quantity' => 1,
-                        'price' => $o['price'] ?? 0,
-                        'total' => $o['price'] ?? 0,
-                        'created_at' => now(), 'updated_at' => now()
-                    ]);
-                }
-            }
-        }
 
-        return redirect()->route('maintenance.index')->with('success', 'Maintenance record added successfully');
+            return redirect()->route('maintenance.index')->with('success', 'Maintenance record added successfully');
+        });
     }
 
     public function update(Request $request, $id)
@@ -254,50 +261,65 @@ class MaintenanceController extends Controller
         }
 
         // Use Eloquent to trigger TrackChanges trait
-        $maintenance = Maintenance::findOrFail($id);
-        $maintenance->update($data);
+        return DB::transaction(function () use ($id, $data, $parsed) {
+            $maintenance = Maintenance::findOrFail($id);
+            $maintenance->update($data);
 
-        // Update unit status based on maintenance completion
-        if ($data['status'] === 'completed' && $data['date_completed']) {
-            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'active', 'updated_at' => now()]);
-        } else if (in_array($data['status'], ['pending', 'in_progress'])) {
-            DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'maintenance', 'updated_at' => now()]);
-        }
+            // Update unit status based on maintenance completion
+            if ($data['status'] === 'completed' && $data['date_completed']) {
+                DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'active', 'updated_at' => now()]);
+            } else if (in_array($data['status'], ['pending', 'in_progress'])) {
+                DB::table('units')->where('id', $data['unit_id'])->update(['status' => 'maintenance', 'updated_at' => now()]);
+            }
 
-        // Update individual parts history
-        if (!empty($data['parts_data']) && is_array($parsed)) {
-            DB::table('maintenance_parts')->where('maintenance_id', $id)->delete();
-            
-            if (!empty($parsed['parts'])) {
-                foreach ($parsed['parts'] as $p) {
-                    DB::table('maintenance_parts')->insert([
-                        'maintenance_id' => $maintenance->id,
-                        'part_id' => $p['id'] ?? null,
-                        'part_name' => $p['name'] ?? 'Part',
-                        'quantity' => $p['qty'] ?? 1,
-                        'price' => $p['price'] ?? 0,
-                        'total' => ($p['price'] ?? 0) * ($p['qty'] ?? 1),
-                        'created_at' => now(), 'updated_at' => now()
-                    ]);
+            // Update individual parts history
+            if (!empty($data['parts_data']) && is_array($parsed)) {
+                // RETURN OLD STOCK FIRST
+                $oldParts = DB::table('maintenance_parts')->where('maintenance_id', $id)->get();
+                foreach ($oldParts as $old) {
+                    if ($old->part_id) {
+                        DB::table('spare_parts')->where('id', $old->part_id)->increment('stock_quantity', $old->quantity);
+                    }
+                }
+
+                DB::table('maintenance_parts')->where('maintenance_id', $id)->delete();
+                
+                if (!empty($parsed['parts'])) {
+                    foreach ($parsed['parts'] as $p) {
+                        DB::table('maintenance_parts')->insert([
+                            'maintenance_id' => $maintenance->id,
+                            'part_id' => $p['id'] ?? null,
+                            'part_name' => $p['name'] ?? 'Part',
+                            'quantity' => $p['qty'] ?? 1,
+                            'price' => $p['price'] ?? 0,
+                            'total' => ($p['price'] ?? 0) * ($p['qty'] ?? 1),
+                            'created_at' => now(), 'updated_at' => now()
+                        ]);
+
+                        // DECREMENT NEW STOCK
+                        if (!empty($p['id'])) {
+                            DB::table('spare_parts')->where('id', $p['id'])->decrement('stock_quantity', $p['qty'] ?? 1);
+                        }
+                    }
+                }
+                if (!empty($parsed['others'])) {
+                    foreach ($parsed['others'] as $o) {
+                        if (empty($o['name'])) continue;
+                        DB::table('maintenance_parts')->insert([
+                            'maintenance_id' => $maintenance->id,
+                            'part_id' => null,
+                            'part_name' => $o['name'],
+                            'quantity' => 1,
+                            'price' => $o['price'] ?? 0,
+                            'total' => $o['price'] ?? 0,
+                            'created_at' => now(), 'updated_at' => now()
+                        ]);
+                    }
                 }
             }
-            if (!empty($parsed['others'])) {
-                foreach ($parsed['others'] as $o) {
-                    if (empty($o['name'])) continue;
-                    DB::table('maintenance_parts')->insert([
-                        'maintenance_id' => $maintenance->id,
-                        'part_id' => null,
-                        'part_name' => $o['name'],
-                        'quantity' => 1,
-                        'price' => $o['price'] ?? 0,
-                        'total' => $o['price'] ?? 0,
-                        'created_at' => now(), 'updated_at' => now()
-                    ]);
-                }
-            }
-        }
 
-        return redirect()->route('maintenance.index')->with('success', 'Maintenance record updated successfully');
+            return redirect()->route('maintenance.index')->with('success', 'Maintenance record updated successfully');
+        });
     }
 
     public function getParts($id) 
@@ -311,9 +333,20 @@ class MaintenanceController extends Controller
 
     public function destroy($id)
     {
-        $maintenance = Maintenance::findOrFail($id);
-        $maintenance->delete();
-        return redirect()->route('maintenance.index')->with('success', 'Maintenance record archived.');
+        return DB::transaction(function () use ($id) {
+            $maintenance = Maintenance::findOrFail($id);
+            
+            // Return stock back to inventory
+            $parts = DB::table('maintenance_parts')->where('maintenance_id', $id)->get();
+            foreach ($parts as $p) {
+                if ($p->part_id) {
+                    DB::table('spare_parts')->where('id', $p->part_id)->increment('stock_quantity', $p->quantity);
+                }
+            }
+
+            $maintenance->delete();
+            return redirect()->route('maintenance.index')->with('success', 'Maintenance record archived and stock returned.');
+        });
     }
 
     public function toggleComplete($id)
