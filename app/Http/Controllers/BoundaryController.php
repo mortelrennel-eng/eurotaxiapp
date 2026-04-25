@@ -220,6 +220,7 @@ class BoundaryController extends Controller
             $needs_maintenance_half = $request->has('needs_maintenance_half');
             $needs_maintenance_zero = $request->has('needs_maintenance_zero');
             $needs_maintenance = $needs_maintenance_half || $needs_maintenance_zero;
+            $now               = now();
             
             // Allow $boundary_amount to be 0 ONLY if $needs_maintenance_zero is true
                     $is_valid_amount = $needs_maintenance_zero ? ($boundary_amount >= 0) : ($boundary_amount > 0);
@@ -263,8 +264,6 @@ class BoundaryController extends Controller
                     $is_absent = false; // "Absent / No Show" logic removed per user request
 
                     if ($unit) {
-                        $now = now();
-                        
                         // Shifting Deadline Check: Legacy auto-voiding for late returns removed per user request. 
                         // Incentives now only focus on the 10:00 AM Cut-off (Late Boundary).
                         $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : Carbon::parse($date)->hour(10);
