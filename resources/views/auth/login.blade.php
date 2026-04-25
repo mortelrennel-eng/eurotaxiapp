@@ -16,6 +16,7 @@
     <link rel="icon" type="image/png" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
     <link rel="apple-touch-icon" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -669,7 +670,23 @@
                 <div class="logo-bounce" style="margin-bottom:1rem;">
                     <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:380px;max-width:100%;filter:drop-shadow(0 0 40px rgba(59,130,246,0.55));object-fit:contain;">
                 </div>
-                <p style="color:#bfdbfe;font-size:0.95rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 2.5rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
+                <p style="color:#bfdbfe;font-size:0.95rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 1.5rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
+                
+                <!-- Drivers Lottie Animation -->
+                <div style="display: flex; flex-direction: column; align-items: center; margin-top: 1rem; animation: logoBounce 2s ease-out;">
+                    <lottie-player 
+                        src="{{ asset('animations/drivers.json') }}" 
+                        background="transparent" 
+                        speed="1" 
+                        style="width: 170px; height: 170px; filter: drop-shadow(0 4px 15px rgba(59,130,246,0.3));"
+                        loop 
+                        autoplay>
+                    </lottie-player>
+                    <div style="text-align: center; margin-top: -15px;">
+                        <p style="color:#fff;font-weight:800;font-size:2.2rem;margin:0;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{{ $driversCount ?? '0' }}</p>
+                        <p style="color:#93c5fd;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin:0; margin-top: 5px;">Partner Drivers</p>
+                    </div>
+                </div>
             </div>
 
 
