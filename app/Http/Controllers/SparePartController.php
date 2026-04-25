@@ -119,7 +119,19 @@ class SparePartController extends Controller
     }
 
     /**
-     * Delete a spare part
+     * Get archived spare parts (API)
+     */
+    public function archived()
+    {
+        $parts = SparePart::onlyTrashed()->orderBy('name')->get();
+        return response()->json([
+            'success' => true,
+            'data' => $parts
+        ]);
+    }
+
+    /**
+     * Delete a spare part (Soft Delete)
      */
     public function destroy($id)
     {
@@ -128,7 +140,35 @@ class SparePartController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Part deleted successfully'
+            'message' => 'Part moved to archive successfully'
+        ]);
+    }
+
+    /**
+     * Restore a deleted spare part
+     */
+    public function restore($id)
+    {
+        $part = SparePart::withTrashed()->findOrFail($id);
+        $part->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Part restored from archive successfully'
+        ]);
+    }
+
+    /**
+     * Permanently delete a spare part
+     */
+    public function forceDelete($id)
+    {
+        $part = SparePart::withTrashed()->findOrFail($id);
+        $part->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Part permanently removed'
         ]);
     }
 }

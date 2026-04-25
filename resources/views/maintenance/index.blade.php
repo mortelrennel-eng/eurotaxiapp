@@ -719,6 +719,9 @@
                     <button onclick="openSuppliersModal()" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
                         <i data-lucide="users" class="w-3 h-3"></i> Suppliers
                     </button>
+                    <button onclick="openPartsArchiveModal()" class="px-3 py-1.5 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
+                        <i data-lucide="archive" class="w-3 h-3"></i> Archives
+                    </button>
                     <button onclick="openPartMiniModal()" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
                         <i data-lucide="plus" class="w-3 h-3"></i> Add Part
                     </button>
@@ -876,7 +879,46 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         SPARE PARTS ARCHIVE MODAL
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="partsArchiveModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:80vh">
+            <div class="flex items-center justify-between px-6 py-4 border-b bg-yellow-50">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-yellow-100 flex items-center justify-center">
+                        <i data-lucide="archive" class="w-5 h-5 text-yellow-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Spare Parts Archive</h3>
+                        <p class="text-[11px] text-yellow-600 font-bold">Restore or permanently remove items</p>
+                    </div>
+                </div>
+                <button onclick="closePartsArchiveModal()" class="p-1.5 hover:bg-yellow-100 rounded-lg text-gray-400 hover:text-yellow-700 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-0">
+                <table class="min-w-full divide-y divide-gray-100">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Part Name</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Supplier</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="archivedPartsTableBody" class="divide-y divide-gray-50">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="px-6 py-4 border-t flex justify-end shadow-inner bg-gray-50">
+                <button onclick="closePartsArchiveModal()" class="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-black text-sm font-bold transition">Close Archive</button>
+            </div>
+        </div>
+    </div>
     <!-- Purchase History Modal -->
     <div id="purchaseHistoryModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 max-h-[85vh] flex flex-col">
@@ -1302,6 +1344,85 @@ function closePartsModal() {
 }
 
 // Mini-Modal Controls
+function openPartsArchiveModal() {
+    document.getElementById('partsArchiveModal').classList.remove('hidden');
+    refreshArchivedParts();
+}
+
+function closePartsArchiveModal() {
+    document.getElementById('partsArchiveModal').classList.add('hidden');
+}
+
+async function refreshArchivedParts() {
+    try {
+        const res = await fetch("{{ route('spare-parts.archived') }}");
+        const result = await res.json();
+        if (result.success) {
+            const tbody = document.getElementById('archivedPartsTableBody');
+            if (result.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-12 text-center text-gray-400 italic text-xs">No archived parts found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = result.data.map(p => `
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-3 text-sm font-medium text-gray-600">${p.name}</td>
+                    <td class="px-6 py-3 text-[10px] font-bold text-gray-400 uppercase">${p.supplier || 'Unspecified'}</td>
+                    <td class="px-6 py-3 text-right flex justify-end gap-2">
+                        <button onclick="restorePart(${p.id})" title="Restore Item" class="p-2 text-green-500 hover:bg-green-50 rounded-lg transition">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="forceDeletePart(${p.id})" title="Delete Permanently" class="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function restorePart(id) {
+    try {
+        const res = await fetch(`{{ url('spare-parts/restore') }}/${id}`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        });
+        const result = await res.json();
+        if (result.success) {
+            showModalToast(result.message, 'success');
+            
+            // Reload active catalog data
+            try {
+                const res2 = await fetch("{{ route('spare-parts.index') }}");
+                const result2 = await res2.json();
+                if (result2.success) {
+                    partsCatalog = result2.data;
+                    refreshPartsTable();
+                    refreshPartDropdowns();
+                }
+            } catch(e) { console.error(e); }
+            
+            refreshArchivedParts();
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function forceDeletePart(id) {
+    if (!confirm('🛑 WARNING: This will permanently delete the part record. This action cannot be undone. Proceed?')) return;
+    try {
+        const res = await fetch(`{{ url('spare-parts/permanent') }}/${id}`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        });
+        const result = await res.json();
+        if (result.success) {
+            showModalToast(result.message, 'success');
+            refreshArchivedParts();
+        }
+    } catch(e) { console.error(e); }
+}
+
 function openPartMiniModal(isEdit = false) {
     const modal = document.getElementById('partMiniModal');
     modal.classList.remove('hidden');
