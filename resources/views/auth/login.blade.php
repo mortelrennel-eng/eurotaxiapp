@@ -652,7 +652,7 @@
     <div id="messageToast" class="message-toast"></div>
 
     <!-- Full Screen Layout -->
-    <div class="split-container" style="position:relative;min-height:100vh;width:100vw;display:flex;overflow-x:hidden;">
+    <div class="split-container" style="position:relative;height:100vh;width:100vw;display:flex;overflow:hidden;">
 
         <!-- Full Screen Background Image -->
         <img src="{{ asset('uploads/1000053201.jpg') }}" alt="Eurotaxisystem" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
@@ -661,7 +661,7 @@
         <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(105deg,rgba(8,12,35,0.88) 0%,rgba(12,20,55,0.85) 45%,rgba(20,40,100,0.65) 70%,rgba(30,58,138,0.45) 100%);"></div>
 
         <!-- LEFT HALF: Large Branding -->
-        <div class="branding-side" style="position:relative;z-index:10;width:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;min-height:100vh;">
+        <div class="branding-side" style="position:relative;z-index:10;width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;">
             <!-- Logo -->
             <div class="logo-bounce" style="margin-bottom:1.5rem;">
                 <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:220px;max-width:100%;filter:drop-shadow(0 0 30px rgba(59,130,246,0.55));object-fit:contain;">
@@ -693,7 +693,7 @@
         </div>
 
         <!-- RIGHT HALF: Login Card -->
-        <div class="auth-side" style="position:relative;z-index:10;width:50%;display:flex;align-items:center;justify-content:center;padding:2rem;min-height:100vh;">
+        <div class="auth-side" style="position:relative;z-index:10;width:50%;height:100%;display:flex;align-items:center;justify-content:center;padding:2rem;">
             <div class="flip-container" style="width:100%;max-width:430px;perspective:1500px;">
                 <div class="flipper state-login" id="flipper" style="position:relative;width:100%;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(0.4,0,0.2,1);">
 
