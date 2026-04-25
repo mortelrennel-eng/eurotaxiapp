@@ -104,10 +104,7 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nickname (Optional)</label>
-                    <input type="text" name="nickname" id="driverNickname" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
-                </div>
+
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -303,7 +300,7 @@ function openAddDriverModal() {
     document.getElementById('editDriverId').value = '';
     document.getElementById('driverFirstName').value = '';
     document.getElementById('driverLastName').value = '';
-    document.getElementById('driverNickname').value = '';
+
     document.getElementById('driverContact').value = '';
     document.getElementById('driverLicense').value = '';
     document.getElementById('driverLicenseExpiry').value = '';
@@ -344,7 +341,7 @@ function openEditDriverModal(id) {
         document.getElementById('editDriverId').value = id;
         document.getElementById('driverFirstName').value = data.first_name || '';
         document.getElementById('driverLastName').value = data.last_name || '';
-        document.getElementById('driverNickname').value = data.nickname || '';
+
         document.getElementById('driverContact').value = data.contact_number || '';
         document.getElementById('driverLicense').value = data.license_number || '';
         document.getElementById('driverLicenseExpiry').value = data.license_expiry || '';
@@ -461,7 +458,7 @@ function openDriverDetails(id) {
             <div>
                 <p><span class="font-semibold">First Name:</span> ${data.first_name || ''}</p>
                 <p><span class="font-semibold">Last Name:</span> ${data.last_name || ''}</p>
-                <p><span class="font-semibold">Nickname:</span> ${data.nickname || 'N/A'}</p>
+
                 <p><span class="font-semibold">Contact:</span> ${data.contact_number || 'N/A'}</p>
                 <p><span class="font-semibold">Address:</span> ${data.address || 'N/A'}</p>
                 <p><span class="font-semibold">Emergency Contact:</span> ${data.emergency_contact || 'N/A'}</p>
@@ -510,7 +507,7 @@ function openDriverDetails(id) {
         document.getElementById('editDriverId').value = '';
         document.getElementById('driverFirstName').value = '';
         document.getElementById('driverLastName').value = '';
-        document.getElementById('driverNickname').value = '';
+
         document.getElementById('driverContact').value = '';
         document.getElementById('driverLicense').value = '';
         document.getElementById('driverLicenseExpiry').value = '';
@@ -548,7 +545,7 @@ function openDriverDetails(id) {
             document.getElementById('editDriverId').value = id;
             document.getElementById('driverFirstName').value = data.first_name || '';
             document.getElementById('driverLastName').value = data.last_name || '';
-            document.getElementById('driverNickname').value = data.nickname || '';
+
             document.getElementById('driverContact').value = data.contact_number || '';
             document.getElementById('driverLicense').value = data.license_number || '';
             document.getElementById('driverLicenseExpiry').value = data.license_expiry || '';
@@ -640,7 +637,7 @@ function openDriverDetails(id) {
                 <div>
                     <p><span class="font-semibold text-gray-500">First Name:</span> ${data.first_name || ''}</p>
                     <p><span class="font-semibold text-gray-500">Last Name:</span> ${data.last_name || ''}</p>
-                    <p><span class="font-semibold text-gray-500">Nickname:</span> ${data.nickname || 'N/A'}</p>
+
                     <p><span class="font-semibold text-gray-500">Contact:</span> ${data.contact_number || 'N/A'}</p>
                     <p><span class="font-semibold text-gray-500">Address:</span> ${data.address || 'N/A'}</p>
                     <p><span class="font-semibold text-gray-500">Emergency Contact:</span> ${data.emergency_contact || 'N/A'}</p>

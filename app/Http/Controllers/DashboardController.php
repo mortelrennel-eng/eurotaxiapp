@@ -136,6 +136,40 @@ class DashboardController extends Controller
                         'updated_at' => now()
                     ]);
             }
+
+            // --- AUTO-FLAGDOWN LOGIC (48 Hours) ---
+            // If unit is missing for 48 hours or more, automatically log a violation to the suspect driver
+            if ($diffHours >= 48) {
+                $suspectId = DB::table('units')->where('id', $unit->id)->value('current_turn_driver_id');
+                
+                if ($suspectId) {
+                    $deadline = Carbon::parse($unit->shift_deadline_at);
+                    
+                    // Check if already logged for this specific missing streak (based on incident_date)
+                    $existingViolation = DB::table('driver_behavior')
+                        ->where('driver_id', $suspectId)
+                        ->where('unit_id', $unit->id)
+                        ->where('incident_type', 'missing_unit_overdue')
+                        ->where('incident_date', $deadline->toDateString())
+                        ->exists();
+
+                    if (!$existingViolation) {
+                        DB::table('driver_behavior')->insert([
+                            'unit_id'       => $unit->id,
+                            'driver_id'     => $suspectId,
+                            'incident_type' => 'missing_unit_overdue',
+                            'severity'      => 'high',
+                            'description'   => "Auto-logged [Flagdown]: Unit {$unit->plate_number} is overdue for >48 hours (Missing since {$deadline->format('M d, Y')}). Investigation required.",
+                            'latitude'      => 0,
+                            'longitude'     => 0,
+                            'video_url'     => '',
+                            'timestamp'     => now(),
+                            'incident_date' => $deadline->toDateString(),
+                            'created_at'    => now(),
+                        ]);
+                    }
+                }
+            }
         }
 
         // Units under maintenance

@@ -452,8 +452,8 @@
                         <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-orange-50 transition-colors group">
                             <input type="checkbox" name="past_cutoff" id="past_cutoff" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-orange-700 leading-none mb-0.5 transition-colors">Past 10:00 AM Cut-off (Late / No Incentive)</span>
-                                <span class="text-[10px] text-orange-600 leading-tight">Remittance recorded past the 10:00 AM deadline. Voids driver incentive.</span>
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-orange-700 leading-none mb-0.5 transition-colors">Late Remittance Enforcement (Past Cut-off)</span>
+                                <span class="text-[10px] text-orange-600 leading-tight">Boundary submitted after the 10:00 AM deadline. Automatically disqualifies driver from daily incentives.</span>
                             </div>
                         </label>
 
@@ -462,8 +462,8 @@
                         <label class="hidden items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
                             <input type="checkbox" name="is_absent" id="is_absent" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Absent / No Show</span>
-                                <span class="text-[10px] text-red-600 leading-tight">Pilot did not show up or check in for the shift. Voids incentive & logs violation.</span>
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Absenteeism Validation (No Show)</span>
+                                <span class="text-[10px] text-red-600 leading-tight">Driver failed to report for the assigned shift. Voids incentive and initiates a formal attendance violation.</span>
                             </div>
                         </label>
 
@@ -472,16 +472,16 @@
                         <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
                             <input type="checkbox" name="needs_maintenance_half" id="needsMaintenanceHalfCheck" value="1" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 needs-maintenance-opt">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down During Shift (Prorated Hourly)</span>
-                                <span class="text-[10px] text-gray-500 leading-tight">Accurate computation based on actual hours driven since handover.</span>
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Operational Breakdown (Prorated Adjustment)</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Mechanical failure during transit. Applies a prorated boundary calculation based on verified operational hours.</span>
                             </div>
                         </label>
 
                         <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
                             <input type="checkbox" name="needs_maintenance_zero" id="needsMaintenanceZeroCheck" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 needs-maintenance-opt">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Broke Down Immediately (<= 2 hrs)</span>
-                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle broke down within 2 hours of deployment. Sets target boundary to 0 (Free).</span>
+                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Early Shift Maintenance Failure (Free Boundary)</span>
+                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle failure within 2 hours of deployment. Sets the target boundary to zero (Waived) for this shift.</span>
                             </div>
                         </label>
 
@@ -490,18 +490,18 @@
                         <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
                             <input type="checkbox" name="vehicle_damaged" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Vehicle Damaged (No Incentive)</span>
-                                <span class="text-[10px] text-red-500 leading-tight">Automatic violation: Voids driver incentive due to vehicle damage.</span>
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Physical Asset Damage (Violation)</span>
+                                <span class="text-[10px] text-red-500 leading-tight">Physical damage identified during vehicle turnover. Voids incentives and initiates a formal damage report.</span>
                             </div>
                         </label>
 
                         <div class="h-px bg-gray-100 my-1 mx-2"></div>
 
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-orange-50 transition-colors group">
-                            <input type="checkbox" name="low_fuel" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
+                            <input type="checkbox" name="low_fuel" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-orange-700 leading-none mb-0.5 transition-colors">Low Fuel (No Incentive)</span>
-                                <span class="text-[10px] text-orange-600 leading-tight">Driver returned the unit without refueling (Kulang sa gas). Voids incentive.</span>
+                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Fuel Replenishment Failure (Violation)</span>
+                                <span class="text-[10px] text-red-500 leading-tight">Unit returned with insufficient fuel levels. Voids incentives and logs a formal fuel violation record.</span>
                             </div>
                         </label>
 
@@ -1617,36 +1617,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Handle Needs Maintenance logic dynamically (Half vs Zero)
-    const needsMaintenanceHalfCheck = document.getElementById('needsMaintenanceHalfCheck');
-    const needsMaintenanceZeroCheck = document.getElementById('needsMaintenanceZeroCheck');
-    
-    function applyMaintenanceLogic(triggerElem) {
-        if (!amtInput || !amtInput.dataset.originalTarget) return;
-        
-        // Ensure mutual exclusivity
-        if (triggerElem === needsMaintenanceHalfCheck && needsMaintenanceHalfCheck.checked) {
-            if(needsMaintenanceZeroCheck) needsMaintenanceZeroCheck.checked = false;
-        } else if (triggerElem === needsMaintenanceZeroCheck && needsMaintenanceZeroCheck.checked) {
-            if(needsMaintenanceHalfCheck) needsMaintenanceHalfCheck.checked = false;
-        }
-
-        if (!needsMaintenanceHalfCheck.checked && !needsMaintenanceZeroCheck.checked) {
-            // Revert to original
-            let original = parseFloat(amtInput.dataset.originalTarget);
-            amtInput.value = original.toFixed(2);
-            document.getElementById('actualBoundary').value = original.toFixed(2);
-            document.getElementById('breakdownComputationDraft').classList.add('hidden');
-        } else {
+    // Mutually exclusive maintenance options
+    const maintenanceOptions = document.querySelectorAll('.needs-maintenance-opt');
+    maintenanceOptions.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                maintenanceOptions.forEach(opt => {
+                    if (opt !== this) opt.checked = false;
+                });
+            }
             updateBreakdownComputation();
-        }
-    }
-
-    if (needsMaintenanceHalfCheck) {
-        needsMaintenanceHalfCheck.addEventListener('change', function() { applyMaintenanceLogic(this); });
-    }
-    if (needsMaintenanceZeroCheck) {
-        needsMaintenanceZeroCheck.addEventListener('change', function() { applyMaintenanceLogic(this); });
-    }
+        });
+    });
 });
 </script>
 @endpush
