@@ -76,7 +76,7 @@ class MaintenanceController extends Controller
 
         // Stock Purchase History from Expenses
         $purchaseHistory = DB::table('expenses')
-            ->where('category', 'Maintenance Supplies')
+            ->where('category', 'maintenance')
             ->whereNull('deleted_at')
             ->orderByDesc('date')
             ->orderByDesc('created_at')

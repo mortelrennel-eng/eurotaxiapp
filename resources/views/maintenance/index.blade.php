@@ -721,8 +721,9 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <input type="hidden" id="newPartId">
+                <input type="hidden" id="newPartCurrentStock" value="0">
                 <div class="md:col-span-2">
                     <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Part Name</label>
                     <input type="text" id="newPartName" placeholder="e.g., Oil Filter" 
@@ -730,13 +731,17 @@
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Price (₱)</label>
-                    <input type="number" id="newPartPrice" placeholder="0.00" 
+                    <input type="number" id="newPartPrice" placeholder="0.00" min="0"
                         class="w-full px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Quantity</label>
-                    <input type="number" id="newPartQty" placeholder="Qty" 
+                    <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">
+                        Add Qty&nbsp;<span id="lblCurrentStock" class="hidden text-gray-400 font-normal normal-case">(stock: <span id="spanCurrentStock">0</span>)</span>
+                    </label>
+                    <input type="number" id="newPartQty" placeholder="Units to add" min="1"
+                        oninput="validateAddQty(this)"
                         class="w-full px-4 py-2 border border-blue-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <p id="qtyError" class="hidden text-[10px] text-red-600 font-bold mt-1 ml-1 flex items-center gap-1">⚠️ Only adding stock is allowed. Enter a value ≥ 1.</p>
                 </div>
                 <div class="md:col-span-3">
                     <label class="block text-[10px] font-bold text-blue-400 uppercase mb-1 ml-1">Supplier</label>
@@ -756,6 +761,9 @@
                     </button>
                 </div>
             </div>
+
+            {{-- Inline modal toast (appears above the parts table) --}}
+            <div id="partsModalToast" class="hidden mb-3 p-3 rounded-xl border flex items-center gap-3 text-sm font-bold shadow-sm"></div>
 
             <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 <table class="min-w-full divide-y divide-gray-100">
@@ -830,7 +838,7 @@
                             <th class="px-4 py-2 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+                    <tbody id="purchaseHistoryTableBody" class="divide-y divide-gray-50">
                         @forelse($purchaseHistory as $ph)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-4 py-4 whitespace-nowrap">
@@ -1229,11 +1237,18 @@ async function saveNewPart() {
     const id = document.getElementById('newPartId').value;
     const name = document.getElementById('newPartName').value;
     const price = document.getElementById('newPartPrice').value;
-    const stock_quantity = document.getElementById('newPartQty').value;
+    const qty_to_add = parseInt(document.getElementById('newPartQty').value) || 0;
     const supplier = document.getElementById('newPartSupplier').value;
 
     if(!name || !price) {
-        alert('Part Name and Price are required.');
+        showModalToast('Part Name and Price are required.', 'error');
+        return;
+    }
+
+    // For editing: qty must be > 0 (adding only)
+    if (id && qty_to_add <= 0) {
+        document.getElementById('qtyError').classList.remove('hidden');
+        document.getElementById('newPartQty').classList.add('border-red-400', 'ring-red-300');
         return;
     }
 
@@ -1241,7 +1256,7 @@ async function saveNewPart() {
         const res = await fetch("{{ route('spare-parts.store') }}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ id, name, price, stock_quantity, supplier })
+            body: JSON.stringify({ id, name, price, qty_to_add, supplier })
         });
         const result = await res.json();
         if(result.success) {
@@ -1253,19 +1268,32 @@ async function saveNewPart() {
             }
             refreshPartsTable();
             refreshPartDropdowns();
+            refreshPurchaseHistory();
+            showModalToast(result.message, 'success');
             resetPartForm();
+        } else {
+            showModalToast(result.message || 'Something went wrong.', 'error');
         }
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error(e); showModalToast('Server error. Please try again.', 'error'); }
 }
 
 function editCatalogPart(id, name, price, qty, supplier) {
     document.getElementById('newPartId').value = id;
+    document.getElementById('newPartCurrentStock').value = qty;
     document.getElementById('newPartName').value = name;
     document.getElementById('newPartPrice').value = price;
-    document.getElementById('newPartQty').value = qty;
+    document.getElementById('newPartQty').value = '';  // Always start with empty — user types qty to ADD
     document.getElementById('newPartSupplier').value = supplier || '';
+
+    // Show current stock in label
+    document.getElementById('spanCurrentStock').textContent = qty;
+    document.getElementById('lblCurrentStock').classList.remove('hidden');
+
+    // Clear any previous error state
+    document.getElementById('qtyError').classList.add('hidden');
+    document.getElementById('newPartQty').classList.remove('border-red-400', 'ring-red-300');
     
-    document.getElementById('txtSavePart').innerText = 'Update Part';
+    document.getElementById('txtSavePart').innerText = 'Add Stock';
     const btn = document.getElementById('btnSavePart');
     btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
     btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
@@ -1277,16 +1305,32 @@ function editCatalogPart(id, name, price, qty, supplier) {
 
 function resetPartForm() {
     document.getElementById('newPartId').value = '';
+    document.getElementById('newPartCurrentStock').value = '0';
     document.getElementById('newPartName').value = '';
     document.getElementById('newPartPrice').value = '';
     document.getElementById('newPartQty').value = '';
     document.getElementById('newPartSupplier').value = '';
+    document.getElementById('lblCurrentStock').classList.add('hidden');
+    document.getElementById('qtyError').classList.add('hidden');
+    document.getElementById('newPartQty').classList.remove('border-red-400', 'ring-red-300');
     
     document.getElementById('txtSavePart').innerText = 'Add to Catalog';
     const btn = document.getElementById('btnSavePart');
     btn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
     btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
     document.getElementById('btnResetPart').classList.add('hidden');
+}
+
+function validateAddQty(input) {
+    const val = parseInt(input.value);
+    const errEl = document.getElementById('qtyError');
+    if (input.value !== '' && (isNaN(val) || val < 1)) {
+        errEl.classList.remove('hidden');
+        input.classList.add('border-red-400', 'ring-1', 'ring-red-300');
+    } else {
+        errEl.classList.add('hidden');
+        input.classList.remove('border-red-400', 'ring-1', 'ring-red-300');
+    }
 }
 
 async function deletePart(id, btn) {
@@ -1389,6 +1433,8 @@ async function saveQuickPart() {
             }
             refreshPartDropdowns();
             refreshPartsTable();
+            refreshPurchaseHistory();
+            showToast(result.message, 'success');
             closeQuickAddPart();
         }
     } catch(e) { console.error(e); }
@@ -1867,12 +1913,95 @@ function refreshSupplierDropdowns() {
 }
 
 function openPurchaseHistoryModal() {
+    refreshPurchaseHistory();
     document.getElementById('purchaseHistoryModal').classList.remove('hidden');
-    lucide.createIcons();
 }
 
 function closePurchaseHistoryModal() {
     document.getElementById('purchaseHistoryModal').classList.add('hidden');
+}
+
+async function refreshPurchaseHistory() {
+    try {
+        const res = await fetch("{{ route('spare-parts.history') }}");
+        const json = await res.json();
+        if (json.success) {
+            const tbody = document.getElementById('purchaseHistoryTableBody');
+            if (json.data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-4 py-12 text-center text-gray-400"><p class="text-sm">No purchase records found.</p></td></tr>';
+                return;
+            }
+            tbody.innerHTML = json.data.map(ph => {
+                const date = new Date(ph.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                const time = new Date(ph.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                return `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <div class="text-xs font-bold text-gray-600">${date}</div>
+                            <div class="text-[9px] text-gray-400">${time}</div>
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="text-sm font-black text-gray-800 tracking-tight">${ph.description}</div>
+                            <div class="text-[10px] text-blue-500 font-bold uppercase">Maintenance Supplies</div>
+                        </td>
+                        <td class="px-4 py-4 text-right">
+                            <div class="text-sm font-black text-green-600">₱${parseFloat(ph.amount).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    } catch (e) { console.error(e); }
+}
+
+// Modal inline toast — shows INSIDE the Spare Parts Catalog modal, above the table
+function showModalToast(message, type = 'success') {
+    const toast = document.getElementById('partsModalToast');
+    if (!toast) return;
+
+    const isSuccess = type === 'success';
+    toast.className = `mb-3 p-3 rounded-xl border flex items-center gap-3 text-sm font-bold shadow-sm transition-all duration-300 ${
+        isSuccess ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+    }`;
+    toast.innerHTML = `
+        <i data-lucide="${isSuccess ? 'check-circle' : 'alert-circle'}" class="w-5 h-5 flex-shrink-0"></i>
+        <span class="flex-1">${message}</span>
+        <button onclick="document.getElementById('partsModalToast').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    `;
+    toast.classList.remove('hidden');
+    lucide.createIcons();
+
+    // Auto-hide after 5 seconds
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 5000);
+}
+
+// Global Toast (for non-modal areas)
+function showToast(message, type = 'success') {
+    const container = document.querySelector('main .overflow-y-auto.p-4');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `alert-slide mb-4 p-4 rounded-lg border flex items-center gap-3 shadow-md transform transition-all duration-300 ${
+        type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
+    }`;
+    toast.innerHTML = `
+        <i data-lucide="${type === 'success' ? 'check-circle' : 'x-circle'}" class="w-5 h-5 flex-shrink-0"></i>
+        <div class="flex-1 font-bold text-sm tracking-tight">${message}</div>
+        <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    `;
+    container.prepend(toast);
+    lucide.createIcons();
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
 </script>
 @endpush

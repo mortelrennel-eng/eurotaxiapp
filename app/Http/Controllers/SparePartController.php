@@ -21,50 +21,100 @@ class SparePartController extends Controller
     }
 
     /**
+     * Get purchase history (API)
+     */
+    public function history()
+    {
+        $history = DB::table('expenses')
+            ->where('category', 'maintenance')
+            ->whereNull('deleted_at')
+            ->orderByDesc('date')
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $history
+        ]);
+    }
+
+    /**
      * Store or Update a spare part
+     * qty_to_add = units being purchased/restocked (always additive)
      */
     public function store(Request $request)
     {
         $data = $request->validate([
-            'id' => 'nullable|integer|exists:spare_parts,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'supplier' => 'nullable|string|max:255',
+            'id'         => 'nullable|integer|exists:spare_parts,id',
+            'name'       => 'required|string|max:255',
+            'price'      => 'required|numeric|min:0',
+            'qty_to_add' => 'nullable|integer|min:0',
+            'supplier'   => 'nullable|string|max:255',
         ]);
 
-        $quantityAdded = 0;
-        if (isset($data['id'])) {
-            $part = \App\Models\SparePart::find($data['id']);
-            $oldStock = (int)($part->stock_quantity ?? 0);
-            $newStock = (int)($data['stock_quantity'] ?? 0);
-            if ($newStock > $oldStock) {
-                $quantityAdded = $newStock - $oldStock;
-            }
-            $part->update($data);
-        } else {
-            $part = \App\Models\SparePart::create($data);
-            $quantityAdded = (int)($data['stock_quantity'] ?? 0);
-        }
+        $qtyToAdd = (int)($data['qty_to_add'] ?? 0);
 
-        // Auto-record as Office Expense if stock was added
-        if ($quantityAdded > 0) {
-            $totalCost = $quantityAdded * (float)$data['price'];
-            \App\Models\Expense::create([
-                'category' => 'Maintenance Supplies',
-                'description' => "PURCHASED: {$quantityAdded} pcs of {$data['name']} from " . ($data['supplier'] ?? 'Unspecified Supplier'),
-                'amount' => $totalCost,
-                'date' => now()->toDateString(),
-                'status' => 'approved',
-                'recorded_by' => auth()->id(),
-                'notes' => 'Auto-generated from Inventory Management update.'
+        if (isset($data['id'])) {
+            // ── UPDATE existing part ──────────────────────────────────────
+            $part = SparePart::findOrFail($data['id']);
+
+            // Enforce add-only: never let qty decrease via this form
+            if ($qtyToAdd < 0) {
+                return response()->json(['success' => false, 'message' => 'Cannot reduce stock from here.'], 422);
+            }
+
+            $newStock = (int)($part->stock_quantity ?? 0) + $qtyToAdd;
+
+            $part->update([
+                'name'           => $data['name'],
+                'price'          => $data['price'],
+                'stock_quantity' => $newStock,
+                'supplier'       => $data['supplier'] ?? $part->supplier,
+            ]);
+        } else {
+            // ── CREATE new part ───────────────────────────────────────────
+            $part = SparePart::create([
+                'name'           => $data['name'],
+                'price'          => $data['price'],
+                'stock_quantity' => $qtyToAdd,
+                'supplier'       => $data['supplier'] ?? null,
             ]);
         }
 
+        // ── Auto-record as Office Expense if stock was added ──────────
+        $expenseId = null;
+        if ($qtyToAdd > 0) {
+            $totalCost = $qtyToAdd * (float)$data['price'];
+            $userId    = auth()->id() ?? (\App\Models\User::first()->id ?? 18);
+
+            try {
+                $expenseId = DB::table('expenses')->insertGetId([
+                    'category'         => 'maintenance',
+                    'expense_category' => 'maintenance',
+                    'description'      => "PURCHASED: {$qtyToAdd} pcs of {$part->name} from " . ($part->supplier ?? 'Unspecified Supplier'),
+                    'amount'           => $totalCost,
+                    'date'             => now()->toDateString(),
+                    'status'           => 'approved',
+                    'recorded_by'      => $userId,
+                    'created_by'       => $userId,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Inventory Expense Record Failed: ' . $e->getMessage());
+            }
+        }
+
+        $msg = $expenseId
+            ? "✅ Stock added! +{$qtyToAdd} pcs of {$part->name} — Purchase recorded in Office Expenses."
+            : ($qtyToAdd === 0 ? "Part details updated successfully." : "Stock updated.");
+
         return response()->json([
-            'success' => true,
-            'message' => 'Part saved and expense recorded successfully',
-            'data' => $part
+            'success'          => true,
+            'message'          => $msg,
+            'expense_recorded' => $expenseId !== null,
+            'data'             => $part->fresh(),
         ]);
     }
 

@@ -170,6 +170,7 @@ Route::middleware('auth')->group(function () {
 
     // ─── Spare Parts Management ───────────────────────────
     Route::get('/spare-parts', [SparePartController::class, 'index'])->name('spare-parts.index');
+    Route::get('/spare-parts/history', [SparePartController::class, 'history'])->name('spare-parts.history');
     Route::post('/spare-parts', [SparePartController::class, 'store'])->name('spare-parts.store');
     Route::delete('/spare-parts/{id}', [SparePartController::class, 'destroy'])->name('spare-parts.destroy');
 
