@@ -38,7 +38,11 @@ class OfficeExpenseController extends Controller
         }
 
         $total = $query->count();
-        $expenses = $query->orderByDesc('e.date')->offset($offset)->limit($limit)->get();
+        $expenses = $query->orderByDesc('e.date')
+                          ->orderByDesc('e.created_at')
+                          ->offset($offset)
+                          ->limit($limit)
+                          ->get();
 
         $totals = DB::table('expenses')
             ->whereNull('deleted_at')
@@ -108,7 +112,10 @@ class OfficeExpenseController extends Controller
             ->orderBy('plate_number')
             ->get();
 
-        return view('office-expenses.index', compact('expenses', 'pagination', 'search', 'category', 'date_from', 'date_to', 'totals', 'categories', 'stats', 'units'));
+        $spareParts = \App\Models\SparePart::orderBy('name')->get();
+        $suppliers = DB::table('suppliers')->orderBy('name')->get();
+
+        return view('office-expenses.index', compact('expenses', 'pagination', 'search', 'category', 'date_from', 'date_to', 'totals', 'categories', 'stats', 'units', 'spareParts', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -116,22 +123,68 @@ class OfficeExpenseController extends Controller
         $request->validate([
             'category' => 'required|string',
             'description' => 'required|string',
+            'vendor_name' => 'nullable|string',
             'amount' => 'required|numeric',
+            'payment_method' => 'nullable|string',
             'date' => 'required|date',
             'reference_number' => 'nullable|string',
             'unit_id' => 'nullable|integer',
+            'spare_part_id' => 'nullable|string', // Changed to string to allow 'new'
+            'new_part_name' => 'nullable|string',
+            'update_master' => 'nullable|integer',
+            'quantity' => 'nullable|integer',
+            'unit_price' => 'nullable|numeric',
         ]);
 
-        // Use Eloquent to trigger TrackChanges trait
-        Expense::create([
+        $sparePartId = $request->spare_part_id;
+        $finalDescription = $request->description;
+
+        // If it's an existing part but user modified Price or Supplier
+        if (is_numeric($sparePartId) && $request->update_master == 1) {
+            $existingPart = \App\Models\SparePart::find($sparePartId);
+            if ($existingPart) {
+                $existingPart->update([
+                    'price' => $request->unit_price ?: $existingPart->price,
+                    'supplier' => $request->vendor_name ?: $existingPart->supplier
+                ]);
+            }
+        }
+
+        // If it's a new part, register it in inventory first
+        if ($sparePartId === 'new' && $request->new_part_name) {
+            $newPart = \App\Models\SparePart::create([
+                'name' => $request->new_part_name,
+                'price' => $request->unit_price ?: 0,
+                'stock_quantity' => 0, // Will be incremented below
+                'supplier' => $request->vendor_name ?: 'Unspecified Supplier'
+            ]);
+            $sparePartId = $newPart->id;
+            $finalDescription = "REGISTERED & PURCHASED: " . $request->new_part_name;
+        }
+
+        $expense = Expense::create([
             'category' => $request->category,
-            'description' => $request->description,
+            'description' => $finalDescription,
+            'vendor_name' => $request->vendor_name,
             'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
             'date' => $request->date,
             'reference_number' => $request->reference_number,
             'unit_id' => $request->unit_id ?: null,
+            'spare_part_id' => is_numeric($sparePartId) ? $sparePartId : null,
+            'quantity' => $request->quantity,
+            'unit_price' => $request->unit_price,
             'recorded_by' => auth()->id(),
+            'created_by' => auth()->id(),
         ]);
+
+        // If it's a spare parts purchase, increment stock
+        if ($request->category === 'Spare Parts Purchase' && $sparePartId && $request->quantity > 0) {
+            $part = \App\Models\SparePart::find($sparePartId);
+            if ($part) {
+                $part->increment('stock_quantity', $request->quantity);
+            }
+        }
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense added successfully');
     }
@@ -141,21 +194,25 @@ class OfficeExpenseController extends Controller
         $request->validate([
             'category' => 'required|string',
             'description' => 'required|string',
+            'vendor_name' => 'nullable|string',
             'amount' => 'required|numeric',
+            'payment_method' => 'nullable|string',
             'date' => 'required|date',
             'reference_number' => 'nullable|string',
             'unit_id' => 'nullable|integer',
         ]);
 
-        // Use Eloquent to trigger TrackChanges trait
         $expense = Expense::findOrFail($id);
         $expense->update([
             'category' => $request->category,
             'description' => $request->description,
+            'vendor_name' => $request->vendor_name,
             'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
             'date' => $request->date,
             'reference_number' => $request->reference_number,
             'unit_id' => $request->unit_id ?: null,
+            'updated_by' => auth()->id(),
         ]);
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense updated successfully');

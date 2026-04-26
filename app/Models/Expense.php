@@ -14,13 +14,18 @@ class Expense extends Model
     protected $fillable = [
         'category',
         'description',
+        'vendor_name',
         'amount',
+        'payment_method',
         'date',
         'receipt_path',
         'recorded_by',
         'notes',
         'reference_number',
         'unit_id',
+        'spare_part_id',
+        'quantity',
+        'unit_price',
         'status',
         'approved_by',
         'approved_at',
@@ -28,6 +33,13 @@ class Expense extends Model
 
     protected $casts = [
         'amount' => 'float',
+        'quantity' => 'integer',
+        'unit_price' => 'float',
         'date' => 'date',
     ];
+
+    public function sparePart()
+    {
+        return $this->belongsTo(SparePart::class, 'spare_part_id');
+    }
 }
