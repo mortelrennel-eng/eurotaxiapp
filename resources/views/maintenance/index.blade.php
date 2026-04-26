@@ -127,9 +127,12 @@
 {{-- Stats --}}
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
     <!-- Card 1: Total Records -->
-    <div class="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 border-l-[6px] border-l-blue-800 p-5 text-center group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 border-l-[6px] border-l-blue-800 p-5 text-center group hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300">
         <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-500">
             <i data-lucide="folder-open" class="w-28 h-28 text-gray-900"></i>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3 mx-auto shadow-[0_0_15px_rgba(30,58,138,0.2)] transition-transform group-hover:scale-110 duration-300">
+            <i data-lucide="folder-open" class="w-6 h-6 text-blue-800"></i>
         </div>
         <p class="text-3xl font-black text-gray-800 tracking-tighter relative z-10">{{ $totals->total_count ?? 0 }}</p>
         <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 relative z-10">Total Records</p>
@@ -140,11 +143,14 @@
     </div>
 
     <!-- Card 2: Pending -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-yellow-50/80 to-white rounded-2xl shadow-sm border border-yellow-100/50 border-l-[6px] border-l-orange-500 p-5 text-center group hover:shadow-md hover:shadow-yellow-100/50 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-gradient-to-br from-yellow-50/80 to-white rounded-2xl shadow-sm border border-yellow-100/50 border-l-[6px] border-l-orange-500 p-5 text-center group hover:shadow-xl hover:shadow-yellow-100/50 hover:-translate-y-1.5 transition-all duration-300">
         <div class="absolute -right-4 -bottom-4 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <i data-lucide="clock" class="w-28 h-28 text-yellow-600"></i>
         </div>
         <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-400/5 blur-2xl rounded-full scale-150 group-hover:bg-yellow-400/10 transition-colors duration-500"></div>
+        <div class="w-12 h-12 rounded-full bg-yellow-50 flex items-center justify-center mb-3 mx-auto shadow-[0_0_15px_rgba(234,179,8,0.25)] transition-transform group-hover:scale-110 duration-300">
+            <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+        </div>
         <p class="text-3xl font-black text-yellow-600 tracking-tighter relative z-10 drop-shadow-sm">{{ $totals->pending_count ?? 0 }}</p>
         <p class="text-[10px] font-black text-yellow-700/60 uppercase tracking-widest mt-1 relative z-10">Pending</p>
         <div class="flex items-center justify-center gap-2 mt-3 relative z-10">
@@ -154,11 +160,14 @@
     </div>
 
     <!-- Card 3: Active Work -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-blue-50/80 to-white rounded-2xl shadow-sm border border-blue-100/50 border-l-[6px] border-l-indigo-500 p-5 text-center group hover:shadow-md hover:shadow-blue-100/50 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-50/80 to-white rounded-2xl shadow-sm border border-blue-100/50 border-l-[6px] border-l-indigo-500 p-5 text-center group hover:shadow-xl hover:shadow-blue-100/50 hover:-translate-y-1.5 transition-all duration-300">
         <div class="absolute -right-4 -bottom-4 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <i data-lucide="wrench" class="w-28 h-28 text-blue-600"></i>
         </div>
         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-400/5 blur-2xl rounded-full scale-150 group-hover:bg-blue-400/10 transition-colors duration-500"></div>
+        <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center mb-3 mx-auto shadow-[0_0_15px_rgba(79,70,229,0.25)] transition-transform group-hover:scale-110 duration-300">
+            <i data-lucide="wrench" class="w-6 h-6 text-indigo-600"></i>
+        </div>
         <p class="text-3xl font-black text-blue-600 tracking-tighter relative z-10 drop-shadow-sm">{{ $totals->in_progress_count ?? 0 }}</p>
         <p class="text-[10px] font-black text-blue-700/60 uppercase tracking-widest mt-1 relative z-10">Active Work</p>
         <div class="flex items-center justify-center gap-2 mt-3 relative z-10">
@@ -168,11 +177,14 @@
     </div>
 
     <!-- Card 4: Total Cost -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-green-50/80 to-white rounded-2xl shadow-sm border border-green-100/50 border-l-[6px] border-l-emerald-500 p-5 text-center group hover:shadow-md hover:shadow-green-100/50 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-gradient-to-br from-green-50/80 to-white rounded-2xl shadow-sm border border-green-100/50 border-l-[6px] border-l-emerald-500 p-5 text-center group hover:shadow-xl hover:shadow-green-100/50 hover:-translate-y-1.5 transition-all duration-300">
         <div class="absolute -right-2 -bottom-8 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <span class="text-[120px] font-black text-green-700 leading-none font-serif">₱</span>
         </div>
         <div class="absolute top-0 right-0 w-32 h-32 bg-green-400/10 blur-2xl rounded-full scale-150 group-hover:bg-green-400/20 transition-colors duration-500"></div>
+        <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3 mx-auto shadow-[0_0_15px_rgba(16,185,129,0.25)] transition-transform group-hover:scale-110 duration-300">
+            <i data-lucide="banknote" class="w-6 h-6 text-green-700"></i>
+        </div>
         <p class="text-2xl font-black text-green-700 tracking-tighter relative z-10 drop-shadow-sm">{{ formatCurrency($totals->total_cost ?? 0) }}</p>
         <p class="text-[10px] font-black text-green-700/60 uppercase tracking-widest mt-1 relative z-10">Total Cost</p>
         <div class="flex items-center justify-center gap-2 mt-3 relative z-10">
