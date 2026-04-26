@@ -73,6 +73,10 @@
         <div class="relative z-10 flex flex-col items-center text-center">
             <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['violations_today'] ?? 0 }}</p>
             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Violations Today</p>
+            <div class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full backdrop-blur-md">
+                <span class="text-[8px] font-black uppercase opacity-60">Today Violators:</span>
+                <span class="text-[10px] font-black">{{ $stats['violators_today'] ?? 0 }}</span>
+            </div>
         </div>
     </div>
 
@@ -83,7 +87,11 @@
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
             <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['total_violators'] ?? 0 }}</p>
-             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
+            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
+            <button onclick="switchTab('profiles')" class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-md transition-all active:scale-95">
+                <span class="text-[8px] font-black uppercase tracking-wider">View Profiles</span>
+                <i data-lucide="chevron-right" class="w-2.5 h-2.5"></i>
+            </button>
         </div>
     </div>
 
@@ -93,10 +101,28 @@
             <i data-lucide="banknote" class="w-16 h-16"></i>
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
-            <p class="text-xl font-black tracking-tighter leading-none">₱{{ number_format($stats['total_charges'] ?? 0, 0) }}</p>
-            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Charges</p>
+            <p class="text-xl font-black tracking-tighter leading-none" id="chargeDisplay">₱{{ number_format($stats['charges_this_month'] ?? 0, 0) }}</p>
+            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1" id="chargeLabel">Monthly Charges</p>
+            
+            <div class="mt-2 flex gap-1">
+                <button onclick="updateChargeCard('this')" class="px-2 py-0.5 bg-white/30 rounded-lg text-[8px] font-black uppercase hover:bg-white/40 transition-colors">This Month</button>
+                <button onclick="updateChargeCard('last')" class="px-2 py-0.5 bg-white/10 rounded-lg text-[8px] font-black uppercase hover:bg-white/20 transition-colors">Last Month</button>
+            </div>
         </div>
     </div>
+    <script>
+        window.updateChargeCard = (p) => {
+            const display = document.getElementById('chargeDisplay');
+            const label = document.getElementById('chargeLabel');
+            if(p === 'this') {
+                display.innerText = '₱{{ number_format($stats['charges_this_month'] ?? 0, 0) }}';
+                label.innerText = 'Monthly Charges';
+            } else {
+                display.innerText = '₱{{ number_format($stats['charges_last_month'] ?? 0, 0) }}';
+                label.innerText = 'Last Month Charges';
+            }
+        };
+    </script>
 
     {{-- 4. ELIGIBLE INCENTIVE --}}
     <div class="stat-card-premium relative overflow-hidden bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl p-4 text-white shadow-lg shadow-yellow-100 group">
@@ -106,6 +132,11 @@
         <div class="relative z-10 flex flex-col items-center text-center">
             <p class="text-3xl font-black tracking-tighter leading-none">{{ count($incentive_summary['eligible'] ?? []) }}</p>
             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Eligible Incentive</p>
+            
+            <div class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-black/10 rounded-full">
+                <span class="text-[8px] font-black uppercase opacity-60">Last Month:</span>
+                <span class="text-[10px] font-black">{{ $stats['eligible_last_month'] ?? 0 }}</span>
+            </div>
         </div>
     </div>
 </div>
