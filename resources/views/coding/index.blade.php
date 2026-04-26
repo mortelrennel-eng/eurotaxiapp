@@ -146,24 +146,27 @@
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-5 gap-4">
             @foreach($coding_calendar as $day => $day_units)
-                <div class="border rounded-2xl p-4 transition-all {{ $day === $today_name ? 'border-yellow-400 bg-yellow-50/30' : 'border-gray-100 bg-white' }}">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="font-black text-gray-800 text-sm tracking-tight">{{ $day }}</h4>
+                <div class="border rounded-2xl p-4 transition-all duration-300 {{ $day === $today_name ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-white shadow-[0_0_15px_rgba(59,130,246,0.3)] transform -translate-y-1 relative overflow-hidden' : 'border-gray-100 bg-gradient-to-br from-gray-50/80 to-white shadow-inner hover:shadow-md hover:-translate-y-0.5' }}">
+                    @if($day === $today_name)
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-blue-400 blur-[30px] opacity-20 -mr-8 -mt-8 pointer-events-none"></div>
+                    @endif
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <h4 class="font-black {{ $day === $today_name ? 'text-blue-800' : 'text-gray-800' }} text-sm tracking-tight">{{ $day }}</h4>
                         <div class="flex items-center gap-1">
-                            <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-black rounded-full">{{ $day_units->count() }}</span>
+                            <span class="px-2 py-0.5 bg-white shadow-sm border border-gray-100 text-gray-500 text-[10px] font-black rounded-full">{{ $day_units->count() }}</span>
                             @if($day === $today_name)
-                                <span class="px-2 py-0.5 bg-yellow-400 text-white text-[8px] font-black rounded-full shadow-sm">TODAY</span>
+                                <span class="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded-full shadow-md shadow-blue-200">TODAY</span>
                             @endif
                         </div>
                     </div>
                     <!-- Coding List Visibility: Maximum 2 units visible, then scroll -->
-                    <div class="space-y-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                    <div class="space-y-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar relative z-10">
                         @forelse($day_units as $u)
-                            <div class="text-[11px] p-2 bg-white rounded-xl border border-gray-50 shadow-sm text-gray-700 font-bold text-center hover:border-blue-400 transition-colors cursor-default">
-                                <div class="text-blue-600 uppercase">{{ $u->plate_number }}</div>
+                            <div class="text-[11px] px-3 py-1.5 bg-blue-50/80 backdrop-blur-sm rounded-full border border-blue-100 shadow-sm text-blue-700 font-black text-center hover:bg-blue-100 hover:shadow-md hover:border-blue-300 hover:scale-[1.02] transition-all cursor-pointer">
+                                <span class="uppercase tracking-widest">{{ $u->plate_number }}</span>
                             </div>
                         @empty
-                            <div class="text-[10px] text-gray-300 italic text-center py-2">No units</div>
+                            <div class="text-[10px] text-gray-400 italic text-center py-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No units</div>
                         @endforelse
                     </div>
                 </div>
