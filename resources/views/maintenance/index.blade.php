@@ -1218,7 +1218,7 @@ async function openViewMaint(id) {
                 <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm gap-4">
                     <div class="min-w-0 flex-1">
                         <div class="text-xs font-bold text-gray-800 break-words">${item.part_name}</div>
-                        <div class="text-[10px] text-gray-400">${item.part_id ? `Qty: ${item.quantity} &times; &#8369;${parseFloat(item.price).toFixed(2)}` : 'Additional Service / Labor'}</div>
+                        <div class="text-[10px] text-gray-400">${item.part_id ? `Qty: ${item.quantity} &times; &#8369;${parseFloat(item.price).toFixed(2)}${item.supplier ? ` <span class="mx-1 text-gray-300">|</span> Supplier: <span class="font-bold text-blue-600 tracking-tight">${item.supplier}</span>` : ''}` : 'Additional Service / Labor'}</div>
                     </div>
                     <div class="text-xs font-black text-gray-900 tabular-nums shrink-0 whitespace-nowrap">&#8369;${parseFloat(item.total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
                 </div>

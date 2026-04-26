@@ -89,18 +89,21 @@ class SparePartController extends Controller
             $userId    = auth()->id() ?? (\App\Models\User::first()->id ?? 18);
 
             try {
-                $expenseId = DB::table('expenses')->insertGetId([
-                    'category'         => 'maintenance',
-                    'expense_category' => 'maintenance',
-                    'description'      => "PURCHASED: {$qtyToAdd} pcs of {$part->name} from " . ($part->supplier ?? 'Unspecified Supplier'),
+                $expense = \App\Models\Expense::create([
+                    'category'         => 'Spare Parts Purchase',
+                    'expense_category' => 'Spare Parts Purchase',
+                    'spare_part_id'    => $part->id,
+                    'quantity'         => $qtyToAdd,
+                    'unit_price'       => (float)$data['price'],
+                    'description'      => "Inventory STOCK: {$qtyToAdd} pcs of {$part->name}",
+                    'vendor_name'      => $part->supplier ?? 'Unspecified Supplier',
                     'amount'           => $totalCost,
                     'date'             => now()->toDateString(),
                     'status'           => 'approved',
                     'recorded_by'      => $userId,
                     'created_by'       => $userId,
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
                 ]);
+                $expenseId = $expense->id;
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Inventory Expense Record Failed: ' . $e->getMessage());
             }

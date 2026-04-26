@@ -233,251 +233,268 @@
 </div>
 
 <!-- Boundary Modal -->
-<div id="boundaryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-3 max-h-[95vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-2">
-            <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">Add Boundary Record</h3>
-            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
+<div id="boundaryModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-all">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
+        {{-- Header (Deep Navy matching Unit Details) --}}
+        <div class="bg-slate-800 p-5 shrink-0">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-white/10 rounded-xl">
+                        <i data-lucide="calculator" class="w-6 h-6 text-yellow-500"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-white tracking-wide" id="modalTitle">Add Boundary Record</h3>
+                        <p class="text-xs font-medium text-slate-300 mt-0.5">Record daily collections and evaluate driver performance.</p>
+                    </div>
+                </div>
+                <button onclick="closeModal()" type="button" class="text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 p-2 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
         
-        <form id="boundaryForm" method="POST" action="{{ route('boundaries.store') }}">
+        <form id="boundaryForm" method="POST" action="{{ route('boundaries.store') }}" class="flex flex-col flex-1 min-h-0">
             @csrf
             <input type="hidden" name="action" id="formAction" value="add_boundary">
             <input type="hidden" name="id" id="boundaryId">
             
-            <div class="space-y-2">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
-                    <div class="relative">
-                        <input type="text" id="unitDisplay" required 
-                               class="w-full px-2 py-1.5 border border-gray-300 rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                               placeholder="Type to search units...">
-                        <input type="hidden" name="unit_id" id="unitId" required>
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                        </div>
-                        
-                        <!-- Unit Dropdown -->
-                        <div id="unit_dropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-32 overflow-y-auto hidden">
-                            @foreach ($units as $unit)
-                                <div class="unit-option px-2 py-1 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                     data-id="{{ $unit['id'] }}"
-                                     data-name="{{ $unit['plate_number'] }}"
-                                     data-plate="{{ $unit['plate_number'] }}"
-                                     data-year="{{ $unit['year'] ?? 0 }}"
-                                     data-model="{{ $unit['make_model'] ?? '' }}"
-                                     data-rate="{{ $unit['boundary_rate'] ?? 0 }}"
-                                     data-coding-day="{{ $unit['coding_day'] ?? '' }}"
-                                     data-primary-id="{{ $unit['driver_id'] }}"
-                                     data-secondary-id="{{ $unit['secondary_driver_id'] }}"
-                                     data-expected-id="{{ $unit['current_turn_driver_id'] }}"
-                                     data-deadline="{{ $unit['shift_deadline_at'] }}"
-                                     data-swapped-at="{{ $unit['last_swapping_at'] }}">
-                                    <div class="font-medium text-xs">{{ $unit['plate_number'] }}</div>
-                                    <div class="text-xs text-gray-500">{{ $unit['make_model'] ?? 'N/A' }}</div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-5">
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Driver *</label>
-                    <div class="relative">
-                        <input type="text" id="driverDisplay" required 
-                               class="w-full px-2 py-1.5 border border-gray-300 rounded-lg bg-white cursor-pointer focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
-                               placeholder="Type to search drivers...">
-                        <input type="hidden" name="driver_id" id="driverId" required>
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
-                        </div>
-                        
-                        <!-- Driver Dropdown -->
-                        <div id="driver_dropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-32 overflow-y-auto hidden">
-                            <!-- All drivers option -->
-                            <div class="driver-option px-2 py-1 hover:bg-yellow-50 cursor-pointer border-b border-gray-100"
-                                 data-id="all"
-                                 data-name="All Drivers"
-                                 data-unit=""
-                                 data-plate="">
-                                <div class="font-medium text-xs">All Drivers</div>
-                                <div class="text-xs text-gray-500">Show all available drivers</div>
+                {{-- Two-Column Grid for Unit & Driver --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Unit <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="text" id="unitDisplay" required 
+                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-xl bg-white cursor-pointer focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm font-bold shadow-sm"
+                                   placeholder="Type to search units...">
+                            <input type="hidden" name="unit_id" id="unitId" required>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                             </div>
-                            <!-- Unit-specific drivers block removed -->
-                            <div class="all-drivers-list">
-                                @foreach ($all_drivers as $driver)
-                                    <div class="driver-option px-2 py-1 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                         data-id="{{ $driver['id'] }}"
-                                         data-name="{{ $driver['name'] }}"
-                                         data-unit="{{ $driver['current_unit'] }}"
-                                         data-plate="{{ $driver['current_plate'] }}"
-                                         data-shortage="{{ $driver['net_shortage'] ?? 0 }}"
-                                         data-has-accident-debt="{{ ($driver['has_accident_debt'] ?? 0) > 0 ? 'true' : 'false' }}"
-                                         data-accident-debt-amount="{{ $driver['total_accident_debt'] ?? 0 }}">
-                                        <div class="font-medium text-xs">{{ $driver['name'] }}</div>
-                                        <div class="text-xs text-gray-500">{{ $driver['current_plate'] }}</div>
+                            
+                            <!-- Unit Dropdown -->
+                            <div id="unit_dropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto hidden">
+                                @foreach ($units as $unit)
+                                    <div class="unit-option px-3 py-2 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                         data-id="{{ $unit['id'] }}"
+                                         data-name="{{ $unit['plate_number'] }}"
+                                         data-plate="{{ $unit['plate_number'] }}"
+                                         data-year="{{ $unit['year'] ?? 0 }}"
+                                         data-model="{{ $unit['make_model'] ?? '' }}"
+                                         data-rate="{{ $unit['boundary_rate'] ?? 0 }}"
+                                         data-coding-day="{{ $unit['coding_day'] ?? '' }}"
+                                         data-primary-id="{{ $unit['driver_id'] }}"
+                                         data-secondary-id="{{ $unit['secondary_driver_id'] }}"
+                                         data-expected-id="{{ $unit['current_turn_driver_id'] }}"
+                                         data-deadline="{{ $unit['shift_deadline_at'] }}"
+                                         data-swapped-at="{{ $unit['last_swapping_at'] }}">
+                                        <div class="font-black text-sm text-gray-900">{{ $unit['plate_number'] }}</div>
+                                        <div class="text-[11px] font-bold text-gray-500">{{ $unit['make_model'] ?? 'N/A' }}</div>
                                     </div>
                                 @endforeach
                             </div>
-                            <!-- Hidden data block removed -->
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Driver <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <input type="text" id="driverDisplay" required 
+                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-xl bg-white cursor-pointer focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm font-bold shadow-sm"
+                                   placeholder="Type to search drivers...">
+                            <input type="hidden" name="driver_id" id="driverId" required>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                            </div>
+                            
+                            <!-- Driver Dropdown -->
+                            <div id="driver_dropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto hidden">
+                                <div class="driver-option px-3 py-2 hover:bg-yellow-50 cursor-pointer border-b border-gray-100"
+                                     data-id="all"
+                                     data-name="All Drivers"
+                                     data-unit=""
+                                     data-plate="">
+                                    <div class="font-black text-sm text-gray-900">All Drivers</div>
+                                    <div class="text-[11px] font-bold text-gray-500">Show all available drivers</div>
+                                </div>
+                                <div class="all-drivers-list">
+                                    @foreach ($all_drivers as $driver)
+                                        <div class="driver-option px-3 py-2 hover:bg-yellow-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                             data-id="{{ $driver['id'] }}"
+                                             data-name="{{ $driver['name'] }}"
+                                             data-unit="{{ $driver['current_unit'] }}"
+                                             data-plate="{{ $driver['current_plate'] }}"
+                                             data-shortage="{{ $driver['net_shortage'] ?? 0 }}"
+                                             data-has-accident-debt="{{ ($driver['has_accident_debt'] ?? 0) > 0 ? 'true' : 'false' }}"
+                                             data-accident-debt-amount="{{ $driver['total_accident_debt'] ?? 0 }}">
+                                            <div class="font-black text-sm text-gray-900">{{ $driver['name'] }}</div>
+                                            <div class="text-[11px] font-bold text-gray-500">{{ $driver['current_plate'] }}</div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Extra Driver Alert --}}
-                <div id="extraDriverAlert" class="hidden mt-1 px-3 py-2 bg-orange-50 border border-orange-300 rounded-lg flex items-start gap-2">
-                    <span class="text-orange-500 mt-0.5">⚠️</span>
+                {{-- Alerts --}}
+                <div id="extraDriverAlert" class="hidden px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl flex items-start gap-3 shadow-sm">
+                    <span class="text-orange-500 mt-0.5"><i data-lucide="alert-triangle" class="w-5 h-5"></i></span>
                     <div>
-                        <p class="text-xs font-bold text-orange-700">Extra Driver Detected</p>
-                        <p class="text-[11px] text-orange-600">This driver is not regularly assigned to this unit. The record will be marked as <strong>Extra Driver</strong>.</p>
+                        <p class="text-sm font-black text-orange-800">Extra Driver Detected</p>
+                        <p class="text-xs font-medium text-orange-700 mt-0.5">This driver is not regularly assigned to this unit. The record will be marked as <strong>Extra Driver</strong>.</p>
                     </div>
                 </div>
 
-                {{-- Past Shortage Alert --}}
-                <div id="shortageBalanceAlert" class="hidden mt-1 px-3 py-2 bg-red-50 border border-red-300 rounded-lg">
-                    <div class="flex items-start gap-2 mb-1">
-                        <span class="text-red-500 mt-0.5">🚨</span>
+                <div id="shortageBalanceAlert" class="hidden px-4 py-3 bg-red-50 border border-red-200 rounded-xl shadow-sm">
+                    <div class="flex items-start gap-3 mb-3">
+                        <span class="text-red-500 mt-0.5"><i data-lucide="alert-circle" class="w-5 h-5"></i></span>
                         <div class="flex-1">
-                            <p class="text-xs font-bold text-red-700">Past Balance Due</p>
-                            <p class="text-[11px] text-red-600">This driver has an unpaid balance of <strong id="shortageBalanceAmount">₱0.00</strong> from previous shortages.</p>
+                            <p class="text-sm font-black text-red-800">Past Balance Due</p>
+                            <p class="text-xs font-medium text-red-700 mt-0.5">This driver has an unpaid balance of <strong id="shortageBalanceAmount" class="font-black">₱0.00</strong> from previous shortages.</p>
                         </div>
                     </div>
                     <button type="button" onclick="payFullBalance()" 
-                            class="w-full py-1 bg-red-600 text-white text-[10px] uppercase font-bold rounded hover:bg-red-700 transition-colors shadow-sm">
+                            class="w-full py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-widest rounded-lg transition-colors shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
                         Pay Full Balance & Clear Debt
                     </button>
                     <input type="hidden" id="rawShortageAmount" value="0">
                 </div>
 
-                {{-- Shift Status (user-friendly redesign) --}}
-                <div id="shiftInfoGroup" class="hidden mt-2 rounded-xl border transition-all duration-300 overflow-hidden">
-                    {{-- Header --}}
-                    <div class="px-3 py-2 flex items-center justify-between border-b bg-gray-50/70" id="shiftInfoHeader">
-                        <span class="text-[10px] uppercase font-black tracking-widest text-gray-400">Shift Status</span>
+                {{-- Shift Status --}}
+                <div id="shiftInfoGroup" class="hidden rounded-xl border border-gray-200 transition-all duration-300 overflow-hidden shadow-sm">
+                    <div class="px-4 py-2.5 flex items-center justify-between border-b border-gray-100 bg-gray-50" id="shiftInfoHeader">
+                        <span class="text-[10px] uppercase font-black tracking-widest text-gray-500">Shift Status</span>
                         <div id="incentiveStatusBadge"></div>
                     </div>
-                    {{-- Expected Driver Row --}}
-                    <div class="px-3 py-2.5 flex items-start gap-3" id="shiftInfoBody">
-                        <div class="p-1.5 rounded-lg mt-0.5 shrink-0" id="shiftIconWrap">
-                            <i data-lucide="user-check" class="w-3.5 h-3.5" id="shiftIcon"></i>
+                    <div class="px-4 py-3 flex items-start gap-3" id="shiftInfoBody">
+                        <div class="p-2 rounded-lg bg-gray-100 shrink-0" id="shiftIconWrap">
+                            <i data-lucide="user-check" class="w-4 h-4 text-gray-600" id="shiftIcon"></i>
                         </div>
-                        <div class="flex flex-col gap-0.5 w-full">
-                            <span id="shiftMainLabel" class="text-[11px] font-black text-gray-800 leading-tight"></span>
-                            <span id="shiftTimer" class="text-[10px] text-gray-500 font-medium leading-snug"></span>
+                        <div class="flex flex-col gap-1 w-full pt-0.5">
+                            <span id="shiftMainLabel" class="text-sm font-black text-gray-800 leading-tight"></span>
+                            <span id="shiftTimer" class="text-xs text-gray-500 font-bold leading-snug"></span>
                         </div>
                     </div>
-                    {{-- Extra Driver Notice (shown when selected driver ≠ expected driver) --}}
-                    <div id="shiftExtraNotice" class="hidden px-3 py-2 border-t bg-orange-50 flex items-start gap-2">
-                        <span class="text-orange-500 text-sm mt-0.5">⚠️</span>
-                        <p id="shiftExtraText" class="text-[10px] text-orange-700 font-bold leading-snug"></p>
+                    <div id="shiftExtraNotice" class="hidden px-4 py-2.5 border-t border-orange-100 bg-orange-50 flex items-start gap-2">
+                        <span class="text-orange-500 text-sm mt-0.5"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
+                        <p id="shiftExtraText" class="text-xs text-orange-800 font-bold leading-snug pt-0.5"></p>
+                    </div>
+                </div>
+
+                {{-- Three-Column Grid for Date, Target, Actual --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Date <span class="text-red-500">*</span></label>
+                        <input type="date" name="date" id="date" required value="{{ date('Y-m-d') }}" 
+                               class="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm font-bold shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Target Boundary <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <span class="text-gray-500 font-black">₱</span>
+                            </div>
+                            <input type="number" name="boundary_amount" id="boundaryAmount" required step="0.01" min="0" readonly
+                                   class="w-full pl-8 px-3 py-2.5 border-2 border-yellow-100 bg-yellow-50/50 rounded-xl focus:ring-0 cursor-not-allowed font-black text-gray-600 shadow-inner text-base"
+                                   title="Target boundary for this shift. This is fixed based on year-based rules.">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">Actual Collected <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <span class="text-blue-600 font-black">₱</span>
+                            </div>
+                            <input type="number" name="actual_boundary" id="actualBoundary" required step="0.01" min="0" 
+                                   class="w-full pl-8 px-3 py-2.5 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-black text-blue-800 shadow-sm text-base"
+                                   placeholder="0.00">
+                        </div>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
-                    <input type="date" name="date" id="date" required value="{{ date('Y-m-d') }}" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500">
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Notes</label>
+                    <textarea name="notes" id="notes" rows="2" 
+                              class="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm font-medium shadow-sm"
+                              placeholder="Optional remarks..."></textarea>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 font-bold">Target Boundary Amount *</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 text-xs">₱</span>
-                        </div>
-                        <input type="number" name="boundary_amount" id="boundaryAmount" required step="0.01" min="0" readonly
-                               class="w-full pl-7 px-2 py-1.5 border-2 border-yellow-100 bg-gray-50 rounded-lg focus:ring-0 cursor-not-allowed font-bold text-gray-500"
-                               title="Target boundary for this shift. This is fixed based on year-based rules.">
+
+                {{-- Exception Controls Redesign --}}
+                <div class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center gap-2">
+                        <i data-lucide="shield-alert" class="w-4 h-4 text-gray-500"></i>
+                        <span class="text-[11px] font-black text-gray-600 uppercase tracking-widest">Exception Controls</span>
                     </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1 font-bold">Actual Boundary Collected *</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-blue-600 font-bold text-xs">₱</span>
-                        </div>
-                        <input type="number" name="actual_boundary" id="actualBoundary" required step="0.01" min="0" 
-                               class="w-full pl-7 px-2 py-1.5 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-bold text-blue-800"
-                               placeholder="0.00">
-                    </div>
-                </div>
-                
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    <textarea name="notes" id="notes" rows="2" class="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"></textarea>
-                </div>
-
-                <div class="mt-3 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                    <div class="bg-gray-50 px-3 py-2 border-b border-gray-200">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Exception Controls</span>
-                    </div>
-                    <div class="p-2 space-y-0.5">
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-orange-50 transition-colors group">
-                            <input type="checkbox" name="past_cutoff" id="past_cutoff" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+                    <div class="p-1">
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-orange-50 transition-colors group">
+                            <input type="checkbox" name="past_cutoff" id="past_cutoff" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 mt-0.5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-orange-700 leading-none mb-0.5 transition-colors">Late Remittance Enforcement (Past Cut-off)</span>
-                                <span class="text-[10px] text-orange-600 leading-tight">Boundary submitted after the 10:00 AM deadline. Automatically disqualifies driver from daily incentives.</span>
+                                <span class="text-sm font-black text-gray-800 group-hover:text-orange-700 leading-tight mb-0.5 transition-colors">Late Remittance Enforcement</span>
+                                <span class="text-xs text-gray-500 font-medium leading-snug">Boundary submitted after the 10:00 AM deadline. Voids incentives.</span>
                             </div>
                         </label>
 
-                        <div class="h-px bg-gray-100 my-1 mx-2 hidden"></div>
+                        <div class="h-px bg-gray-100 mx-3"></div>
 
-                        <label class="hidden items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
-                            <input type="checkbox" name="is_absent" id="is_absent" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                        <label class="hidden items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-red-50 transition-colors group">
+                            <input type="checkbox" name="is_absent" id="is_absent" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500 mt-0.5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Absenteeism Validation (No Show)</span>
-                                <span class="text-[10px] text-red-600 leading-tight">Driver failed to report for the assigned shift. Voids incentive and initiates a formal attendance violation.</span>
+                                <span class="text-sm font-black text-gray-800 group-hover:text-red-700 leading-tight mb-0.5 transition-colors">Absenteeism Validation (No Show)</span>
+                                <span class="text-xs text-gray-500 font-medium leading-snug">Driver failed to report. Voids incentive and initiates a violation.</span>
                             </div>
                         </label>
 
-                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+                        <div class="h-px bg-gray-100 mx-3 hidden"></div>
 
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
-                            <input type="checkbox" name="needs_maintenance_half" id="needsMaintenanceHalfCheck" value="1" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 needs-maintenance-opt">
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-yellow-50 transition-colors group">
+                            <input type="checkbox" name="needs_maintenance_half" id="needsMaintenanceHalfCheck" value="1" class="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 needs-maintenance-opt mt-0.5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Operational Breakdown (Prorated Adjustment)</span>
-                                <span class="text-[10px] text-gray-500 leading-tight">Mechanical failure during transit. Applies a prorated boundary calculation based on verified operational hours.</span>
+                                <span class="text-sm font-black text-gray-800 group-hover:text-yellow-700 leading-tight mb-0.5 transition-colors">Operational Breakdown (Prorated)</span>
+                                <span class="text-xs text-gray-500 font-medium leading-snug">Mechanical failure during transit. Applies prorated boundary calculation.</span>
                             </div>
                         </label>
 
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 transition-colors">
-                            <input type="checkbox" name="needs_maintenance_zero" id="needsMaintenanceZeroCheck" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 needs-maintenance-opt">
+                        <div class="h-px bg-gray-100 mx-3"></div>
+
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-orange-50 transition-colors group">
+                            <input type="checkbox" name="needs_maintenance_zero" id="needsMaintenanceZeroCheck" value="1" class="rounded border-gray-300 text-orange-600 focus:ring-orange-500 needs-maintenance-opt mt-0.5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 leading-none mb-0.5">Early Shift Maintenance Failure (Free Boundary)</span>
-                                <span class="text-[10px] text-gray-500 leading-tight">Vehicle failure within 2 hours of deployment. Sets the target boundary to zero (Waived) for this shift.</span>
+                                <span class="text-sm font-black text-gray-800 group-hover:text-orange-700 leading-tight mb-0.5 transition-colors">Early Shift Maintenance Failure</span>
+                                <span class="text-xs text-gray-500 font-medium leading-snug">Vehicle failure within 2 hours of deployment. Boundary is waived.</span>
                             </div>
                         </label>
 
-                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+                        <div class="h-px bg-gray-100 mx-3"></div>
 
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
-                            <input type="checkbox" name="vehicle_damaged" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-red-50 transition-colors group">
+                            <input type="checkbox" name="vehicle_damaged" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500 mt-0.5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Physical Asset Damage (Violation)</span>
-                                <span class="text-[10px] text-red-500 leading-tight">Physical damage identified during vehicle turnover. Voids incentives and initiates a formal damage report.</span>
+                                <span class="text-sm font-black text-gray-800 group-hover:text-red-700 leading-tight mb-0.5 transition-colors">Physical Asset Damage</span>
+                                <span class="text-xs text-gray-500 font-medium leading-snug">Damage identified during turnover. Voids incentives and initiates report.</span>
                             </div>
                         </label>
 
-                        <div class="h-px bg-gray-100 my-1 mx-2"></div>
+                        <div class="h-px bg-gray-100 mx-3"></div>
 
-                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition-colors group">
-                            <input type="checkbox" name="low_fuel" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                        <label class="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-red-50 transition-colors group">
+                            <input type="checkbox" name="low_fuel" value="1" class="rounded border-gray-300 text-red-600 focus:ring-red-500 mt-0.5">
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-gray-800 group-hover:text-red-700 leading-none mb-0.5 transition-colors">Fuel Replenishment Failure (Violation)</span>
-                                <span class="text-[10px] text-red-500 leading-tight">Unit returned with insufficient fuel levels. Voids incentives and logs a formal fuel violation record.</span>
+                                <span class="text-sm font-black text-gray-800 group-hover:text-red-700 leading-tight mb-0.5 transition-colors">Fuel Replenishment Failure</span>
+                                <span class="text-xs text-gray-500 font-medium leading-snug">Unit returned with insufficient fuel. Voids incentives.</span>
                             </div>
                         </label>
 
                         <!-- Calculation Transparency Box -->
-                        <div id="breakdownComputationDraft" class="hidden mt-2 p-2 bg-blue-50 border border-blue-100 rounded-lg">
-                            <div class="flex items-center gap-2 mb-1">
-                                <i data-lucide="calculator" class="w-3 h-3 text-blue-600"></i>
-                                <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Breakdown Computation</span>
+                        <div id="breakdownComputationDraft" class="hidden mt-1 mb-2 mx-3 p-3 bg-blue-50 border border-blue-200 rounded-xl shadow-sm">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="calculator" class="w-4 h-4 text-blue-600"></i>
+                                <span class="text-xs font-black text-blue-800 uppercase tracking-wider">Breakdown Computation</span>
                             </div>
-                            <div id="breakdownMathDisplay" class="text-[11px] text-blue-800 font-medium leading-tight whitespace-pre-line">
+                            <div id="breakdownMathDisplay" class="text-xs text-blue-900 font-bold leading-relaxed whitespace-pre-line">
                                 <!-- Injected calculation here -->
                             </div>
                             <input type="hidden" id="calculatedHours" name="hours_driven">
@@ -486,12 +503,13 @@
                 </div>
             </div>
             
-            <div class="mt-4 flex gap-3">
-                <button type="submit" class="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                    Save
-                </button>
-                <button type="button" onclick="closeModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+            {{-- Footer --}}
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3 shrink-0">
+                <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-bold text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition-all shadow-sm">
                     Cancel
+                </button>
+                <button type="submit" class="px-6 py-2.5 text-sm font-black text-slate-900 bg-yellow-500 rounded-xl hover:bg-yellow-400 focus:ring-4 focus:ring-yellow-100 transition-all shadow-sm">
+                    Save Record
                 </button>
             </div>
         </form>

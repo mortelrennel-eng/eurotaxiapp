@@ -175,52 +175,60 @@
     </div>
 
     {{-- Driver Details Modal with Tabs --}}
-    <div id="driverDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden h-full w-full z-50 flex items-center justify-center p-4">
-        <div class="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center p-6 border-b">
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900" id="driverDetailsName">Driver Details</h3>
-                    <p class="text-sm text-gray-500" id="driverDetailsSubtitle"></p>
+    <div id="driverDetailsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden">
+            {{-- Modal Header (Deep Navy matching login & Unit Details) --}}
+            <div class="bg-slate-800 p-4 shrink-0">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <i data-lucide="user" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white leading-tight" id="driverDetailsName">Driver Details</h3>
+                            <p class="text-sm text-blue-100 leading-tight" id="driverDetailsSubtitle">Loading assignment details...</p>
+                        </div>
+                    </div>
+                    <button onclick="closeDriverDetails()" class="text-white hover:text-gray-200 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
                 </div>
-                <button onclick="closeDriverDetails()" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
             </div>
 
-            {{-- Tabs --}}
-            <div class="px-6 pt-4 border-b">
-                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
-                    <button type="button" class="driver-tab active border-yellow-500 text-yellow-600 whitespace-nowrap py-2 px-3 border-b-2 text-sm font-medium" data-tab="basic">
+            {{-- Main Content Area with Scroll --}}
+            <div class="flex-1 overflow-y-auto flex flex-col">
+                {{-- Tabs Navigation --}}
+                <div class="px-6 pt-4 border-b bg-gray-50/50 shrink-0">
+                <nav class="flex justify-between w-full" aria-label="Tabs">
+                    <button type="button" class="driver-tab active flex-1 text-center py-4 px-1 border-b-2 font-black text-[11px] uppercase tracking-widest border-yellow-500 text-yellow-600 transition-colors" data-tab="basic">
                         Basic Info
                     </button>
-                    <button type="button" class="driver-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-3 border-b-2 text-sm font-medium" data-tab="license">
+                    <button type="button" class="driver-tab flex-1 text-center py-4 px-1 border-b-2 font-black text-[11px] uppercase tracking-widest border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors" data-tab="license">
                         License & Documents
                     </button>
-                    <button type="button" class="driver-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-3 border-b-2 text-sm font-medium" data-tab="incentives">
+                    <button type="button" class="driver-tab flex-1 text-center py-4 px-1 border-b-2 font-black text-[11px] uppercase tracking-widest border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors" data-tab="incentives">
                         Incentives
                     </button>
-                    <button type="button" class="driver-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-3 border-b-2 text-sm font-medium" data-tab="performance">
+                    <button type="button" class="driver-tab flex-1 text-center py-4 px-1 border-b-2 font-black text-[11px] uppercase tracking-widest border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors" data-tab="performance">
                         Performance
                     </button>
-                    <button type="button" class="driver-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-3 border-b-2 text-sm font-medium" data-tab="insights">
+                    <button type="button" class="driver-tab flex-1 text-center py-4 px-1 border-b-2 font-black text-[11px] uppercase tracking-widest border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors" data-tab="insights">
                         Insights
                     </button>
                 </nav>
             </div>
 
             {{-- Tab Panels --}}
-            <div class="p-6 space-y-6">
-                <div class="driver-tab-panel" data-tab-panel="basic">
-                    <h4 class="text-md font-semibold text-gray-800 mb-4">Personal & Employment Details</h4>
-                    <div id="basicInfoContent" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-                        <p class="text-gray-400">Loading...</p>
+            <div class="p-6 flex-1 bg-gray-50/30">
+                <div class="driver-tab-panel h-full flex flex-col" data-tab-panel="basic">
+                    <div id="basicInfoContent" class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm text-gray-700 h-full">
+                        <p class="text-gray-400 p-8 text-center w-full col-span-2">Loading...</p>
                     </div>
                 </div>
 
-                <div class="driver-tab-panel hidden" data-tab-panel="license">
-                    <h4 class="text-md font-semibold text-gray-800 mb-4">License Information</h4>
-                    <div id="licenseInfoContent" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-                        <p class="text-gray-400">Loading...</p>
+                <div class="driver-tab-panel hidden h-full flex flex-col" data-tab-panel="license">
+                    <div id="licenseInfoContent" class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-sm text-gray-700 mb-8 h-full">
+                        <p class="text-gray-400 p-8 text-center w-full col-span-2">Loading...</p>
                     </div>
 
                     <div class="mt-6 border-t pt-4">
@@ -263,239 +271,35 @@
                     </div>
                 </div>
 
-                <div class="driver-tab-panel hidden" data-tab-panel="incentives">
-                    <h4 class="text-md font-semibold text-gray-800 mb-4">Rule-based Incentives</h4>
-                    <p class="text-sm text-gray-600 mb-4">This section shows the breakdown of incentives based on rules like no damage, no absence, complete boundary payments, and no late return.</p>
-                    <div id="incentivesContent" class="text-sm text-gray-700">
+                <div class="driver-tab-panel hidden h-full flex flex-col" data-tab-panel="incentives">
+                    <h4 class="text-md font-semibold text-gray-800 mb-4 shrink-0">Rule-based Incentives</h4>
+                    <p class="text-sm text-gray-600 mb-4 shrink-0">This section shows the breakdown of incentives based on rules like no damage, no absence, complete boundary payments, and no late return.</p>
+                    <div id="incentivesContent" class="text-sm text-gray-700 flex-1 flex flex-col">
                         <p class="text-gray-400">Loading incentive data...</p>
                     </div>
                 </div>
 
-                <div class="driver-tab-panel hidden" data-tab-panel="performance">
-                    <h4 class="text-md font-semibold text-gray-800 mb-4">Performance Analytics</h4>
-                    <div id="performanceContent" class="text-sm text-gray-700 space-y-2">
+                <div class="driver-tab-panel hidden h-full flex flex-col" data-tab-panel="performance">
+                    <h4 class="text-md font-semibold text-gray-800 mb-4 shrink-0">Performance Analytics</h4>
+                    <div id="performanceContent" class="text-sm text-gray-700 space-y-2 flex-1 flex flex-col">
                         <p class="text-gray-400">Loading performance data...</p>
                     </div>
                 </div>
 
-                <div class="driver-tab-panel hidden" data-tab-panel="insights">
-                    <h4 class="text-md font-semibold text-gray-800 mb-4">System Insights & Recommendations</h4>
-                    <div id="insightsContent" class="text-sm text-gray-700 space-y-2">
+                <div class="driver-tab-panel hidden h-full flex flex-col" data-tab-panel="insights">
+                    <h4 class="text-md font-semibold text-gray-800 mb-4 shrink-0">System Insights & Recommendations</h4>
+                    <div id="insightsContent" class="text-sm text-gray-700 space-y-2 flex-1 flex flex-col">
                         <p class="text-gray-400">Loading insights...</p>
                     </div>
                 </div>
             </div>
+            </div> {{-- End Main Content Area --}}
         </div>
     </div>
 
 @endsection
 
-@push('scripts')
-<script>
-window.boundaryRules = @json($boundary_rules ?? []);
-function openAddDriverModal() {
-    document.getElementById('driverModalTitle').textContent = 'Add Driver';
-    document.getElementById('driverFormMethod').value = 'POST';
-    document.getElementById('driverForm').action = '{{ route('driver-management.store') }}';
-    document.getElementById('editDriverId').value = '';
-    document.getElementById('driverFirstName').value = '';
-    document.getElementById('driverLastName').value = '';
 
-    document.getElementById('driverContact').value = '';
-    document.getElementById('driverLicense').value = '';
-    document.getElementById('driverLicenseExpiry').value = '';
-    document.getElementById('driverHireDate').value = '{{ date('Y-m-d') }}';
-    document.getElementById('driverAddress').value = '';
-    document.getElementById('driverEmergencyContact').value = '';
-    document.getElementById('driverEmergencyPhone').value = '';
-    const targetInput = document.getElementById('driverBoundaryTarget');
-    const codingAlert = document.getElementById('codingBoundaryAlert');
-    targetInput.value = '0';
-    if (document.getElementById('unitDerivedLabel')) {
-        const derivedLabel = document.getElementById('unitDerivedLabel');
-        derivedLabel.classList.add('hidden');
-    }
-    
-    if (codingAlert) {
-        codingAlert.classList.remove('hidden');
-        codingAlert.classList.remove('text-red-600');
-        codingAlert.classList.add('text-gray-500');
-        codingAlert.textContent = '(Pending Dispatch)';
-    }
-
-    document.getElementById('editIsActive').value = '1';
-    document.getElementById('deleteDriverButton').classList.add('hidden');
-    document.getElementById('addDriverModal').classList.remove('hidden');
-    lucide.createIcons();
-}
-
-function openEditDriverModal(id) {
-    fetch('{{ route('driver-management.index') }}/' + id + '?format=json', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById('driverModalTitle').textContent = 'Edit Driver';
-        document.getElementById('driverFormMethod').value = 'PUT';
-        document.getElementById('driverForm').action = '{{ url('driver-management') }}/' + id;
-        document.getElementById('editDriverId').value = id;
-        document.getElementById('driverFirstName').value = data.first_name || '';
-        document.getElementById('driverLastName').value = data.last_name || '';
-
-        document.getElementById('driverContact').value = data.contact_number || '';
-        document.getElementById('driverLicense').value = data.license_number || '';
-        document.getElementById('driverLicenseExpiry').value = data.license_expiry || '';
-        document.getElementById('driverHireDate').value = data.hire_date || '{{ date('Y-m-d') }}';
-        document.getElementById('driverAddress').value = data.address || '';
-        document.getElementById('driverEmergencyContact').value = data.emergency_contact || '';
-        document.getElementById('driverEmergencyPhone').value = data.emergency_phone || '';
-        
-        // Dynamic Boundary Automation (Sync with Controller Trait)
-        const targetInput = document.getElementById('driverBoundaryTarget');
-        const codingAlert = document.getElementById('codingBoundaryAlert');
-        
-        if (data.current_pricing) {
-            targetInput.value = data.current_pricing.rate.toFixed(2);
-            
-            // Show inheritance label if assigned
-            const derivedLabel = document.getElementById('unitDerivedLabel');
-            if (data.assigned_unit) {
-                if (derivedLabel) {
-                    derivedLabel.textContent = `(Inherited from ${data.assigned_unit})`;
-                    derivedLabel.classList.remove('hidden');
-                }
-            } else {
-                if (derivedLabel) derivedLabel.classList.add('hidden');
-            }
-
-            if (data.current_pricing.label && data.current_pricing.type !== 'regular') {
-                codingAlert.classList.remove('hidden');
-                codingAlert.textContent = data.current_pricing.label;
-                codingAlert.className = data.current_pricing.type === 'coding' ? 'text-[11px] text-red-600 font-bold' : 'text-[11px] text-blue-600 font-bold';
-            } else {
-                codingAlert.classList.add('hidden');
-            }
-        } else {
-            targetInput.value = data.daily_boundary_target || '0.00';
-            const derivedLabel = document.getElementById('unitDerivedLabel');
-            if (derivedLabel) derivedLabel.classList.add('hidden');
-            codingAlert.classList.add('hidden');
-        }
-        document.getElementById('editIsActive').value = data.is_active ? '1' : '0';
-        document.getElementById('deleteDriverButton').classList.remove('hidden');
-        document.getElementById('addDriverModal').classList.remove('hidden');
-        lucide.createIcons();
-    })
-    .catch(() => {
-        // Fallback: just show empty edit modal
-        document.getElementById('driverModalTitle').textContent = 'Edit Driver';
-        document.getElementById('driverFormMethod').value = 'PUT';
-        document.getElementById('driverForm').action = '{{ url('driver-management') }}/' + id;
-        document.getElementById('editDriverId').value = id;
-        document.getElementById('deleteDriverButton').classList.remove('hidden');
-        document.getElementById('addDriverModal').classList.remove('hidden');
-        lucide.createIcons();
-    });
-}
-
-function closeAddDriverModal() {
-    document.getElementById('addDriverModal').classList.add('hidden');
-}
-
-function confirmDeleteDriver() {
-    const id = document.getElementById('editDriverId').value;
-    const firstName = document.getElementById('driverFirstName').value || '';
-    const lastName = document.getElementById('driverLastName').value || '';
-    const name = (firstName + ' ' + lastName).trim() || 'this driver';
-    deleteDriver(id, name);
-}
-
-function deleteDriver(id, name) {
-    if (!id) return;
-    if (confirm('Are you sure you want to delete ' + name + '?')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{{ url('driver-management') }}/' + id;
-        form.innerHTML = '@csrf' +
-                         '<input type="hidden" name="_method" value="DELETE">';
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
-
-function openDriverDetails(id) {
-    const modal = document.getElementById('driverDetailsModal');
-    modal.classList.remove('hidden');
-
-    // Reset tab state
-    document.querySelectorAll('.driver-tab').forEach(btn => {
-        btn.classList.remove('border-yellow-500', 'text-yellow-600', 'active');
-        btn.classList.add('border-transparent', 'text-gray-500');
-    });
-    document.querySelectorAll('.driver-tab-panel').forEach(panel => {
-        panel.classList.add('hidden');
-    });
-    const firstTab = document.querySelector('.driver-tab[data-tab="basic"]');
-    const firstPanel = document.querySelector('.driver-tab-panel[data-tab-panel="basic"]');
-    if (firstTab && firstPanel) {
-        firstTab.classList.add('border-yellow-500', 'text-yellow-600', 'active');
-        firstTab.classList.remove('border-transparent', 'text-gray-500');
-        firstPanel.classList.remove('hidden');
-    }
-
-    document.getElementById('driverDocumentsDriverId').value = id;
-    document.getElementById('driverDocumentsForm').action = '{{ url('driver-management/upload-documents') }}/' + id;
-
-    // Fetch basic details
-    fetch('{{ route('driver-management.index') }}/' + id + '?format=json', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        document.getElementById('driverDetailsName').textContent = data.full_name || 'Driver Details';
-
-        document.getElementById('basicInfoContent').innerHTML = `
-            <div>
-                <p><span class="font-semibold">First Name:</span> ${data.first_name || ''}</p>
-                <p><span class="font-semibold">Last Name:</span> ${data.last_name || ''}</p>
-
-                <p><span class="font-semibold">Contact:</span> ${data.contact_number || 'N/A'}</p>
-                <p><span class="font-semibold">Address:</span> ${data.address || 'N/A'}</p>
-                <p><span class="font-semibold">Emergency Contact:</span> ${data.emergency_contact || 'N/A'}</p>
-                <p><span class="font-semibold">Emergency Phone:</span> ${data.emergency_phone || 'N/A'}</p>
-            </div>
-            <div>
-                <p><span class="font-semibold">Hire Date:</span> ${data.hire_date || 'N/A'}</p>
-                <p><span class="font-semibold">Daily Boundary Target:</span> ₱${data.current_pricing ? data.current_pricing.rate.toFixed(2) : data.daily_boundary_target}</p>
-                ${data.current_pricing && data.current_pricing.type !== 'regular' ? `<p class="text-[10px] text-blue-600 font-bold">${data.current_pricing.label}</p>` : ''}
-                <p><span class="font-semibold">Status:</span> ${data.is_active ? 'Active' : 'Inactive'}</p>
-                <div class="mt-4 pt-2 border-t border-gray-100">
-                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Record Credit</p>
-                    <p class="text-xs text-gray-600"><span class="font-medium text-gray-500">Input by:</span> ${data.creator_name || 'System'}</p>
-                    <p class="text-xs text-gray-600"><span class="font-medium text-gray-500">Last Edit:</span> ${data.editor_name || 'System'}</p>
-                </div>
-            </div>
-        `;
-
-        document.getElementById('licenseInfoContent').innerHTML = `
-            <div>
-                <p><span class="font-semibold">License Number:</span> ${data.license_number || ''}</p>
-                <p><span class="font-semibold">License Expiry:</span> ${data.license_expiry || ''}</p>
-            </div>
-            <div>
-                <p class="text-xs text-gray-500">License status and reminders will be computed here (e.g., expiring soon).</p>
-            </div>
-        `;
-
-        lucide.createIcons();
-    })
-    .catch(() => {
-        document.getElementById('basicInfoContent').innerHTML = '<p class="text-red-500">Failed to load details.</p>';
-    });
-
-    lucide.createIcons();
-}
-</script>
 
 @push('scripts')
 <script>
@@ -634,36 +438,104 @@ function openDriverDetails(id) {
             document.getElementById('driverDetailsSubtitle').textContent = data.assigned_unit ? `Assigned to ${data.assigned_unit}` : 'Not currently assigned';
 
             document.getElementById('basicInfoContent').innerHTML = `
-                <div>
-                    <p><span class="font-semibold text-gray-500">First Name:</span> ${data.first_name || ''}</p>
-                    <p><span class="font-semibold text-gray-500">Last Name:</span> ${data.last_name || ''}</p>
-
-                    <p><span class="font-semibold text-gray-500">Contact:</span> ${data.contact_number || 'N/A'}</p>
-                    <p><span class="font-semibold text-gray-500">Address:</span> ${data.address || 'N/A'}</p>
-                    <p><span class="font-semibold text-gray-500">Emergency Contact:</span> ${data.emergency_contact || 'N/A'}</p>
-                    <p><span class="font-semibold text-gray-500">Emergency Phone:</span> ${data.emergency_phone || 'N/A'}</p>
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <i data-lucide="user-circle" class="w-4 h-4 text-blue-500"></i> Personal Information
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-end border-b border-gray-50 pb-2">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Full Name</span>
+                                <span class="text-sm font-black text-gray-900">${data.first_name || ''} ${data.last_name || ''}</span>
+                            </div>
+                            <div class="flex justify-between items-end border-b border-gray-50 pb-2">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Contact Number</span>
+                                <span class="text-sm font-bold text-gray-800">${data.contact_number || 'N/A'}</span>
+                            </div>
+                            <div class="flex flex-col border-b border-gray-50 pb-2">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Address</span>
+                                <span class="text-sm font-bold text-gray-800">${data.address || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between items-end border-b border-gray-50 pb-2">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Emergency Contact</span>
+                                <span class="text-sm font-bold text-gray-800">${data.emergency_contact || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Emergency Phone</span>
+                                <span class="text-sm font-bold text-red-600">${data.emergency_phone || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p><span class="font-semibold text-gray-500">Hire Date:</span> ${data.hire_date || 'N/A'}</p>
-                    <p><span class="font-semibold text-gray-500">Standard Rate:</span> ₱${data.assigned_boundary_rate ? parseFloat(data.assigned_boundary_rate).toLocaleString() : '0.00'}</p>
-                    <p><span class="font-semibold text-gray-500">Active Target:</span> ₱${data.current_pricing ? data.current_pricing.rate.toFixed(2) : '0.00'}</p>
-                    ${data.current_pricing && data.current_pricing.label ? `<p class="text-[10px] text-blue-600 font-bold">${data.current_pricing.label}</p>` : ''}
-                    <p><span class="font-semibold text-gray-500">Status:</span> 
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${data.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                            ${data.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                    </p>
+
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <i data-lucide="briefcase" class="w-4 h-4 text-emerald-500"></i> Employment Details
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-end border-b border-gray-50 pb-2">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</span>
+                                <span class="text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-widest ${data.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                    ${data.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-end border-b border-gray-50 pb-2">
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Hire Date</span>
+                                <span class="text-sm font-bold text-gray-800">${data.hire_date || 'N/A'}</span>
+                            </div>
+                            <div class="flex flex-col border-b border-gray-50 pb-3 bg-blue-50/50 p-3 rounded-xl mt-2">
+                                <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider mb-1">Financial Target</span>
+                                <div class="flex justify-between items-end">
+                                    <span class="text-[10px] font-bold text-gray-500">Boundary Target</span>
+                                    <span class="text-xl font-black text-gray-900 tracking-tight">₱${data.current_pricing ? data.current_pricing.rate.toFixed(2) : parseFloat(data.daily_boundary_target || 0).toFixed(2)}</span>
+                                </div>
+                                ${data.current_pricing && data.current_pricing.type !== 'regular' ? `<div class="mt-1 flex justify-end"><span class="text-[9px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase font-black tracking-widest">${data.current_pricing.label}</span></div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-100 flex justify-between items-end bg-gray-50 p-3 rounded-lg">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-0.5">Record By</span>
+                            <span class="text-[11px] font-bold text-gray-600">${data.creator_name || 'System'}</span>
+                        </div>
+                        <div class="flex flex-col text-right">
+                            <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-0.5">Last Edit</span>
+                            <span class="text-[11px] font-bold text-gray-600">${data.editor_name || 'System'}</span>
+                        </div>
+                    </div>
                 </div>
             `;
 
             document.getElementById('licenseInfoContent').innerHTML = `
-                <div>
-                    <p><span class="font-semibold text-gray-500">License Number:</span> ${data.license_number || ''}</p>
-                    <p><span class="font-semibold text-gray-500">License Expiry:</span> ${data.license_expiry || ''}</p>
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-full">
+                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i data-lucide="award" class="w-4 h-4 text-yellow-500"></i> License Credentials
+                    </h4>
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 p-4 rounded-xl flex items-center justify-between border border-gray-100">
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">License Number</span>
+                                <span class="text-lg font-black text-gray-900 tracking-wider font-mono">${data.license_number || 'NOT PROVIDED'}</span>
+                            </div>
+                            <i data-lucide="credit-card" class="w-8 h-8 text-gray-300"></i>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-50 pb-2 px-1">
+                            <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Expiration Date</span>
+                            <span class="text-sm font-bold text-gray-800">${data.license_expiry || 'N/A'}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                    <p class="text-[11px] text-blue-700 font-medium">Auto-Status Detection</p>
-                    <p class="text-xs text-blue-600 mt-1">Based on expiry date: No active issues detected.</p>
+                
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-center items-center text-center h-full">
+                    <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-blue-500"></i>
+                    </div>
+                    <h4 class="text-sm font-black text-gray-900 mb-2">Compliance Status</h4>
+                    <p class="text-xs text-gray-500 leading-relaxed max-w-[250px]">
+                        License status and automated expiration reminders will be computed here. Ensure documents are up to date.
+                    </p>
                 </div>
             `;
 
@@ -698,40 +570,42 @@ function openDriverDetails(id) {
             }
 
             document.getElementById('incentivesContent').innerHTML = `
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 shrink-0">
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-4 text-center flex flex-col justify-center">
                         <p class="text-[10px] text-green-500 font-black uppercase tracking-widest mb-1">Monthly Incentive</p>
                         <p class="text-xl font-black text-green-700">₱${parseFloat(data.monthly_incentive||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
                         <p class="text-[10px] text-green-500 mt-0.5">5% of eligible collections</p>
                     </div>
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center flex flex-col justify-center">
                         <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest mb-1">Shifts This Month</p>
                         <p class="text-xl font-black text-blue-700">${data.total_shifts_month||0}</p>
                         <p class="text-[10px] text-blue-500 mt-0.5">${data.incentive_earned_count||0} earned / ${data.incentive_missed_count||0} missed</p>
                     </div>
-                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-center flex flex-col justify-center">
                         <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Incentive Rate</p>
                         <p class="text-xl font-black ${rateColor}">${incentiveRate}%</p>
                         <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1"><div class="${rateBar} h-1.5 rounded-full" style="width:${incentiveRate}%"></div></div>
                     </div>
-                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-center flex flex-col justify-center">
                         <p class="text-[10px] text-red-500 font-black uppercase tracking-widest mb-1">Missed Reasons</p>
                         <p class="text-[11px] text-red-700 font-bold">Late Turn: ${data.late_turn_missed||0}</p>
                         <p class="text-[11px] text-orange-600 font-bold">Vehicle Damage: ${data.damage_missed||0}</p>
                         <p class="text-[11px] text-red-600 font-bold">Breakdown: ${data.breakdown_missed||0}</p>
                     </div>
                 </div>
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Per-Shift Incentive Log (Last 15)</p>
-                <div class="overflow-x-auto rounded-xl border border-gray-100">
-                    <table class="w-full text-xs text-left">
-                        <thead class="bg-gray-50 text-gray-500 font-bold">
-                            <tr>
-                                <th class="p-2">Date</th><th class="p-2">Unit</th><th class="p-2">Actual</th>
-                                <th class="p-2">Status</th><th class="p-2 text-center">Incentive</th><th class="p-2">Reason (if missed)</th>
-                            </tr>
-                        </thead>
-                        <tbody>${incentiveRowsHtml}</tbody>
-                    </table>
+                <div class="flex-1 flex flex-col min-h-0 bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 shrink-0">Per-Shift Incentive Log (Last 15)</p>
+                    <div class="overflow-y-auto flex-1 rounded-lg border border-gray-100">
+                        <table class="w-full text-xs text-left relative">
+                            <thead class="bg-gray-50 text-gray-500 font-bold sticky top-0 shadow-sm z-10">
+                                <tr>
+                                    <th class="p-3">Date</th><th class="p-3">Unit</th><th class="p-3">Actual</th>
+                                    <th class="p-3">Status</th><th class="p-3 text-center">Incentive</th><th class="p-3">Reason (if missed)</th>
+                                </tr>
+                            </thead>
+                            <tbody>${incentiveRowsHtml}</tbody>
+                        </table>
+                    </div>
                 </div>`;
 
             // ===================== PERFORMANCE TAB =====================

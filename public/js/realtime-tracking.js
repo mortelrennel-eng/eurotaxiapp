@@ -44,8 +44,8 @@ function initMap() {
 
 function startTracking() {
     updateFleetData();
-    // Poll every 20 seconds (safer for API rate limits)
-    updateInterval = setInterval(updateFleetData, 20000);
+    // Poll every 5 seconds to match Tracksolid API real-time push
+    updateInterval = setInterval(updateFleetData, 5000);
 }
 
 async function updateFleetData() {
@@ -72,30 +72,10 @@ async function updateFleetData() {
                 apiStatus.className = 'api-status-text text-[10px] font-black text-green-600 uppercase';
             }
 
-            // Sync Notification Bell (Real-time Notif)
-            if (data.alerts) {
-                const bell = document.getElementById('notificationBell');
-                if (bell) {
-                    let badge = bell.querySelector('span');
-                    const count = data.alerts.length;
-                    
-                    if (count > 0) {
-                        if (!badge) {
-                            badge = document.createElement('span');
-                            badge.className = 'absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] leading-[18px] rounded-full text-center';
-                            bell.appendChild(badge);
-                        }
-                        badge.textContent = count;
-                    } else if (badge) {
-                        badge.remove();
-                    }
-                }
-            }
-
             // Auto-follow logic
             if (followingUnitId && markers[followingUnitId]) {
                 const latlng = markers[followingUnitId].getLatLng();
-                map.panTo(latlng, { animate: true, duration: 2 });
+                map.panTo(latlng, { animate: true, duration: 1 });
             }
         }
     } catch (error) {
@@ -445,7 +425,17 @@ function updateMarker(unit) {
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between pt-2 border-t border-gray-50">
+                <!-- Engine Control -->
+                <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-gray-100/50">
+                    <button onclick="toggleEngineControl(${unit.unit_id}, 'kill', this)" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white border border-red-200 hover:border-red-600 transition-colors py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 shadow-sm">
+                        <i data-lucide="power-off" class="w-3 h-3"></i> Kill Engine
+                    </button>
+                    <button onclick="toggleEngineControl(${unit.unit_id}, 'restore', this)" class="bg-green-50 hover:bg-green-500 text-green-600 hover:text-white border border-green-200 hover:border-green-500 transition-colors py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1 shadow-sm">
+                        <i data-lucide="power" class="w-3 h-3"></i> Restore
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-gray-50 mt-3">
                     <div class="flex flex-col">
                         <div class="text-[10px] text-gray-400 font-bold italic">
                             Sync: ${unit.last_update || 'N/A'}
@@ -641,3 +631,64 @@ function drawRestrictedZones(group) {
         }).addTo(group).bindTooltip(`${name} Restricted Road`);
     }
 }
+
+// Global scope for engine control
+window.toggleEngineControl = async function(unitId, action, btn) {
+    const originalText = btn.innerHTML;
+    const isKill = action === 'kill';
+    
+    // Quick double-check UI logic without password
+    if (isKill && confirm("WARNING: Are you sure you want to CUT OFF the engine for this unit? Ensure the vehicle is in a safe location.") === false) {
+        return;
+    }
+
+    // Set loading state
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Sending...`;
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+    try {
+        const response = await fetch('/live-tracking/engine-control', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ unit_id: unitId, action: action })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Command Sent!',
+                text: data.message,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Command Failed',
+                text: data.error || 'The command was rejected by the API.',
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Network Error',
+            text: 'Could not connect to the server.'
+        });
+    } finally {
+        // Restore button state
+        btn.innerHTML = originalText;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+};

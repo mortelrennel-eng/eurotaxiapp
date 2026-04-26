@@ -316,4 +316,49 @@ class TracksolidService
             return null;
         }
     }
+
+    /**
+     * Send Engine Cut-off / Restore Command
+     * Uses jimi.device.instruction.send mapping or generic.
+     */
+    public function sendEngineCommand(string $imei, string $action)
+    {
+        $token = $this->getAccessToken();
+        if (!$token) return ['success' => false, 'error' => 'API Auth Failed'];
+
+        // 'Relay,1#' for cut-off, 'Relay,0#' for restore 
+        // Using "Custom" passing raw command
+        $paramValue = ($action === 'kill') ? 'Relay,1#' : 'Relay,0#';
+
+        $params = [
+            'method'       => 'jimi.device.instruction.send',
+            'app_key'      => $this->appKey,
+            'access_token' => $token,
+            'timestamp'    => $this->getTimestamp(),
+            'format'       => 'json',
+            'v'            => '1.0',
+            'sign_method'  => 'md5',
+            'imei'         => $imei,
+            'cmd_type'     => 'Custom', 
+            'param'        => $paramValue,
+        ];
+
+        $params['sign'] = $this->generateSignature($params);
+
+        try {
+            $response = Http::asForm()->post($this->apiUrl, $params);
+            $data = $response->json();
+
+            if (isset($data['code']) && $data['code'] == 0) {
+                return ['success' => true, 'data' => $data];
+            }
+
+            Log::warning('Tracksolid Engine Command Rejected: ' . json_encode($data));
+            return ['success' => false, 'error' => $data['msg'] ?? 'Tracker rejected the command or is offline.'];
+
+        } catch (\Exception $e) {
+            Log::error('Tracksolid API Exception (Engine Command): ' . $e->getMessage());
+            return ['success' => false, 'error' => 'Server communication error: ' . $e->getMessage()];
+        }
+    }
 }

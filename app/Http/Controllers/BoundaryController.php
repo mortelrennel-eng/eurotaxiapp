@@ -243,6 +243,7 @@ class BoundaryController extends Controller
                     $is_extra_driver = false;
                     $expected_driver_id = $unit ? $unit->current_turn_driver_id : $driver_id;
                     $has_incentive = true;
+                    $now = now();
 
                     $past_cutoff = $request->has('past_cutoff');
                     if ($past_cutoff) {
@@ -268,7 +269,6 @@ class BoundaryController extends Controller
                     $is_absent = false; // "Absent / No Show" logic removed per user request
 
                     if ($unit) {
-                        $now = now();
                         
                         // Shifting Deadline Check: Legacy auto-voiding for late returns removed per user request. 
                         // Incentives now only focus on the 10:00 AM Cut-off (Late Boundary).

@@ -443,6 +443,9 @@
                                                         @if($part->quantity > 1)
                                                         <span class="text-xs text-gray-500 ml-1">(x{{ $part->quantity }})</span>
                                                         @endif
+                                                        @if(!empty($part->supplier))
+                                                        <span class="mx-1 text-gray-300">|</span> <span class="text-[10px] font-bold text-blue-600 uppercase tracking-tight">Supplier: {{ $part->supplier }}</span>
+                                                        @endif
                                                     </div>
                                                     <div class="text-sm font-bold text-gray-900">₱{{ number_format($part->total, 2) }}</div>
                                                 </div>

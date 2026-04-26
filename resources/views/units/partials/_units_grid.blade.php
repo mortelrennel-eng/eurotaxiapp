@@ -11,7 +11,7 @@
                 'active'       => 'text-green-500',
                 'maintenance'  => 'text-red-500',
                 'coding'       => 'text-yellow-600',
-                'at_risk'      => 'text-orange-500',
+                'surveillance' => 'text-orange-500',
                 'vacant', 'available' => 'text-gray-400',
                 default        => 'text-gray-400',
             };
@@ -19,7 +19,7 @@
                 'active'       => 'bg-green-500',
                 'maintenance'  => 'bg-red-500',
                 'coding'       => 'bg-yellow-500',
-                'at_risk'      => 'bg-orange-500',
+                'surveillance' => 'bg-orange-500',
                 'vacant', 'available' => 'bg-gray-400',
                 default        => 'bg-gray-400',
             };
@@ -43,7 +43,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-2.5 h-2.5 rounded-full {{ $dot_bg }} animate-pulse {{ $unit->status === 'active' ? 'shadow-[0_0_8px_rgba(34,197,94,0.6)]' : '' }}"></div>
-                    <span class="text-xs font-bold {{ $status_color }}">{{ $unit->status === 'at_risk' ? 'At Risk' : ucfirst($unit->status === 'available' ? 'vacant' : $unit->status) }}</span>
+                    <span class="text-xs font-bold {{ $status_color }}">{{ ucfirst($unit->status === 'available' ? 'vacant' : $unit->status) }}</span>
                 </div>
             </div>
 

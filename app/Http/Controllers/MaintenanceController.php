@@ -324,7 +324,12 @@ class MaintenanceController extends Controller
 
     public function getParts($id) 
     {
-        $parts = DB::table('maintenance_parts')->where('maintenance_id', $id)->get();
+        $parts = DB::table('maintenance_parts')
+            ->leftJoin('spare_parts', 'maintenance_parts.part_id', '=', 'spare_parts.id')
+            ->where('maintenance_parts.maintenance_id', $id)
+            ->select('maintenance_parts.*', 'spare_parts.supplier')
+            ->get();
+
         return response()->json([
             'success' => true,
             'data' => $parts
