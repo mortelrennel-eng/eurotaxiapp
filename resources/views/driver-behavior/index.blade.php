@@ -65,14 +65,23 @@
 {{-- ════════ HEADER STATS (COMPACT) ════════ --}}
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
-    {{-- 1. VIOLATIONS TODAY --}}
+    {{-- 1. VIOLATIONS --}}
     <div class="stat-card-premium relative overflow-hidden bg-gradient-to-br from-red-600 to-rose-700 rounded-2xl p-4 text-white shadow-lg shadow-red-100 group">
         <div class="absolute right-[-5px] top-[-5px] opacity-10 transition-transform group-hover:scale-110 duration-500">
             <i data-lucide="alert-circle" class="w-16 h-16"></i>
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
-            <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['violations_today'] ?? 0 }}</p>
-            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Violations Today</p>
+            <div id="todayViolationsView">
+                <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['violations_today'] ?? 0 }}</p>
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Violations Today</p>
+            </div>
+            <div id="periodViolationsView" class="hidden">
+                <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['incidents_period'] ?? 0 }}</p>
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Violations in Period</p>
+            </div>
+            <button type="button" onclick="toggleCard('todayViolationsView', 'periodViolationsView', 'toggleViolationsText')" class="mt-2 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all">
+                <span id="toggleViolationsText">View Period total</span>
+            </button>
         </div>
     </div>
 
@@ -82,8 +91,17 @@
             <i data-lucide="users" class="w-16 h-16"></i>
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
-            <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['total_violators'] ?? 0 }}</p>
-             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
+            <div id="totalViolatorsView">
+                <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['total_violators'] ?? 0 }}</p>
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
+            </div>
+            <div id="todayViolatorsView" class="hidden text-center">
+                <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['violators_today'] ?? 0 }}</p>
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Today Violators</p>
+            </div>
+            <button type="button" onclick="toggleCard('totalViolatorsView', 'todayViolatorsView', 'toggleViolatorsCountText')" class="mt-2 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all">
+                <span id="toggleViolatorsCountText">View Today</span>
+            </button>
         </div>
     </div>
 
@@ -105,8 +123,7 @@
             </div>
             
             {{-- Toggle Button --}}
-            <button type="button" onclick="toggleMonthlyCharge()" class="mt-3 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 border border-white/5 flex items-center gap-1.5">
-                <i data-lucide="arrow-left-right" class="w-2.5 h-2.5"></i>
+            <button type="button" onclick="toggleCard('currentMonthCharge', 'lastMonthCharge', 'toggleChargeText')" class="mt-2 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all">
                 <span id="toggleChargeText">View last month</span>
             </button>
         </div>
@@ -118,8 +135,17 @@
             <i data-lucide="trophy" class="w-16 h-16"></i>
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
-            <p class="text-3xl font-black tracking-tighter leading-none">{{ count($incentive_summary['eligible'] ?? []) }}</p>
-            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Eligible Incentive</p>
+            <div id="eligibleNowView">
+                <p class="text-3xl font-black tracking-tighter leading-none">{{ count($incentive_summary['eligible'] ?? []) }}</p>
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Eligible Incentive</p>
+            </div>
+            <div id="eligibleLastMonthView" class="hidden">
+                <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['last_month_eligible_count'] ?? 0 }}</p>
+                <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Last Month Eligible</p>
+            </div>
+            <button type="button" onclick="toggleCard('eligibleNowView', 'eligibleLastMonthView', 'toggleIncentiveText')" class="mt-2 px-2 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all">
+                <span id="toggleIncentiveText">View last month</span>
+            </button>
         </div>
     </div>
 </div>
@@ -1016,19 +1042,22 @@ let incidentPartsCart = [];
 let incidentServices = [];
 let partyIndex = 0;
 
-function toggleMonthlyCharge() {
-    const currentView = document.getElementById('currentMonthCharge');
-    const lastView = document.getElementById('lastMonthCharge');
-    const toggleText = document.getElementById('toggleChargeText');
+function toggleCard(view1Id, view2Id, textId) {
+    const view1 = document.getElementById(view1Id);
+    const view2 = document.getElementById(view2Id);
+    const textLabel = document.getElementById(textId);
 
-    if (currentView.classList.contains('hidden')) {
-        currentView.classList.remove('hidden');
-        lastView.classList.add('hidden');
-        toggleText.textContent = 'View last month';
+    if (view1.classList.contains('hidden')) {
+        view1.classList.remove('hidden');
+        view2.classList.add('hidden');
+        textLabel.textContent = textLabel.dataset.orig || 'View Period total';
     } else {
-        currentView.classList.add('hidden');
-        lastView.classList.remove('hidden');
-        toggleText.textContent = 'View current month';
+        // Save original text if not saved
+        if (!textLabel.dataset.orig) textLabel.dataset.orig = textLabel.textContent;
+        
+        view1.classList.add('hidden');
+        view2.classList.remove('hidden');
+        textLabel.textContent = 'View current';
     }
 }
 

@@ -565,6 +565,11 @@ class DriverBehaviorController extends Controller
             ->whereDate('timestamp', now()->format('Y-m-d'))
             ->count();
 
+        $violatorsToday = DB::table('driver_behavior')
+            ->whereDate('timestamp', now()->format('Y-m-d'))
+            ->distinct('driver_id')
+            ->count('driver_id');
+
         // [NEW] Monthly calculations for the "Monthly Total Charge" card
         $tz = 'Asia/Manila';
         $currentMonthStart = now()->timezone($tz)->startOfMonth();
@@ -580,16 +585,24 @@ class DriverBehaviorController extends Controller
             ->whereBetween('timestamp', [$lastMonthStart, $lastMonthEnd])
             ->sum('total_charge_to_driver');
 
+        // [NEW] Last month eligibility count (based on released incentives)
+        $lastMonthReleasedIncentives = DB::table('boundaries')
+            ->whereBetween('incentive_released_at', [$lastMonthStart, $lastMonthEnd])
+            ->distinct('driver_id')
+            ->count('driver_id');
+
         return [
-            'incidents_period'        => (clone $base)->count(),
-            'violations_today'        => $violationsToday,
-            'by_severity'             => $bySev,
-            'incident_types'          => $byType,
-            'total_violators'         => $totalViolators,
-            'total_charges'           => $totalCharges,
-            'monthly_total_charges'   => $monthlyTotalCharges,
-            'last_month_total_charges'=> $lastMonthTotalCharges,
-            'pending_charges'         => $pendingCharges,
+            'incidents_period'           => (clone $base)->count(),
+            'violations_today'           => $violationsToday,
+            'violators_today'            => $violatorsToday,
+            'by_severity'                => $bySev,
+            'incident_types'             => $byType,
+            'total_violators'            => $totalViolators,
+            'total_charges'              => $totalCharges,
+            'monthly_total_charges'      => $monthlyTotalCharges,
+            'last_month_total_charges'   => $lastMonthTotalCharges,
+            'last_month_eligible_count'  => $lastMonthReleasedIncentives,
+            'pending_charges'            => $pendingCharges,
         ];
     }
 
