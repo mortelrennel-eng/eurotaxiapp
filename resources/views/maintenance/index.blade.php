@@ -101,7 +101,7 @@
 {{-- Stats --}}
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
     <!-- Card 1: Total Records -->
-    <div class="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-white rounded-2xl shadow-sm border border-gray-100 border-l-[6px] border-l-blue-800 p-5 text-center group hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
         <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-500">
             <i data-lucide="folder-open" class="w-28 h-28 text-gray-900"></i>
         </div>
@@ -110,7 +110,7 @@
     </div>
 
     <!-- Card 2: Pending -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-yellow-50/80 to-white rounded-2xl shadow-sm border border-yellow-100/50 p-5 text-center group hover:shadow-md hover:shadow-yellow-100/50 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-gradient-to-br from-yellow-50/80 to-white rounded-2xl shadow-sm border border-yellow-100/50 border-l-[6px] border-l-orange-500 p-5 text-center group hover:shadow-md hover:shadow-yellow-100/50 hover:-translate-y-0.5 transition-all duration-300">
         <div class="absolute -right-4 -bottom-4 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <i data-lucide="clock" class="w-28 h-28 text-yellow-600"></i>
         </div>
@@ -120,7 +120,7 @@
     </div>
 
     <!-- Card 3: Active Work -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-blue-50/80 to-white rounded-2xl shadow-sm border border-blue-100/50 p-5 text-center group hover:shadow-md hover:shadow-blue-100/50 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-gradient-to-br from-blue-50/80 to-white rounded-2xl shadow-sm border border-blue-100/50 border-l-[6px] border-l-indigo-500 p-5 text-center group hover:shadow-md hover:shadow-blue-100/50 hover:-translate-y-0.5 transition-all duration-300">
         <div class="absolute -right-4 -bottom-4 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <i data-lucide="wrench" class="w-28 h-28 text-blue-600"></i>
         </div>
@@ -130,7 +130,7 @@
     </div>
 
     <!-- Card 4: Total Cost -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-green-50/80 to-white rounded-2xl shadow-sm border border-green-100/50 p-5 text-center group hover:shadow-md hover:shadow-green-100/50 hover:-translate-y-0.5 transition-all duration-300">
+    <div class="relative overflow-hidden bg-gradient-to-br from-green-50/80 to-white rounded-2xl shadow-sm border border-green-100/50 border-l-[6px] border-l-emerald-500 p-5 text-center group hover:shadow-md hover:shadow-green-100/50 hover:-translate-y-0.5 transition-all duration-300">
         <div class="absolute -right-2 -bottom-8 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500">
             <span class="text-[120px] font-black text-green-700 leading-none font-serif">₱</span>
         </div>
