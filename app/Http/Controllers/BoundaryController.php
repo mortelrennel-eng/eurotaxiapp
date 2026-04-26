@@ -210,6 +210,7 @@ class BoundaryController extends Controller
         $action = $request->input('action', '');
         
         if ($action === 'add_boundary') {
+            $now             = now();
             $unit_id         = (int) $request->input('unit_id', 0);
             $driver_id       = (int) $request->input('driver_id', 0);
             $date            = $request->input('date', date('Y-m-d'));
@@ -268,7 +269,6 @@ class BoundaryController extends Controller
                     $is_absent = false; // "Absent / No Show" logic removed per user request
 
                     if ($unit) {
-                        $now = now();
                         
                         // Shifting Deadline Check: Legacy auto-voiding for late returns removed per user request. 
                         // Incentives now only focus on the 10:00 AM Cut-off (Late Boundary).

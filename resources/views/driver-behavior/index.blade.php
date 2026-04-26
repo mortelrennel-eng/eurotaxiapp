@@ -1227,14 +1227,16 @@ function refreshPartSearchDropdown() {
             <div class="search-option part-search-option group ${isUnavailable ? 'opacity-60 cursor-not-allowed bg-red-50/10' : ''}" 
                  data-id="${p.id}" 
                  data-name="${p.name}" 
+                 data-supplier="${p.supplier || ''}"
                  data-price="${p.price}"
                  data-unavailable="${isUnavailable}">
                 <div class="flex justify-between items-center w-full">
-                    <div class="flex flex-col">
+                    <div class="flex flex-col text-left">
                         <div class="font-black text-xs text-gray-900">${p.name}</div>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="text-[9px] font-black ${isUnavailable ? 'text-red-500' : 'text-green-600'} uppercase">Stock: ${p.stock_quantity || 0}</span>
-                            ${p.supplier ? `<span class="text-[9px] font-bold text-gray-400 capitalize opacity-70">• ${p.supplier}</span>` : ''}
+                            <span class="text-[9px] font-black text-gray-300 uppercase tracking-widest">|</span>
+                            <span class="text-[9px] font-black text-gray-400 uppercase tracking-[0.1em]">Supplier: ${p.supplier || 'Unspecified'}</span>
                         </div>
                     </div>
                     <div class="flex flex-col items-end">
@@ -1254,9 +1256,11 @@ function initPartSearch() {
 
     input.onfocus = () => { refreshPartSearchDropdown(); dropdown.classList.remove('hidden'); };
     input.oninput = () => { 
-        const q = input.value.toLowerCase();
+        const q = input.value.toLowerCase().trim();
         dropdown.querySelectorAll('.part-search-option').forEach(opt => {
-            opt.style.display = opt.dataset.name.toLowerCase().includes(q) ? 'block' : 'none';
+            const match = opt.dataset.name.toLowerCase().includes(q) || 
+                          opt.dataset.supplier.toLowerCase().includes(q);
+            opt.style.display = match ? 'block' : 'none';
         });
         dropdown.classList.remove('hidden');
     };
