@@ -64,6 +64,31 @@ class MaintenanceController extends Controller
             SUM(CASE WHEN maintenance.status IN ("in_progress", "in_shop", "testing") THEN 1 ELSE 0 END) as in_progress_count
         ')->first();
 
+        // 7-Day Trend Data for Sparklines
+        $sevenDaysAgo = date('Y-m-d', strtotime('-6 days'));
+        $trendsRaw = DB::table('maintenance')
+            ->whereNull('deleted_at')
+            ->where('date_started', '>=', $sevenDaysAgo)
+            ->selectRaw('
+                DATE(date_started) as d,
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status IN ("in_progress", "in_shop", "testing") THEN 1 ELSE 0 END) as active,
+                SUM(cost) as cost
+            ')
+            ->groupBy(DB::raw('DATE(date_started)'))
+            ->get()
+            ->keyBy('d');
+
+        $trends = ['total' => [], 'pending' => [], 'active' => [], 'cost' => []];
+        for ($i = 6; $i >= 0; $i--) {
+            $d = date('Y-m-d', strtotime("-$i days"));
+            $trends['total'][] = $trendsRaw->has($d) ? $trendsRaw[$d]->total : 0;
+            $trends['pending'][] = $trendsRaw->has($d) ? $trendsRaw[$d]->pending : 0;
+            $trends['active'][] = $trendsRaw->has($d) ? $trendsRaw[$d]->active : 0;
+            $trends['cost'][] = $trendsRaw->has($d) ? $trendsRaw[$d]->cost : 0;
+        }
+
         $units = DB::table('units')->whereNull('deleted_at')->where('status', '!=', 'retired')->orderBy('plate_number')->get();
         $drivers = DB::table('drivers')
             ->whereNull('deleted_at')
@@ -107,7 +132,8 @@ class MaintenanceController extends Controller
             'staff',
             'spare_parts',
             'suppliers',
-            'purchaseHistory'
+            'purchaseHistory',
+            'trends'
         ));
     }
 
