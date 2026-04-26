@@ -444,15 +444,31 @@
 </div>
 
 {{-- Add Modal --}}
-<div id="addMaintenanceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between mb-4">
-            <h3 class="text-lg font-semibold">Add Maintenance Record</h3>
-            <button onclick="document.getElementById('addMaintenanceModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+<div id="addMaintenanceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[95vh] flex flex-col overflow-hidden">
+        {{-- Modal Header (Deep Navy) --}}
+        <div class="bg-slate-800 p-4 shrink-0">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                        <i data-lucide="wrench" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white leading-tight">Add Maintenance Record</h3>
+                        <p class="text-sm text-blue-100 leading-tight">Create a new maintenance job for a unit</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('addMaintenanceModal').classList.add('hidden')" class="text-white hover:text-gray-200 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
-        <form method="POST" action="{{ route('maintenance.store') }}">
+        
+        {{-- Content Area --}}
+        <form method="POST" action="{{ route('maintenance.store') }}" class="flex flex-col flex-1 overflow-hidden">
             @csrf
-            <div class="space-y-3">
+            <div class="p-6 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="max-w-3xl mx-auto space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Unit *</label>
                     <div class="relative">
@@ -630,12 +646,14 @@
                     <p class="text-[10px] text-gray-400 mt-2 px-1 italic">Calculated sum of all parts and additional services above.</p>
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button type="submit" class="flex-1 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm font-bold shadow-lg shadow-green-100 transition-all flex items-center justify-center gap-2">
-                    <i data-lucide="check" class="w-4 h-4"></i> Save Record
-                </button>
-                <button type="button" onclick="document.getElementById('addMaintenanceModal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 text-sm font-bold transition-all">
+                </div>
+            </div>
+            <div class="p-4 border-t flex justify-end gap-3 shadow-inner bg-gray-50 shrink-0">
+                <button type="button" onclick="document.getElementById('addMaintenanceModal').classList.add('hidden')" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-bold transition-all">
                     Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-bold shadow-lg shadow-green-200/50 transition-all flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i> Save Record
                 </button>
             </div>
         </form>
@@ -643,15 +661,31 @@
 </div>
 
 {{-- Edit Modal --}}
-<div id="editMaintenanceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between mb-4">
-            <h3 class="text-lg font-semibold">Edit Maintenance Record</h3>
-            <button onclick="document.getElementById('editMaintenanceModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+<div id="editMaintenanceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[95vh] flex flex-col overflow-hidden">
+        {{-- Modal Header (Deep Navy) --}}
+        <div class="bg-slate-800 p-4 shrink-0">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                        <i data-lucide="edit-3" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white leading-tight">Edit Maintenance Record</h3>
+                        <p class="text-sm text-blue-100 leading-tight">Modify an existing maintenance job</p>
+                    </div>
+                </div>
+                <button type="button" onclick="document.getElementById('editMaintenanceModal').classList.add('hidden')" class="text-white hover:text-gray-200 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
-        <form id="editMaintForm" method="POST">
+        
+        {{-- Content Area --}}
+        <form id="editMaintForm" method="POST" class="flex flex-col flex-1 overflow-hidden">
             @csrf @method('PUT')
-            <div class="space-y-3">
+            <div class="p-6 flex-1 overflow-y-auto custom-scrollbar">
+                <div class="max-w-3xl mx-auto space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-700 mb-1">Unit *</label>
                     <div class="relative">
@@ -834,9 +868,15 @@
                     </div>
                 </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button type="submit" class="flex-1 py-3 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 text-sm font-bold shadow-lg shadow-yellow-100 transition-all">Update Record</button>
-                <button type="button" onclick="document.getElementById('editMaintenanceModal').classList.add('hidden')" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 text-sm font-bold transition">Cancel</button>
+                </div>
+            </div>
+            <div class="p-4 border-t flex justify-end gap-3 shadow-inner bg-gray-50 shrink-0">
+                <button type="button" onclick="document.getElementById('editMaintenanceModal').classList.add('hidden')" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm font-bold transition-all">
+                    Cancel
+                </button>
+                <button type="submit" class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm font-bold shadow-lg shadow-yellow-200/50 transition-all flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i> Update Record
+                </button>
             </div>
         </form>
     </div>
@@ -930,100 +970,110 @@
     <!-- ═══════════════════════════════════════════════════════════
          SPARE PARTS CATALOG MODAL — Clean list view
     ═══════════════════════════════════════════════════════════ -->
-    <div id="partsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:88vh">
-
-            {{-- Header --}}
-            <div class="flex items-center justify-between px-6 py-4 border-b">
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900">Spare Parts Catalog</h3>
-                    <p class="text-[11px] text-gray-400 mt-0.5">View, restock, and manage your parts inventory</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="openSuppliersModal()" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
-                        <i data-lucide="users" class="w-3 h-3"></i> Suppliers
-                    </button>
-                    <button onclick="openPartsArchiveModal()" class="px-3 py-1.5 bg-yellow-50 text-yellow-600 rounded-lg hover:bg-yellow-100 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
-                        <i data-lucide="archive" class="w-3 h-3"></i> Archives
-                    </button>
-                    <button onclick="openPartMiniModal()" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
-                        <i data-lucide="plus" class="w-3 h-3"></i> Add Part
-                    </button>
-                    <button onclick="closePartsModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition text-gray-400 hover:text-gray-700">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
+    <div id="partsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden">
+            {{-- Header (Deep Navy matching Unit Details) --}}
+            <div class="bg-slate-800 p-4 shrink-0">
+                <div class="flex justify-between items-center flex-wrap gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                            <i data-lucide="box" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white leading-tight">Spare Parts Catalog</h3>
+                            <p class="text-sm text-blue-100 leading-tight">View, restock, and manage your parts inventory</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openSuppliersModal()" class="px-3 py-1.5 bg-white bg-opacity-10 text-white rounded-lg hover:bg-opacity-20 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
+                            <i data-lucide="users" class="w-3 h-3"></i> Suppliers
+                        </button>
+                        <button onclick="openPartsArchiveModal()" class="px-3 py-1.5 bg-yellow-500/20 text-yellow-300 rounded-lg hover:bg-yellow-500/30 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5">
+                            <i data-lucide="archive" class="w-3 h-3"></i> Archives
+                        </button>
+                        <button onclick="openPartMiniModal()" class="px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-400 text-[10px] font-black uppercase tracking-widest transition flex items-center gap-1.5 shadow-md">
+                            <i data-lucide="plus" class="w-3 h-3"></i> Add Part
+                        </button>
+                        <div class="w-px h-6 bg-slate-600 mx-2"></div>
+                        <button onclick="closePartsModal()" class="text-white hover:text-gray-200 transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {{-- Toast --}}
             <div id="partsModalToast" class="hidden mx-6 mt-3 p-3 rounded-xl border flex items-center gap-3 text-sm font-bold shadow-sm"></div>
 
-            {{-- Search --}}
-            <div class="px-6 pt-3 pb-2">
-                <div class="relative">
-                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
-                    <input type="text" id="partsSearchInput"
-                        placeholder="Search parts by name or supplier..."
-                        oninput="filterPartsTable(this.value)"
-                        class="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50">
-                    <button id="btnClearPartsSearch" onclick="clearPartsSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition">
-                        <i data-lucide="x-circle" class="w-4 h-4"></i>
-                    </button>
+            {{-- Table & Search Container --}}
+            <div class="flex-1 flex flex-col overflow-hidden">
+                {{-- Search --}}
+                <div class="px-6 pt-4 pb-2 shrink-0">
+                    <div class="relative">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></i>
+                        <input type="text" id="partsSearchInput"
+                            placeholder="Search parts by name or supplier..."
+                            oninput="filterPartsTable(this.value)"
+                            class="w-full pl-9 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50">
+                        <button id="btnClearPartsSearch" onclick="clearPartsSearch()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition">
+                            <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-end mt-1">
+                        <span id="partsSearchCount" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"></span>
+                    </div>
                 </div>
-                <div class="flex justify-end mt-1">
-                    <span id="partsSearchCount" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"></span>
-                </div>
-            </div>
 
-            {{-- Parts Table --}}
-            <div class="flex-1 overflow-y-auto custom-scrollbar px-2">
-                <table class="min-w-full divide-y divide-gray-100">
-                    <thead class="bg-gray-50 sticky top-0">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Part Name</th>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Supplier</th>
-                            <th class="px-4 py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock</th>
-                            <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</th>
-                            <th class="px-4 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="partsTableBody" class="divide-y divide-gray-50">
-                        @foreach($spare_parts as $p)
-                        <tr class="hover:bg-gray-50/60 transition parts-row" data-name="{{ strtolower($p->name) }}" data-supplier="{{ strtolower($p->supplier ?? '') }}">
-                            <td class="px-4 py-3">
-                                <div class="text-sm font-semibold text-gray-800 part-name-cell">{{ $p->name }}</div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{{ $p->supplier ?? 'Unspecified' }}</div>
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase {{ ($p->stock_quantity ?? 0) <= 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700' }}">
-                                    {{ $p->stock_quantity ?? 0 }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-sm font-bold text-blue-600">₱{{ number_format($p->price, 2) }}</td>
-                            <td class="px-4 py-3 text-right">
-                                <div class="flex justify-end gap-1">
-                                    <button onclick="editCatalogPart({{ $p->id }}, '{{ addslashes($p->name) }}', {{ $p->price }}, {{ $p->stock_quantity ?? 0 }}, '{{ addslashes($p->supplier ?? '') }}')"
-                                        title="Add Stock"
-                                        class="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                                        <i data-lucide="package-plus" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="deletePart({{ $p->id }}, this)"
-                                        title="Delete"
-                                        class="p-2 text-red-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                {{-- Parts Table --}}
+                <div class="flex-1 overflow-y-auto custom-scrollbar px-6 pb-4">
+                    <table class="w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50 sticky top-0 z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Part Name</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Supplier</th>
+                                <th class="px-4 py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</th>
+                                <th class="px-4 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partsTableBody" class="divide-y divide-gray-50">
+                            @foreach($spare_parts as $p)
+                            <tr class="hover:bg-gray-50/60 transition parts-row" data-name="{{ strtolower($p->name) }}" data-supplier="{{ strtolower($p->supplier ?? '') }}">
+                                <td class="px-4 py-3">
+                                    <div class="text-sm font-semibold text-gray-800 part-name-cell">{{ $p->name }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{{ $p->supplier ?? 'Unspecified' }}</div>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase {{ ($p->stock_quantity ?? 0) <= 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700' }}">
+                                        {{ $p->stock_quantity ?? 0 }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm font-bold text-blue-600">₱{{ number_format($p->price, 2) }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <button onclick="editCatalogPart({{ $p->id }}, '{{ addslashes($p->name) }}', {{ $p->price }}, {{ $p->stock_quantity ?? 0 }}, '{{ addslashes($p->supplier ?? '') }}')"
+                                            title="Add Stock"
+                                            class="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                                            <i data-lucide="package-plus" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="deletePart({{ $p->id }}, this)"
+                                            title="Delete"
+                                            class="p-2 text-red-200 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {{-- Footer --}}
-            <div class="px-6 py-4 border-t flex justify-end">
+            <div class="p-4 border-t flex justify-end shadow-inner bg-gray-50 shrink-0">
                 <button onclick="closePartsModal()" class="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-black text-sm font-bold transition">Done</button>
             </div>
         </div>
