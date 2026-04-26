@@ -232,6 +232,13 @@ class DriverBehaviorController extends Controller
                     'total_price'        => $qty * $price,
                     'is_charged_to_driver' => $isCharged,
                 ]);
+
+                // Auto-deduct from Inventory if it's a catalog part
+                if (!empty($partData['spare_part_id'])) {
+                    DB::table('spare_parts')
+                        ->where('id', $partData['spare_part_id'])
+                        ->decrement('stock_quantity', $qty);
+                }
             }
         }
 

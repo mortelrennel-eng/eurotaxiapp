@@ -1050,9 +1050,21 @@
                 <input type="text" id="quickPartName" placeholder="e.g. Brake Pads, Side Mirror..."
                     class="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 focus:outline-none transition-all placeholder:text-gray-300">
             </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Price (₱)</label>
+                    <input type="number" id="quickPartPrice" placeholder="0.00"
+                        class="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 focus:outline-none transition-all placeholder:text-gray-300">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Initial Stock</label>
+                    <input type="number" id="quickPartStock" value="10"
+                        class="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 focus:outline-none transition-all placeholder:text-gray-300">
+                </div>
+            </div>
             <div>
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Standard Price (₱)</label>
-                <input type="number" id="quickPartPrice" placeholder="0.00"
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Supplier Name</label>
+                <input type="text" id="quickPartSupplier" placeholder="e.g. ABC Auto Parts"
                     class="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-400 focus:outline-none transition-all placeholder:text-gray-300">
             </div>
             
@@ -1177,15 +1189,18 @@ function filterDropdown(input, optClass) {
 
 // ─── Spare Parts & Catalog Management ───
 window.saveQuickPart = async function() {
-    const name = document.getElementById('quickPartName').value;
-    const price = document.getElementById('quickPartPrice').value;
+    const name         = document.getElementById('quickPartName').value;
+    const price        = document.getElementById('quickPartPrice').value;
+    const qty_to_add   = document.getElementById('quickPartStock').value;
+    const supplier     = document.getElementById('quickPartSupplier').value;
+
     if(!name || !price) return alert('Please fill in both name and price.');
     
     try {
         const res = await fetch("{{ route('spare-parts.store') }}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-            body: JSON.stringify({ name, price })
+            body: JSON.stringify({ name, price, qty_to_add, supplier })
         });
         const result = await res.json();
         if(result.success) {
@@ -1206,14 +1221,30 @@ window.saveQuickPart = async function() {
 function refreshPartSearchDropdown() {
     const dropdown = document.getElementById('incidentPartDropdown');
     if(!dropdown) return;
-    dropdown.innerHTML = partsCatalog.map(p => `
-        <div class="search-option part-search-option group" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
-            <div class="flex justify-between items-center w-full">
-                <div class="font-black text-xs text-gray-900">${p.name}</div>
-                <div class="text-[10px] font-black text-purple-600">₱${parseFloat(p.price).toFixed(2)}</div>
+    dropdown.innerHTML = partsCatalog.map(p => {
+        const isUnavailable = (parseInt(p.stock_quantity) || 0) <= 0;
+        return `
+            <div class="search-option part-search-option group ${isUnavailable ? 'opacity-60 cursor-not-allowed bg-red-50/10' : ''}" 
+                 data-id="${p.id}" 
+                 data-name="${p.name}" 
+                 data-price="${p.price}"
+                 data-unavailable="${isUnavailable}">
+                <div class="flex justify-between items-center w-full">
+                    <div class="flex flex-col">
+                        <div class="font-black text-xs text-gray-900">${p.name}</div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[9px] font-black ${isUnavailable ? 'text-red-500' : 'text-green-600'} uppercase">Stock: ${p.stock_quantity || 0}</span>
+                            ${p.supplier ? `<span class="text-[9px] font-bold text-gray-400 capitalize opacity-70">• ${p.supplier}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <div class="text-[10px] font-black text-purple-600">₱${parseFloat(p.price).toFixed(2)}</div>
+                        ${isUnavailable ? '<span class="text-[8px] font-black text-red-500 uppercase mt-0.5">OUT OF STOCK</span>' : ''}
+                    </div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function initPartSearch() {
@@ -1232,6 +1263,12 @@ function initPartSearch() {
     dropdown.onmousedown = (e) => {
         const opt = e.target.closest('.part-search-option');
         if (!opt) return;
+
+        if (opt.dataset.unavailable === 'true') {
+            alert('❌ THIS PART IS CURRENTLY UNAVAILABLE.\n\nThe item is out of stock. Please restock via the Inventory Management system before assigning it to an incident.');
+            return;
+        }
+
         addPartToIncidentCart({ id: opt.dataset.id, name: opt.dataset.name, price: parseFloat(opt.dataset.price) || 0, qty: 1, isCharged: true });
         input.value = ''; dropdown.classList.add('hidden');
     };
@@ -1239,9 +1276,24 @@ function initPartSearch() {
 }
 
 function addPartToIncidentCart(part) {
+    const catalogItem = partsCatalog.find(p => p.id == part.id);
+    const stock = catalogItem ? (parseInt(catalogItem.stock_quantity) || 0) : 999;
+
     const existing = incidentPartsCart.find(p => p.id === part.id);
-    if(existing) existing.qty++;
-    else incidentPartsCart.push(part);
+    if(existing) {
+        if (existing.qty >= stock) {
+            alert(`⚠️ STOCK LIMIT REACHED: You cannot add more than ${stock} units for this part.`);
+            return;
+        }
+        existing.qty++;
+    }
+    else {
+        if (stock < 1) {
+            alert(`⚠️ OUT OF STOCK: This part is currently unavailable.`);
+            return;
+        }
+        incidentPartsCart.push(part);
+    }
     refreshPartsCart();
 }
 
@@ -1259,7 +1311,10 @@ function refreshPartsCart() {
         return `<div class="flex items-center gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 animate-in slide-in-from-right duration-200">
             <input type="hidden" name="parts[${i}][spare_part_id]" value="${p.id}">
             <input type="hidden" name="parts[${i}][unit_price]" value="${p.price}">
-            <div class="flex-1"><p class="text-[10px] font-black text-gray-800 uppercase">${p.name}</p></div>
+            <div class="flex-1">
+                <p class="text-[10px] font-black text-gray-800 uppercase">${p.name}</p>
+                <p class="text-[8px] font-bold text-gray-400">#${p.id}</p>
+            </div>
             <div class="w-16"><input type="number" name="parts[${i}][quantity]" value="${p.qty}" onchange="window.updatePartQty(${i}, this.value)" class="w-full text-center py-2 bg-white border border-gray-100 rounded-xl text-[10px] font-black"></div>
             <div class="w-24 text-right"><p class="text-[10px] font-black text-gray-900">₱${sub.toLocaleString()}</p></div>
             <div class="flex items-center"><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" name="parts[${i}][is_charged_to_driver]" value="1" ${p.isCharged ? 'checked' : ''} onchange="window.togglePartCharge(${i}, this.checked)" class="sr-only peer"><div class="w-8 h-4 bg-gray-200 rounded-full peer peer-checked:bg-red-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:after:translate-x-4"></div></label></div>
@@ -1270,7 +1325,19 @@ function refreshPartsCart() {
     computeTotal();
 }
 
-window.updatePartQty = (i, val) => { incidentPartsCart[i].qty = parseInt(val) || 1; refreshPartsCart(); };
+window.updatePartQty = (i, val) => { 
+    const part = incidentPartsCart[i];
+    const catalogItem = partsCatalog.find(p => p.id == part.id);
+    const stock = catalogItem ? (parseInt(catalogItem.stock_quantity) || 0) : 999;
+    
+    let newVal = parseInt(val) || 1;
+    if (newVal > stock) {
+        alert(`⚠️ ONLY ${stock} UNITS AVAILABLE: Reverting quantity.`);
+        newVal = stock;
+    }
+    incidentPartsCart[i].qty = newVal; 
+    refreshPartsCart(); 
+};
 window.togglePartCharge = (i, val) => { incidentPartsCart[i].isCharged = val; computeTotal(); };
 window.removePartFromIncident = (i) => { incidentPartsCart.splice(i, 1); refreshPartsCart(); };
 
