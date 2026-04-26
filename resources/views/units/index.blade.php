@@ -3,18 +3,84 @@
 @section('title', 'Unit Management - Euro System')
 @section('page-heading', 'Unit Management')
 @section('page-subheading', 'Manage your fleet of taxi units')
+@section('main-padding', 'p-0')
 
 @push('styles')
     <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #unitDetailMap { z-index: 1; }
+
+        /* ── Live Status Dots ─────────────────────────────────── */
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .status-dot .dot {
+            flex-shrink: 0;
+            border-radius: 9999px;
+            position: relative;
+        }
+
+        /* Green Pulse — Active / On Road */
+        .dot-green {
+            width: 9px; height: 9px;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 1.8s ease-in-out infinite;
+        }
+        @keyframes pulse-green {
+            0%   { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0.7); }
+            70%  { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);   }
+            100% { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0);   }
+        }
+
+        /* Red Static — Maintenance (no animation, solid danger) */
+        .dot-red {
+            width: 9px; height: 9px;
+            background: #ef4444;
+            box-shadow: 0 0 5px rgba(239, 68, 68, 0.6);
+        }
+
+        /* Yellow Blink — Coding / Surveillance / Pending */
+        .dot-yellow {
+            width: 9px; height: 9px;
+            background: #f59e0b;
+            animation: blink-yellow 1.1s step-start infinite;
+        }
+        @keyframes blink-yellow {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.15; }
+        }
+
+        /* Orange pulse — Surveillance */
+        .dot-orange {
+            width: 9px; height: 9px;
+            background: #f97316;
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+            animation: pulse-orange 2.2s ease-in-out infinite;
+        }
+        @keyframes pulse-orange {
+            0%   { box-shadow: 0 0 0 0   rgba(249, 115, 22, 0.7); }
+            70%  { box-shadow: 0 0 0 6px rgba(249, 115, 22, 0);   }
+            100% { box-shadow: 0 0 0 0   rgba(249, 115, 22, 0);   }
+        }
+
+        /* Gray Static — Retired / Vacant */
+        .dot-gray {
+            width: 9px; height: 9px;
+            background: #9ca3af;
+        }
     </style>
 @endpush
 
 @section('content')
     <!-- Search and Filters -->
-    <div class="bg-white rounded-lg shadow p-2 mb-1">
+    <div class="bg-white px-6 py-4 border-b border-gray-200">
         <form method="GET" action="{{ route('units.index') }}" class="flex flex-col md:flex-row gap-2">
             <div class="md:w-48">
                 <div class="relative">
@@ -53,7 +119,22 @@
                     <option value="retired" {{ $status_filter === 'retired' ? 'selected' : '' }}>Retired</option>
                 </select>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
+                {{-- ── View Mode Toggle (Premium Labeled Pill) ─────── --}}
+                <div class="flex items-center bg-gray-900/5 p-1 rounded-xl border border-gray-200/80 gap-0.5 shadow-inner">
+                    <button type="button" onclick="setViewMode('table')" id="btn-view-table"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all duration-200 uppercase tracking-wide whitespace-nowrap">
+                        <i data-lucide="table-properties" class="w-3.5 h-3.5"></i>
+                        <span>Table</span>
+                    </button>
+                    <button type="button" onclick="setViewMode('grid')" id="btn-view-grid"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all duration-200 uppercase tracking-wide whitespace-nowrap">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Cards</span>
+                    </button>
+                    <input type="hidden" name="view" id="viewModeInput" value="table">
+                </div>
+
                 <button type="button" onclick="showFlaggedUnitsModal()" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 text-xs font-semibold shadow-sm">
                     <i data-lucide="siren" class="w-3.5 h-3.5"></i> Flagged Units
                 </button>
@@ -69,9 +150,76 @@
         </form>
     </div>
 
-    <!-- Units Table Container -->
-    <div id="unitsTableContainer" class="bg-white rounded-lg shadow overflow-hidden">
-        @include('units.partials._units_table')
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- Quick Stats Bar — updates in real-time with filters/search    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div id="quickStatsBar" class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700/50 px-6 py-4 flex items-center justify-between gap-4 text-white min-h-[40px]">
+        <!-- Stats pills -->
+        <div class="flex items-center gap-1 flex-wrap">
+            <!-- Filtered badge (hidden by default) -->
+            <span id="qs-filter-badge" class="hidden mr-2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-yellow-400 text-gray-900 tracking-wide animate-pulse">
+                ⚡ Filtered
+            </span>
+
+            <!-- Total -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                <span class="text-[11px] font-bold text-gray-300">Total</span>
+                <span id="qs-total" class="text-[13px] font-black text-white tabular-nums">{{ $stats['total'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- On Road -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 hover:bg-green-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_6px_rgba(74,222,128,0.8)]"></div>
+                <span class="text-[11px] font-bold text-green-300">On Road</span>
+                <span id="qs-onroad" class="text-[13px] font-black text-green-400 tabular-nums">{{ $stats['on_road'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- Garage / Vacant -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 hover:bg-blue-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_6px_rgba(96,165,250,0.8)]"></div>
+                <span class="text-[11px] font-bold text-blue-300">Garage</span>
+                <span id="qs-garage" class="text-[13px] font-black text-blue-400 tabular-nums">{{ $stats['garage'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- Workshop / Maintenance -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.8)]"></div>
+                <span class="text-[11px] font-bold text-yellow-300">Workshop</span>
+                <span id="qs-workshop" class="text-[13px] font-black text-yellow-400 tabular-nums">{{ $stats['workshop'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- Coding -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 hover:bg-red-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-red-400 animate-pulse shadow-[0_0_6px_rgba(248,113,113,0.8)]"></div>
+                <span class="text-[11px] font-bold text-red-300">Coding</span>
+                <span id="qs-coding" class="text-[13px] font-black text-red-400 tabular-nums">{{ $stats['coding'] ?? '—' }}</span>
+            </div>
+        </div>
+
+        <!-- Right side: last updated hint -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <div id="qs-loading" class="hidden w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span id="qs-context" class="text-[10px] text-gray-500 font-medium italic hidden">showing filtered results</span>
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-pulse" title="Live"></div>
+        </div>
+    </div>
+
+    <!-- Units Container — renders table or grid based on view_mode -->
+    <div id="unitsTableContainer" class="bg-white overflow-hidden">
+        @if(($view_mode ?? 'table') === 'grid')
+            @include('units.partials._units_grid')
+        @else
+            @include('units.partials._units_table')
+        @endif
     </div>
 
     {{-- Add Unit Modal --}}
@@ -492,7 +640,7 @@
                             <select name="status" id="editStatus"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="active">Active</option>
-                                <option value="surveillance">At Risk</option>
+                                <option value="surveillance">Surveillance / Missing</option>
                                 <option value="maintenance">Maintenance</option>
                                 <option value="coding">Coding</option>
                                 <option value="retired">Retired</option>
@@ -734,10 +882,10 @@
     </div>
 
     {{-- Unit Details Modal --}}
-    <div id="unitDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
-            {{-- Modal Header (blue gradient matching Units Overview) --}}
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 shrink-0">
+    <div id="unitDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden">
+            {{-- Modal Header (Deep Navy matching login page) --}}
+            <div class="bg-slate-800 p-4 shrink-0">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-white bg-opacity-20 rounded-lg">
@@ -775,7 +923,7 @@
                             <i data-lucide="siren" class="w-5 h-5 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (At Risk)</h3>
+                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (Missing/Surveillance)</h3>
                             <p class="text-sm text-red-100 leading-tight">Units that are under monitoring and their inactive days</p>
                         </div>
                     </div>
@@ -798,12 +946,96 @@
 
 @push('scripts')
 <script>
+    let currentViewMode = localStorage.getItem('unitViewMode') || 'table';
+    
+    function setViewMode(mode) {
+        currentViewMode = mode;
+        localStorage.setItem('unitViewMode', mode);
+        document.getElementById('viewModeInput').value = mode;
+        
+        // Update UI — premium pill toggle active states
+        const btnTable = document.getElementById('btn-view-table');
+        const btnGrid  = document.getElementById('btn-view-grid');
+        
+        if (mode === 'table') {
+            // Table ACTIVE
+            btnTable.classList.add('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnTable.classList.remove('text-gray-400');
+            // Grid INACTIVE
+            btnGrid.classList.remove('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnGrid.classList.add('text-gray-400');
+        } else {
+            // Grid ACTIVE
+            btnGrid.classList.add('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnGrid.classList.remove('text-gray-400');
+            // Table INACTIVE
+            btnTable.classList.remove('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnTable.classList.add('text-gray-400');
+        }
+        
+        performSearch(1); // Re-fetch with new view mode
+    }
+
     let searchTimer;
     const searchInput = document.querySelector('input[name="search"]');
     const statusFilter = document.querySelector('select[name="status"]');
     const sortFilter = document.querySelector('select[name="sort"]');
     const tableContainer = document.getElementById('unitsTableContainer');
 
+    // ── Quick Stats ─────────────────────────────────────────────────
+    const QUICK_STATS_URL = '{{ route("units.quick-stats") }}';
+
+    function animateCount(el, target) {
+        if (!el) return;
+        const current = parseInt(el.textContent.replace(/\D/g,'')) || 0;
+        if (current === target) { el.textContent = target; return; }
+        const step = target > current ? 1 : -1;
+        const diff = Math.abs(target - current);
+        const delay = diff > 20 ? 16 : diff > 10 ? 30 : 50;
+        let val = current;
+        const tick = () => {
+            val += step;
+            el.textContent = val;
+            if (val !== target) setTimeout(tick, delay);
+        };
+        setTimeout(tick, delay);
+    }
+
+    function refreshQuickStats() {
+        const search = searchInput ? searchInput.value : '';
+        const status = statusFilter ? statusFilter.value : '';
+        const loading = document.getElementById('qs-loading');
+        if (loading) loading.classList.remove('hidden');
+
+        fetch(`${QUICK_STATS_URL}?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (loading) loading.classList.add('hidden');
+
+            const d = data.is_filtered ? data.filtered : data.global;
+
+            animateCount(document.getElementById('qs-total'),    d.total);
+            animateCount(document.getElementById('qs-onroad'),   d.on_road);
+            animateCount(document.getElementById('qs-garage'),   d.garage);
+            animateCount(document.getElementById('qs-workshop'), d.workshop);
+            animateCount(document.getElementById('qs-coding'),   d.coding);
+
+            const badge   = document.getElementById('qs-filter-badge');
+            const context = document.getElementById('qs-context');
+            if (data.is_filtered) {
+                badge?.classList.remove('hidden');
+                context?.classList.remove('hidden');
+            } else {
+                badge?.classList.add('hidden');
+                context?.classList.add('hidden');
+            }
+        })
+        .catch(() => { if (loading) loading.classList.add('hidden'); });
+    }
+
+    // ── performSearch ───────────────────────────────────────────────
     function performSearch(page = 1) {
         const query = searchInput.value;
         const status = statusFilter.value;
@@ -813,7 +1045,7 @@
         tableContainer.style.opacity = '0.5';
         tableContainer.style.pointerEvents = 'none';
 
-        fetch(`{{ route('units.index') }}?search=${encodeURIComponent(query)}&status=${status}&sort=${sort}&page=${page}`, {
+        fetch(`{{ route('units.index') }}?search=${encodeURIComponent(query)}&status=${status}&sort=${sort}&page=${page}&view=${currentViewMode}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -834,16 +1066,25 @@
 
     searchInput.addEventListener('input', () => {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => performSearch(1), 300);
+        searchTimer = setTimeout(() => {
+            performSearch(1);
+            refreshQuickStats();
+        }, 300);
     });
 
-    statusFilter.addEventListener('change', () => performSearch(1));
+    statusFilter.addEventListener('change', () => {
+        performSearch(1);
+        refreshQuickStats();
+    });
     sortFilter.addEventListener('change', () => performSearch(1));
 
     window.changePage = function(page) {
         performSearch(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    // Load quick stats on initial page load
+    refreshQuickStats();
 
     window.showFlaggedUnitsModal = function() {
         const modal = document.getElementById('flaggedUnitsModal');
@@ -866,7 +1107,7 @@
                         <div class="text-center py-12">
                             <i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-500"></i>
                             <h4 class="text-lg font-bold text-gray-900">All Clear!</h4>
-                            <p class="text-gray-500">There are no units currently flagged as At Risk.</p>
+                            <p class="text-gray-500">There are no units currently flagged as missing or under surveillance.</p>
                         </div>
                     `;
                     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -1318,11 +1559,8 @@
                                 parts.forEach(p => {
                                     partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
                                         <div class="flex-1">
-                                            <div class="text-xs font-medium text-gray-900">${p.part_name}</div>
-                                            <div class="flex items-center gap-2">
-                                                ${p.supplier ? `<span class="text-[9px] text-gray-400 font-bold uppercase italic">From: ${p.supplier}</span>` : ''}
-                                                ${p.quantity > 1 ? `<span class="text-[9px] text-gray-500 font-black">(x${p.quantity})</span>` : ''}
-                                            </div>
+                                            <span class="text-xs font-medium text-gray-900">${p.part_name}</span>
+                                            ${p.quantity > 1 ? `<span class="text-xs text-gray-500 ml-1">(x${p.quantity})</span>` : ''}
                                         </div>
                                         <div class="text-xs font-bold text-gray-900">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
                                     </div>`;
@@ -1394,227 +1632,287 @@
                 const invPerMonth = parseFloat(roi.total_investment || 0) / 12;
                 const mthBnd = parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0);
                 const bndPrgW = invPerMonth > 0 ? Math.min(100, (mthBnd / invPerMonth) * 100).toFixed(1) : 0;
+
                 document.getElementById('unitDetailsContent').innerHTML = `
-                <div class="space-y-4">
-                    <!-- Unit Header -->
-                    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 rounded-xl text-white shadow-lg">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h3 class="text-xl font-black leading-none tracking-tight">${unit.plate_number || ''}</h3>
-                                    <span class="px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white border-opacity-30">${unit.status || ''}</span>
-                                    <span class="px-2 py-0.5 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white border-opacity-30">${unit.unit_type || 'Standard'}</span>
-                                    ${unit.status === 'surveillance' ? `<span class="px-2 py-0.5 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">🚨 At Risk</span>` : ''}
+                <div class="space-y-6">
+                    <!-- Unit Summary Card (Top) -->
+                    <div class="bg-slate-800 p-6 rounded-2xl text-white shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-4">
+                                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                                    <i data-lucide="car" class="w-8 h-8 text-white"></i>
                                 </div>
-                                <p class="text-xs text-blue-100 font-medium tracking-wide">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
+                                <div>
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-black tracking-tight leading-none">${unit.plate_number || ''}</h3>
+                                        <span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.status || ''}</span>
+                                        <span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.unit_type || 'Standard'}</span>
+                                        ${unit.status === 'surveillance' ? `<span class="px-2.5 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border border-red-400">🚨 surveillance</span>` : ''}
+                                    </div>
+                                    <p class="text-blue-100 font-medium">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
+                                </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-xl font-black leading-none mb-1">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
-                                <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest">Daily Boundary Rate</p>
+                                <div class="text-2xl font-black leading-none mb-1">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                <p class="text-blue-100 text-xs font-bold uppercase tracking-widest opacity-80">Daily Boundary Rate</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tabs Navigation -->
-                    <div class="border-b border-gray-200">
-                        <nav class="-mb-px flex w-full overflow-x-auto scrollbar-none">
-                            <button onclick="showTab('overview')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-blue-500 font-black text-[11px] uppercase tracking-widest text-blue-600 transition-all duration-200 whitespace-nowrap" data-tab="overview">Overview</button>
-                            <button onclick="showTab('drivers')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="drivers">Drivers</button>
-                            <button onclick="showTab('coding')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="coding">Coding</button>
-                            <button onclick="showTab('boundary')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="boundary">Boundary</button>
-                            <button onclick="showTab('maintenance')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="maintenance">Maintenance</button>
-                            <button onclick="showTab('roi')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="roi">ROI</button>
-                            <button onclick="showTab('location')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="location">Location</button>
-                            <button onclick="showTab('dashcam')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200 whitespace-nowrap" data-tab="dashcam">Dashcam</button>
+                    <!-- Justified Tabs Navigation -->
+                    <div class="border-b border-gray-100 bg-gray-50/50 rounded-t-xl p-1">
+                        <nav class="flex w-full gap-1">
+                            <button onclick="showTab('overview')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-blue-600 font-black text-[10px] uppercase tracking-widest text-blue-600 transition-all duration-200" data-tab="overview">Overview</button>
+                            <button onclick="showTab('drivers')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="drivers">Drivers</button>
+                            <button onclick="showTab('coding')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="coding">Coding</button>
+                            <button onclick="showTab('boundary')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="boundary">Boundary</button>
+                            <button onclick="showTab('maintenance')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="maintenance">Maintenance</button>
+                            <button onclick="showTab('roi')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="roi">ROI</button>
+                            <button onclick="showTab('location')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="location">Location</button>
+                            <button onclick="showTab('dashcam')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="dashcam">Dashcam</button>
                         </nav>
                     </div>
 
-                    <!-- Tab Content -->
-                    <div id="tabContent" class="pt-2" style="min-height: 450px;">
+                    <!-- Tab Content Area -->
+                    <div id="tabContent" class="min-h-[480px]">
                         <!-- Overview Tab -->
-                        <div id="overview-tab" class="tab-content">
-                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3">
-                                        <div class="p-2.5 bg-blue-50 rounded-lg"><i data-lucide="users" class="w-5 h-5 text-blue-600"></i></div>
-                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Drivers</p><p class="text-xl font-black text-gray-900">${assignedDrivers.length}/2</p></div>
+                        <div id="overview-tab" class="tab-content animate-in fade-in duration-300">
+                            <!-- Quick Stats Grid -->
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-blue-50 rounded-xl"><i data-lucide="users" class="w-5 h-5 text-blue-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Drivers</p><p class="text-xl font-black text-gray-900">${assignedDrivers.length}/2</p></div>
                                     </div>
                                 </div>
-                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3">
-                                        <div class="p-2.5 bg-green-50 rounded-lg"><i data-lucide="calendar" class="w-5 h-5 text-green-600"></i></div>
-                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Next Coding</p><p class="text-xl font-black text-gray-900">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + 'd'}</p></div>
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-green-50 rounded-xl"><i data-lucide="calendar" class="w-5 h-5 text-green-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Next Coding</p><p class="text-xl font-black text-gray-900">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + 'd'}</p></div>
                                     </div>
                                 </div>
-                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3">
-                                        <div class="p-2.5 bg-purple-50 rounded-lg"><i data-lucide="trending-up" class="w-5 h-5 text-purple-600"></i></div>
-                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">ROI</p><p class="text-xl font-black text-gray-900">${roiPct.toFixed(1)}%</p></div>
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-purple-50 rounded-xl"><i data-lucide="trending-up" class="w-5 h-5 text-purple-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">ROI</p><p class="text-xl font-black text-gray-900">${roiPct.toFixed(1)}%</p></div>
                                     </div>
                                 </div>
-                                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3">
-                                        <div class="p-2.5 bg-orange-50 rounded-lg"><i data-lucide="wrench" class="w-5 h-5 text-orange-600"></i></div>
-                                        <div><p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Maint</p><p class="text-xl font-black text-gray-900">${maint.length}</p></div>
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-orange-50 rounded-xl"><i data-lucide="wrench" class="w-5 h-5 text-orange-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Maint Jobs</p><p class="text-xl font-black text-gray-900">${maint.length}</p></div>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Main Info Grid -->
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {{-- Basic Information Card --}}
+                                <!-- Basic Info Card -->
                                 <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
                                     <h4 class="text-xs font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
                                         <i data-lucide="info" class="w-4 h-4 text-blue-600"></i> Basic Information
                                     </h4>
-                                    <div class="space-y-4 text-xs">
-                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Plate Number</span><span class="font-black text-gray-900 bg-gray-50 px-2 py-1 rounded">${unit.plate_number || ''}</span></div>
-                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Vehicle</span><span class="font-black text-gray-700">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
-                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Year</span><span class="font-black text-gray-700">${unit.year || ''}</span></div>
-                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Status</span><span class="px-3 py-1 text-[10px] font-black uppercase rounded-full bg-green-50 text-green-600 border border-green-100">${unit.status === 'surveillance' ? 'AT RISK' : (unit.status ? unit.status.charAt(0).toUpperCase() + unit.status.slice(1) : '')}</span></div>
-                                        
-                                        <div class="pt-4 border-t border-gray-50 mt-4 space-y-2">
-                                            <div class="flex justify-between items-center"><span class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Created By</span><span class="text-[11px] font-bold text-gray-600">${unit.created_by_name || 'System'} - ${unit.created_at_fmt || 'N/A'}</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-[9px] text-gray-400 font-black uppercase tracking-widest">Last Update</span><span class="text-[11px] font-bold text-gray-600">${unit.updated_by_name || 'System'} - ${unit.updated_at_fmt || 'N/A'}</span></div>
-                                        </div>
-                                        
+                                    <div class="space-y-4 text-sm">
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Plate Number</span><span class="font-black text-gray-900 bg-gray-50 px-2 py-1 rounded">${unit.plate_number || ''}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Vehicle</span><span class="font-black text-gray-700">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Year</span><span class="font-black text-gray-700">${unit.year || ''}</span></div>
+                                        <div class="flex justify-between items-center pt-3 border-t border-gray-50"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Created By</span><span class="font-bold text-gray-600 text-xs">${unit.created_by_name || 'System'}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Last Update</span><span class="font-bold text-gray-600 text-xs">${unit.updated_at_fmt || 'N/A'}</span></div>
                                         <div class="flex justify-between items-center pt-4 border-t border-gray-50 mt-4">
-                                            <span class="text-xs font-black text-gray-900 uppercase tracking-widest">Boundary Rate</span>
-                                            <span class="text-xl font-black text-blue-600">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                            <span class="text-gray-900 font-black uppercase text-[11px] tracking-widest">Active Rate</span>
+                                            <span class="text-2xl font-black text-blue-600">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- Driver Assignment Card --}}
+                                <!-- Assignment Card -->
                                 <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
                                     <h4 class="text-xs font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
                                         <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Driver Assignment
                                     </h4>
-                                    <div class="space-y-4 text-xs">
-                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Assigned Drivers</span><span class="font-black text-gray-900">${assignedDrivers.length}/2</span></div>
-                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase tracking-tight">Availability</span><span class="px-3 py-1 text-[10px] font-black uppercase rounded-full ${assignedDrivers.length >= 2 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}">${assignedDrivers.length >= 2 ? 'Full' : 'Available'}</span></div>
-                                        
-                                        <div class="mt-6 space-y-3">
-                                            ${assignedDrivers.length > 0 ? assignedDrivers.map(d => `
-                                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 group hover:border-blue-200 transition-colors">
-                                                    <div class="flex justify-between items-start mb-2">
-                                                        <p class="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors">${d.full_name || ''}</p>
-                                                        <span class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase">Active</span>
-                                                    </div>
-                                                    <div class="grid grid-cols-2 gap-2 text-[11px]">
-                                                        <p class="text-gray-500 font-medium">${d.license_number || 'No License'}</p>
-                                                        <p class="text-gray-500 font-medium text-right">Contact: ${d.contact_number || 'N/A'}</p>
-                                                    </div>
-                                                </div>
-                                            `).join('') : `
-                                                <div class="py-12 text-center">
-                                                    <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                        <i data-lucide="user-x" class="w-6 h-6 text-gray-300"></i>
-                                                    </div>
-                                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Drivers Assigned</p>
-                                                </div>
-                                            `}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Other Tabs (Preserved structure) -->
-                        <div id="drivers-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Assigned Drivers</h4>
-                                <div class="space-y-4">${driversTabHtml.replace(/p-4/g, 'p-4').replace(/p-6/g, 'p-6')}</div>
-                            </div>
-                        </div>
-
-                        <div id="coding-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">MMDA Coding Schedule</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div class="space-y-4">
-                                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-tight">Current Unit Info</h5>
-                                        <div class="space-y-3 text-xs">
-                                            <div class="flex justify-between"><span class="text-gray-600">Coding Day</span><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">${codingDay}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Last Digit</span><span class="font-black">${lastChar || '-'}</span></div>
-                                            <div class="flex justify-between"><span class="text-gray-600">Next Coding</span><span class="font-black">${nextCodingDate || '-'}</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-gray-600">Status</span><span class="px-2 py-0.5 rounded font-black uppercase text-[10px] ${daysUntilCoding === 0 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}">${daysUntilCoding === 0 ? 'Coding Today' : 'No Coding'}</span></div>
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Status</span>
+                                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${assignedDrivers.length >= 2 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}">${assignedDrivers.length >= 2 ? 'Full' : 'Available'}</span>
+                                        </div>
+                                        ${driversOverviewHtml ? '<div class="space-y-3">' + driversOverviewHtml.replace(/bg-gray-50/g, 'bg-gray-50 border border-gray-100 rounded-xl p-4') + '</div>' : `
+                                            <div class="text-center py-10">
+                                                <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <i data-lucide="user-x" class="w-6 h-6 text-gray-300"></i>
+                                                </div>
+                                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Drivers Assigned</p>
+                                            </div>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Drivers Tab -->
+                        <div id="drivers-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="users" class="w-5 h-5 text-blue-600"></i> Assigned Drivers Details
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    ${driversTabHtml.replace(/border border-gray-200/g, 'bg-gray-50 border border-gray-100 shadow-sm').replace(/p-4/g, 'p-6').replace(/rounded-lg/g, 'rounded-2xl')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coding Tab -->
+                        <div id="coding-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i> MMDA Coding Schedule
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                        <h5 class="font-black text-xs text-gray-400 uppercase tracking-widest mb-6 border-b border-gray-200 pb-2">Current Unit Status</h5>
+                                        <div class="space-y-4 text-sm">
+                                            <div class="flex justify-between items-center"><span class="text-gray-500 font-bold uppercase text-[10px]">Coding Day</span><span class="px-3 py-1 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">${codingDay}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-500 font-bold uppercase text-[10px]">Plate Ending</span><span class="font-black text-gray-900 text-lg">${lastChar || '-'}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-500 font-bold uppercase text-[10px]">Next Schedule</span><span class="font-black text-gray-900">${nextCodingDate || '-'}</span></div>
+                                            <div class="flex justify-between items-center pt-4 border-t border-gray-200"><span class="text-gray-500 font-bold uppercase text-[10px]">Remaining</span><span class="font-black ${daysUntilCoding === 0 ? 'text-red-600' : 'text-green-600'} text-lg">${daysUntilCoding === 0 ? 'TODAY' : daysUntilCoding + ' Days'}</span></div>
                                         </div>
                                     </div>
-                                    <div class="bg-gray-50 p-4 rounded-xl">
-                                        <h5 class="text-xs font-bold text-gray-400 uppercase tracking-tight mb-3">Schedule Guide</h5>
-                                        <div class="space-y-2 text-[11px]">
-                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Monday</span><span class="font-black">1, 2</span></div>
-                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Tuesday</span><span class="font-black">3, 4</span></div>
-                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Wednesday</span><span class="font-black">5, 6</span></div>
-                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Thursday</span><span class="font-black">7, 8</span></div>
-                                            <div class="flex justify-between p-2 bg-white rounded border border-gray-100"><span>Friday</span><span class="font-black">9, 0</span></div>
+                                    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-inner">
+                                        <h5 class="font-black text-xs text-gray-400 uppercase tracking-widest mb-4">Standard MMDA Reference</h5>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Monday</span>
+                                                <span class="font-black text-blue-600">1, 2</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Tuesday</span>
+                                                <span class="font-black text-blue-600">3, 4</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Wednesday</span>
+                                                <span class="font-black text-blue-600">5, 6</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Thursday</span>
+                                                <span class="font-black text-blue-600">7, 8</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Friday</span>
+                                                <span class="font-black text-blue-600">9, 0</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="boundary-tab" class="tab-content hidden">
+                        <!-- Boundary Tab -->
+                        <div id="boundary-tab" class="tab-content hidden animate-in fade-in duration-300">
                             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Boundary History</h4>
-                                ${boundaryRowsHtml ? `<div class="overflow-x-auto"><table class="min-w-full"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver</th><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Remarks</th><th class="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th></tr></thead><tbody class="divide-y divide-gray-100">${boundaryRowsHtml.replace(/px-6 py-4/g, 'px-4 py-3').replace(/text-sm/g, 'text-xs')}</tbody></table></div>` : '<div class="text-center py-12 text-gray-400 font-bold uppercase tracking-widest">No boundary history found</div>'}
-                            </div>
-                        </div>
-
-                        <div id="maintenance-tab" class="tab-content hidden">
-                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <div class="flex justify-between items-center mb-6 border-b border-gray-50 pb-4">
-                                    <h4 class="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center gap-2">
-                                        <i data-lucide="wrench" class="w-4 h-4 text-orange-600"></i>
-                                        Maintenance History
-                                    </h4>
-                                    <div class="text-right">
-                                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mb-1">Total Unit Expenses</p>
-                                        <p class="text-xl font-black text-orange-600">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="coins" class="w-5 h-5 text-blue-600"></i> Boundary Collection History
+                                </h4>
+                                ${boundaryRowsHtml ? `
+                                    <div class="overflow-hidden border border-gray-100 rounded-2xl shadow-sm">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+                                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver</th>
+                                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Remarks</th>
+                                                    <th class="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-100">
+                                                ${boundaryRowsHtml}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
-                                <div class="space-y-4">${maintHtml.replace(/p-4/g, 'p-4').replace(/p-6/g, 'p-6')}</div>
+                                ` : `
+                                    <div class="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <div class="p-4 bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                            <i data-lucide="banknote" class="w-8 h-8 text-gray-300"></i>
+                                        </div>
+                                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest">No transaction history found</p>
+                                    </div>
+                                `}
                             </div>
                         </div>
 
-                        <div id="roi-tab" class="tab-content hidden">
+                        <!-- Maintenance Tab -->
+                        <div id="maintenance-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="wrench" class="w-5 h-5 text-blue-600"></i> Vehicle Maintenance Records
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    ${maintHtml.replace(/border border-gray-200/g, 'bg-gray-50 border border-gray-100 shadow-sm').replace(/p-4/g, 'p-6').replace(/rounded-lg/g, 'rounded-2xl')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROI Tab -->
+                        <div id="roi-tab" class="tab-content hidden animate-in fade-in duration-300">
                             <div class="space-y-6">
-                                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 rounded-2xl text-white shadow-lg">
-                                    <h4 class="text-lg font-black mb-4 uppercase tracking-widest">ROI Analysis</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div class="bg-white bg-opacity-10 p-4 rounded-xl">
-                                            <p class="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Investment</p>
-                                            <p class="text-xl font-black">₱${parseFloat(roi.total_investment || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 p-8 opacity-10">
+                                        <i data-lucide="trending-up" class="w-32 h-32"></i>
+                                    </div>
+                                    <h4 class="text-xl font-black mb-6 uppercase tracking-widest flex items-center gap-3">
+                                        <i data-lucide="bar-chart-3" class="w-6 h-6"></i> ROI Performance Analysis
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                                            <p class="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Investment</p>
+                                            <p class="text-2xl font-black">₱${parseFloat(roi.total_investment || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
                                         </div>
-                                        <div class="bg-white bg-opacity-10 p-4 rounded-xl">
-                                            <p class="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Revenue</p>
-                                            <p class="text-xl font-black">₱${parseFloat(roi.total_revenue || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                                            <p class="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Net Revenue</p>
+                                            <p class="text-2xl font-black text-green-300">₱${parseFloat(roi.total_revenue || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
                                         </div>
-                                        <div class="bg-white bg-opacity-10 p-4 rounded-xl">
-                                            <p class="text-purple-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Expenses</p>
-                                            <p class="text-xl font-black">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                                            <p class="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Expenses</p>
+                                            <p class="text-2xl font-black text-red-300">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                        <h4 class="text-xs font-black text-gray-900 mb-4 uppercase tracking-widest">Metrics</h4>
-                                        <div class="space-y-4 text-xs">
-                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Current ROI</span><span class="font-black text-${roiColor}-600 text-lg">${roiPct.toFixed(1)}%</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Payback Period</span><span class="font-black text-blue-600">${parseFloat(roi.payback_period || 0).toFixed(1)} months</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Monthly Revenue</span><span class="font-black text-green-600">₱${parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                                        <h4 class="text-xs font-black text-gray-900 mb-6 uppercase tracking-widest border-b border-gray-50 pb-3">Key Metrics</h4>
+                                        <div class="space-y-6">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">ROI Percentage</span>
+                                                <span class="text-2xl font-black text-${roiColor}-600">${roiPct.toFixed(1)}%</span>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Payback Period</span>
+                                                <span class="text-2xl font-black text-blue-600">${parseFloat(roi.payback_period || 0).toFixed(1)} <span class="text-sm font-bold text-gray-400 uppercase">mths</span></span>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Avg Monthly Revenue</span>
+                                                <span class="text-2xl font-black text-green-600">₱${parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                        <h4 class="text-xs font-black text-gray-900 mb-4 uppercase tracking-widest">Target Progress</h4>
-                                        <div class="space-y-4">
+                                    <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                                        <h4 class="text-xs font-black text-gray-900 mb-8 uppercase tracking-widest border-b border-gray-50 pb-3">Goal Progress</h4>
+                                        <div class="space-y-8">
                                             <div>
-                                                <div class="flex justify-between items-center mb-2"><span class="text-[10px] text-gray-400 font-black uppercase">Capital Recovery</span><span class="text-xs font-black text-purple-600">${roiPct.toFixed(1)}%</span></div>
-                                                <div class="w-full bg-gray-100 rounded-full h-3"><div class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full shadow-sm" style="width:${roiPrgW}%"></div></div>
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Investment Achievement</span>
+                                                    <span class="text-sm font-black text-indigo-600">${roiPct.toFixed(1)}%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-100 rounded-full h-4 p-1 shadow-inner">
+                                                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full shadow-sm" style="width:${roiPrgW}%"></div>
+                                                </div>
                                             </div>
                                             <div>
-                                                <div class="flex justify-between items-center mb-2"><span class="text-[10px] text-gray-400 font-black uppercase">Monthly Target Reach</span><span class="text-xs font-black text-green-600">₱${invPerMonth.toLocaleString('en-PH', {minimumFractionDigits:0})}</span></div>
-                                                <div class="w-full bg-gray-100 rounded-full h-3"><div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full shadow-sm" style="width:${bndPrgW}%"></div></div>
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Monthly Target Efficiency</span>
+                                                    <span class="text-sm font-black text-green-600">₱${invPerMonth.toLocaleString('en-PH', {minimumFractionDigits:0})} Target</span>
+                                                </div>
+                                                <div class="w-full bg-gray-100 rounded-full h-4 p-1 shadow-inner">
+                                                    <div class="bg-gradient-to-r from-green-400 to-emerald-600 h-2 rounded-full shadow-sm" style="width:${bndPrgW}%"></div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1622,65 +1920,244 @@
                             </div>
                         </div>
 
-                        <div id="location-tab" class="tab-content hidden">
+                        <!-- Location Tab -->
+                        <div id="location-tab" class="tab-content hidden animate-in fade-in duration-300">
                             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Real-Time Tracking</h4>
-                                <div class="space-y-4">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="map-pin" class="w-5 h-5 text-blue-600"></i> Real-time GPS Location
+                                </h4>
+                                <div class="space-y-6">
                                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Current Address</p>
-                                            <p class="text-[11px] font-bold text-gray-900">${locInfo.current_location || 'Not Available'}</p>
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Current Address</p>
+                                            <p class="text-xs font-black text-gray-900">${locInfo.current_location || 'Not Available'}</p>
                                         </div>
-                                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                            <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Last Update</p>
-                                            <p class="text-[11px] font-bold text-gray-900">${locInfo.last_location_update || 'Never'}</p>
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Update</p>
+                                            <p class="text-xs font-black text-gray-900">${locInfo.last_location_update || 'Never'}</p>
                                         </div>
-                                        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
-                                            <span class="text-[9px] text-gray-400 font-black uppercase tracking-widest">GPS Status</span>
-                                            <span class="px-2 py-0.5 text-[10px] rounded font-black uppercase ${locInfo.gps_enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${locInfo.gps_enabled ? 'Active' : 'Offline'}</span>
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">GPS Status</p>
+                                                <span class="px-2 py-1 text-[9px] font-black uppercase rounded-full ${locInfo.gps_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${locInfo.gps_enabled ? 'Active' : 'Offline'}</span>
+                                            </div>
+                                            <i data-lucide="satellite" class="w-6 h-6 ${locInfo.gps_enabled ? 'text-green-500' : 'text-red-400'}"></i>
                                         </div>
                                     </div>
-                                    <div id="unitDetailMapContainer" class="relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 flex flex-col items-center justify-center p-8 text-center shadow-inner" style="height: 350px;">
-                                        <div class="mb-4 p-5 bg-blue-100 rounded-full shadow-sm">
-                                            <i data-lucide="satellite" class="w-12 h-12 text-blue-600"></i>
+                                    <div id="unitDetailMapContainer" class="relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 flex flex-col items-center justify-center p-12 text-center shadow-inner" style="height: 400px;">
+                                        <div class="mb-6 p-6 bg-blue-100 rounded-full shadow-sm animate-pulse">
+                                            <i data-lucide="navigation" class="w-12 h-12 text-blue-600"></i>
                                         </div>
-                                        <h4 class="text-lg font-black text-gray-900 mb-1">Tracksolid Pro Enterprise</h4>
-                                        <p class="text-xs text-gray-500 mb-6 max-w-sm">Enterprise real-time tracking identification via device IMEI.</p>
-                                        <div class="bg-white px-4 py-2 border border-gray-200 rounded-lg text-sm font-mono font-bold text-blue-700 mb-8 shadow-sm">
-                                            IMEI: ${unit.imei || 'Not Set'}
-                                        </div>
-                                        <a href="/live-tracking?unit=${unit.id}" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                                            <i data-lucide="map-pin" class="w-4 h-4"></i> Live Tracking Map
+                                        <h4 class="text-lg font-black text-gray-900 mb-2 uppercase tracking-tight">Tracksolid Pro Enterprise</h4>
+                                        <p class="text-sm text-gray-500 mb-8 max-w-md mx-auto">This unit is tracked via real-time satellite identification. Access the full live map for movement history and geofencing.</p>
+                                        
+                                        <a href="/live-tracking?unit=${unit.id}" class="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-2xl transition-all shadow-lg hover:shadow-blue-200 hover:-translate-y-1 uppercase tracking-widest">
+                                            <i data-lucide="map" class="w-5 h-5"></i>
+                                            Open Live Tracking Map
                                         </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="dashcam-tab" class="tab-content hidden">
+                        <!-- Dashcam Tab -->
+                        <div id="dashcam-tab" class="tab-content hidden animate-in fade-in duration-300">
                             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <h4 class="text-sm font-black text-gray-900 mb-4 uppercase tracking-widest">Dashcam Fleet Control</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div class="space-y-4">
-                                        <div class="space-y-3 text-xs">
-                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">System Status</span><span class="px-2 py-0.5 rounded font-black uppercase ${dashcam.dashcam_enabled ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}">${dashcam.dashcam_enabled ? 'Online' : 'Disabled'}</span></div>
-                                            <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase">Cloud Connection</span><span class="px-2 py-0.5 rounded font-black uppercase ${dashcam.dashcam_status === 'Online' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}">${dashcam.dashcam_status || 'Offline'}</span></div>
-                                            <div class="pt-4 border-t border-gray-50">
-                                                <div class="flex justify-between items-center mb-2"><span class="text-[10px] text-gray-400 font-black uppercase">SD Storage Used</span><span class="text-[10px] font-black text-gray-700">${parseFloat(dashcam.storage_used || 0).toFixed(1)} / ${parseFloat(dashcam.storage_total || 32).toFixed(0)} GB</span></div>
-                                                <div class="w-full bg-gray-100 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full" style="width:${(parseFloat(dashcam.storage_used || 0) / parseFloat(dashcam.storage_total || 32) * 100).toFixed(1)}%"></div></div>
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="video" class="w-5 h-5 text-blue-600"></i> Dashcam & Surveillance
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div class="lg:col-span-1 space-y-4">
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Device Status</p>
+                                            <div class="space-y-4 text-xs font-bold">
+                                                <div class="flex justify-between items-center"><span>System</span><span class="px-2 py-1 rounded-full ${dashcam.dashcam_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} text-[10px]">${dashcam.dashcam_enabled ? 'ENABLED' : 'DISABLED'}</span></div>
+                                                <div class="flex justify-between items-center"><span>Connection</span><span class="px-2 py-1 rounded-full ${dashcam.dashcam_status === 'Online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} text-[10px]">${dashcam.dashcam_status || 'OFFLINE'}</span></div>
+                                                <div class="flex justify-between items-center pt-2 border-t border-gray-200"><span>Storage</span><span class="text-indigo-600 font-black">${parseFloat(dashcam.storage_used || 0).toFixed(1)} / ${parseFloat(dashcam.storage_total || 32).toFixed(0)} GB</span></div>
                                             </div>
                                         </div>
+                                        <div class="bg-blue-600 rounded-2xl p-5 text-white shadow-lg">
+                                            <h5 class="text-xs font-black uppercase tracking-widest mb-2">Remote Access</h5>
+                                            <p class="text-[10px] text-blue-100 mb-4 font-medium">Request a live stream or download recorded footage from the cloud.</p>
+                                            <button class="w-full py-3 bg-white text-blue-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-colors">Request Stream</button>
+                                        </div>
                                     </div>
-                                    <div class="bg-gray-900 rounded-2xl aspect-video flex items-center justify-center shadow-2xl relative overflow-hidden group">
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-50"></div>
-                                        <div class="text-center text-white z-10">
-                                            <i data-lucide="video" class="w-12 h-12 mx-auto mb-2 text-blue-400"></i>
-                                            <p class="text-[10px] font-black uppercase tracking-widest">Fleet Feed Offline</p>
+                                    <div class="lg:col-span-2 bg-gray-900 rounded-2xl flex flex-col items-center justify-center min-h-[300px] border border-gray-800 shadow-inner relative overflow-hidden">
+                                        <div class="absolute top-4 left-4 flex items-center gap-2">
+                                            <div class="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                                            <span class="text-white/40 text-[9px] font-black uppercase tracking-widest">No Active Stream</span>
+                                        </div>
+                                        <i data-lucide="video-off" class="w-16 h-16 text-white/10 mb-4"></i>
+                                        <p class="text-white/30 text-xs font-black uppercase tracking-widest">Preview Unavailable</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                        <!-- Drivers Tab -->
+                        <div id="drivers-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Assigned Drivers</h4>
+                                <div class="space-y-2">${driversTabHtml.replace(/p-4/g, 'p-2').replace(/p-6/g, 'p-3').replace(/text-lg/g, 'text-base').replace(/text-sm/g, 'text-xs')}</div>
+                            </div>
+                        </div>
+
+                        <!-- Coding Tab -->
+                        <div id="coding-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">MMDA Coding Schedule</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <h5 class="font-medium text-xs text-gray-900 mb-1.5">Current Coding Information</h5>
+                                        <div class="space-y-1 text-xs">
+                                            <div class="flex justify-between"><span class="text-gray-600">Coding Day:</span><span class="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[10px] font-medium">${codingDay}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Last Digit:</span><span class="font-medium">${lastChar || '-'}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Next Coding:</span><span class="font-medium">${nextCodingDate || '-'}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Days Until Coding:</span><span class="font-medium ${daysUntilCoding === 0 ? 'text-red-600' : 'text-green-600'}">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + ' days'}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Coding Status:</span><span class="px-1.5 py-0.5 text-[10px] rounded-full ${daysUntilCoding === 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${daysUntilCoding === 0 ? 'Coding Today' : 'No Coding'}</span></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h5 class="font-medium text-xs text-gray-900 mb-1.5">MMDA Coding Schedule</h5>
+                                        <div class="space-y-0.5 text-[10px]">
+                                            <div class="flex justify-between p-1 bg-blue-50 rounded"><span>Monday</span><span class="font-medium">1, 2</span></div>
+                                            <div class="flex justify-between p-1 bg-green-50 rounded"><span>Tuesday</span><span class="font-medium">3, 4</span></div>
+                                            <div class="flex justify-between p-1 bg-yellow-50 rounded"><span>Wednesday</span><span class="font-medium">5, 6</span></div>
+                                            <div class="flex justify-between p-1 bg-orange-50 rounded"><span>Thursday</span><span class="font-medium">7, 8</span></div>
+                                            <div class="flex justify-between p-1 bg-red-50 rounded"><span>Friday</span><span class="font-medium">9, 0</span></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Boundary Tab -->
+                        <div id="boundary-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Boundary Collection History</h4>
+                                ${boundaryRowsHtml ? `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">Date</th><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">Driver</th><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">License</th><th class="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase">Amount</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">${boundaryRowsHtml.replace(/px-6 py-4/g, 'px-3 py-1.5').replace(/text-sm/g, 'text-xs')}</tbody></table></div>` : '<div class="text-center py-6 text-gray-500"><i data-lucide="dollar-sign" class="w-10 h-10 mx-auto mb-2 text-gray-300"></i><p class="text-xs">No boundary history found</p></div>'}
+                            </div>
+                        </div>
+
+                        <!-- Maintenance Tab -->
+                        <div id="maintenance-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Maintenance Records</h4>
+                                <div class="space-y-2">${maintHtml.replace(/p-4/g, 'p-2').replace(/p-6/g, 'p-3').replace(/text-lg/g, 'text-base').replace(/text-sm/g, 'text-xs')}</div>
+                            </div>
+                        </div>
+
+                        <!-- ROI Tab - Aggressively Miniaturized -->
+                        <div id="roi-tab" class="tab-content hidden">
+                            <div class="space-y-3">
+                                <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-lg text-white">
+                                    <h4 class="text-base font-bold mb-2">ROI Analysis</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div><p class="text-purple-100 text-[10px]">Total Investment</p><p class="text-base font-bold">₱${parseFloat(roi.total_investment || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p></div>
+                                        <div><p class="text-purple-100 text-[10px]">Total Revenue</p><p class="text-base font-bold">₱${parseFloat(roi.total_revenue || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p></div>
+                                        <div><p class="text-purple-100 text-[10px]">Total Expenses</p><p class="text-base font-bold">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p></div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                        <h4 class="text-xs font-semibold text-gray-900 mb-2">ROI Metrics</h4>
+                                        <div class="space-y-2 text-xs">
+                                            <div class="flex justify-between items-center"><span class="text-gray-600">ROI %</span><span class="font-bold text-${roiColor}-600">${roiPct.toFixed(1)}%</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-600">Payback</span><span class="font-bold text-blue-600">${parseFloat(roi.payback_period || 0).toFixed(1)} mths</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-600">Mth Rev</span><span class="font-bold text-green-600">₱${parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                        <h4 class="text-xs font-semibold text-gray-900 mb-2">ROI Progress</h4>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1"><span class="text-[10px] text-gray-600">Achievement</span><span class="text-[10px] font-medium">${roiPct.toFixed(1)}%</span></div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-gradient-to-r from-purple-500 to-purple-600 h-2.5 rounded-full" style="width:${roiPrgW}%"></div></div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between items-center mb-1"><span class="text-[10px] text-gray-600">Monthly Target</span><span class="text-[10px] font-medium">₱${invPerMonth.toLocaleString('en-PH', {minimumFractionDigits:0})}</span></div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-gradient-to-r from-green-500 to-green-600 h-2.5 rounded-full" style="width:${bndPrgW}%"></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Tab -->
+                        <div id="location-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Location Information</h4>
+                                <div class="space-y-3">
+                                    {{-- Info Row --}}
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
+                                            <span class="text-gray-500 text-[10px]">Location:</span>
+                                            <span class="font-medium text-[10px] text-right">${locInfo.current_location || 'Not Available'}</span>
+                                        </div>
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
+                                            <span class="text-gray-500 text-[10px]">Update:</span>
+                                            <span class="font-medium text-[10px] text-right">${locInfo.last_location_update || 'Never'}</span>
+                                        </div>
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5 items-center">
+                                            <span class="text-gray-500 text-[10px]">GPS:</span>
+                                            <span class="px-1.5 py-0.5 text-[9px] rounded-full ${locInfo.gps_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                                ${locInfo.gps_enabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Tracking Status Display --}}
+                                    <div id="unitDetailMapContainer" class="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex flex-col items-center justify-center p-6 text-center" style="height: 320px;">
+                                        <div class="mb-4 p-4 bg-indigo-100 rounded-full">
+                                            <i data-lucide="satellite" class="w-12 h-12 text-indigo-600"></i>
+                                        </div>
+                                        <h4 class="text-sm font-bold text-gray-900 mb-1">Tracksolid Pro Enterprise</h4>
+                                        <p class="text-xs text-gray-500 mb-4 px-4">This unit is tracked via real-time API using IMEI identification.</p>
+                                        
+                                        <div class="w-full max-w-xs space-y-2 mb-6">
+                                            <div class="flex justify-between items-center bg-white p-2 border border-gray-200 rounded text-xs">
+                                                <span class="text-gray-500">Device IMEI:</span>
+                                                <span class="font-mono font-bold text-indigo-700">${unit.imei || 'Not Set'}</span>
+                                            </div>
+                                        </div>
+
+                                        <a href="/live-tracking?unit=${unit.id}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
+                                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                            View on Live Tracking Map
+                                        </a>
+                                    </div>
+
+                                    ${locInfo.coordinates ? `
+                                        <div class="flex justify-between bg-gray-50 rounded-lg px-2 py-1.5">
+                                            <span class="text-gray-500 text-[10px]">Coordinates:</span>
+                                            <span class="font-medium text-[10px]">${locInfo.coordinates}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dashcam Tab -->
+                        <div id="dashcam-tab" class="tab-content hidden">
+                            <div class="bg-white border border-gray-200 rounded-lg p-3">
+                                <h4 class="text-sm font-semibold text-gray-900 mb-2">Dashcam Information</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <div class="space-y-1.5 text-xs">
+                                            <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="px-1.5 py-0.5 text-[9px] rounded-full ${dashcam.dashcam_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${dashcam.dashcam_enabled ? 'Enabled' : 'Disabled'}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Connect:</span><span class="px-1.5 py-0.5 text-[9px] rounded-full ${dashcam.dashcam_status === 'Online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${dashcam.dashcam_status || 'Offline'}</span></div>
+                                            <div class="flex justify-between"><span class="text-gray-600">Storage:</span><span class="font-medium text-[10px]">${parseFloat(dashcam.storage_used || 0).toFixed(1)} / ${parseFloat(dashcam.storage_total || 32).toFixed(0)} GB</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-100 rounded-lg h-20 flex items-center justify-center"><div class="text-center text-gray-500"><i data-lucide="video" class="w-6 h-6 mx-auto mb-1"></i><p class="text-[10px]">Video placeholder</p></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 `;
 
                 // Re-init lucide icons
@@ -1971,6 +2448,7 @@ function resetAddUnitModal() {
 
 // Real-time table filtering
 document.addEventListener('DOMContentLoaded', function() {
+    setViewMode(currentViewMode);
     const searchInput = document.getElementById('tableSearchInput');
     const tableBody = document.querySelector('tbody.bg-white.divide-y.divide-gray-200');
     
