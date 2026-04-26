@@ -611,13 +611,11 @@ class UnitController extends Controller
 
         // Add detailed parts and cost breakdown for each maintenance record
         foreach ($maintenance_records as &$record) {
-            $parts = DB::table('maintenance_parts as mp')
-                ->leftJoin('spare_parts as sp', 'mp.part_id', '=', 'sp.id')
-                ->where('mp.maintenance_id', $record->id)
-                ->select('mp.*', 'sp.supplier as supplier_name')
-                ->orderBy('mp.part_name')
+            $parts = DB::table('maintenance_parts')
+                ->where('maintenance_id', $record->id)
+                ->orderBy('part_name')
                 ->get();
-
+            
             $record->parts_details = $parts;
             $record->total_parts_cost = $parts->where('part_id', '!=', null)->sum('total');
             $record->total_other_costs = $parts->where('part_id', null)->sum('total');
@@ -697,17 +695,17 @@ class UnitController extends Controller
 
     public function getFlaggedUnits()
     {
-        // 1. Manually flagged units (status = at_risk) — always shown regardless of driver
-        $atRiskUnits = DB::table('units')
+        // 1. Manually flagged units (status = surveillance) — always shown regardless of driver
+        $surveillanceUnits = DB::table('units')
             ->whereNull('deleted_at')
-            ->where('status', 'at_risk')
+            ->where('status', 'surveillance')
             ->select('id', 'plate_number', 'make', 'model', 'status', 'driver_id', 'secondary_driver_id')
             ->get();
 
-        // 2. Auto-detected missing units: has a driver, overdue boundary (>48h), NOT already flagged as at_risk
+        // 2. Auto-detected missing units: has a driver, overdue boundary (>48h), NOT already surveillance
         $autoMissingUnits = DB::table('units')
             ->whereNull('deleted_at')
-            ->whereNotIn('status', ['maintenance', 'at_risk', 'retired', 'coding'])
+            ->whereNotIn('status', ['maintenance', 'surveillance', 'retired', 'coding'])
             ->whereNotNull('shift_deadline_at')
             ->where('shift_deadline_at', '<', now()->subHours(48))
             ->where(function($q) {
@@ -718,7 +716,7 @@ class UnitController extends Controller
             ->get();
 
         // Merge and de-duplicate by id
-        $allFlagged = $atRiskUnits->merge($autoMissingUnits)->unique('id')->values();
+        $allFlagged = $surveillanceUnits->merge($autoMissingUnits)->unique('id')->values();
 
         foreach ($allFlagged as $unit) {
             // Get the most recent boundary record for this unit
@@ -783,7 +781,7 @@ class UnitController extends Controller
                 $unit->last_known_driver = 'No boundary record';
                 $unit->last_driver_contact = null;
             }
-            $unit->is_at_risk = ($unit->status === 'at_risk');
+            $unit->is_surveillance = ($unit->status === 'surveillance');
         }
         
         return response()->json($allFlagged);
