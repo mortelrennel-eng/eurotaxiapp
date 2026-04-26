@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/units/details', [UnitController::class, 'getDetails'])->name('units.details');
     Route::get('/units/details-html', [UnitController::class, 'getDetailsHtml'])->name('units.detailsHtml');
     Route::post('/units/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');
+    Route::get('/units/quick-stats', [UnitController::class, 'quickStats'])->name('units.quick-stats');
     Route::get('/units/print', [UnitController::class, 'printPdf'])->name('units.print');
     Route::resource('units', UnitController::class);
 
@@ -131,7 +132,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/live-tracking/unit/{id}', [LiveTrackingController::class, 'getUnitLocation'])->name('live-tracking.unit-location');
     Route::get('/live-tracking/units-live', [LiveTrackingController::class, 'getUnitsLive'])->name('live-tracking.units-live');
     Route::get('/live-tracking/unit-mileage/{id}', [LiveTrackingController::class, 'getUnitMileage'])->name('live-tracking.mileage');
-    Route::post('/live-tracking/send-command', [LiveTrackingController::class, 'sendCommand'])->name('live-tracking.send-command');
 
     // Unit Profitability
     Route::get('/unit-profitability', [UnitProfitabilityController::class, 'index'])->name('unit-profitability.index');
