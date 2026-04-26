@@ -981,19 +981,6 @@
                 </button>
             </div>
 
-            <!-- Filter & Total -->
-            <div class="mb-4 flex flex-col sm:flex-row justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 gap-3">
-                <div class="flex items-center gap-2">
-                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest whitespace-nowrap">Filter by Day:</label>
-                    <input type="date" id="purchaseHistoryDateFilter" class="px-3 py-1.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition uppercase tracking-widest" onchange="filterPurchaseHistory()">
-                    <button onclick="clearPurchaseHistoryFilter()" class="px-4 py-1.5 bg-white text-gray-700 text-xs font-black uppercase tracking-widest rounded-lg border border-gray-200 hover:bg-gray-100 shadow-sm transition whitespace-nowrap">All</button>
-                </div>
-                <div class="text-right sm:text-right text-center w-full sm:w-auto">
-                    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Selected Expenses</div>
-                    <div id="purchaseHistoryTotal" class="text-2xl font-black text-green-600 leading-none tracking-tight">₱0.00</div>
-                </div>
-            </div>
-
             <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 <table class="min-w-full divide-y divide-gray-100">
                     <thead class="bg-gray-50 sticky top-0">
@@ -1005,7 +992,7 @@
                     </thead>
                     <tbody id="purchaseHistoryTableBody" class="divide-y divide-gray-50">
                         @forelse($purchaseHistory as $ph)
-                        <tr class="hover:bg-gray-50 transition purchase-history-row" data-date="{{ \Carbon\Carbon::parse($ph->date)->format('Y-m-d') }}" data-amount="{{ $ph->amount }}">
+                        <tr class="hover:bg-gray-50 transition">
                             <td class="px-4 py-4 whitespace-nowrap">
                                 <div class="text-xs font-bold text-gray-600">{{ \Carbon\Carbon::parse($ph->date)->format('M d, Y') }}</div>
                                 <div class="text-[9px] text-gray-400">{{ \Carbon\Carbon::parse($ph->created_at)->format('h:i A') }}</div>
@@ -1019,19 +1006,12 @@
                             </td>
                         </tr>
                         @empty
-                        <tr class="purchase-history-empty">
-                            <td colspan="3" class="px-4 py-12 text-center text-gray-400 border-b-0">
-                                <i data-lucide="receipt" class="w-8 h-8 opacity-20 mx-auto mb-2"></i>
-                                <p class="text-sm font-bold tracking-tight">No purchase records found.</p>
+                        <tr>
+                            <td colspan="3" class="px-4 py-12 text-center text-gray-400">
+                                <p class="text-sm">No purchase records found.</p>
                             </td>
                         </tr>
                         @endforelse
-                        <tr id="purchaseHistoryNoFilterResult" class="hidden">
-                            <td colspan="3" class="px-4 py-12 text-center text-gray-400 border-b-0">
-                                <i data-lucide="search-x" class="w-8 h-8 opacity-20 mx-auto mb-2"></i>
-                                <p class="text-sm font-bold tracking-tight">No expenses recorded for the selected date.</p>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -2276,15 +2256,13 @@ async function refreshPurchaseHistory() {
                 return;
             }
             tbody.innerHTML = json.data.map(ph => {
-                const dateObj = new Date(ph.date);
-                const dateStr = dateObj.toISOString().split('T')[0];
-                const dateFormatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-                const timeStr = new Date(ph.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                const date = new Date(ph.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                const time = new Date(ph.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                 return `
-                    <tr class="hover:bg-gray-50 transition purchase-history-row" data-date="${dateStr}" data-amount="${ph.amount}">
+                    <tr class="hover:bg-gray-50 transition">
                         <td class="px-4 py-4 whitespace-nowrap">
-                            <div class="text-xs font-bold text-gray-600">${dateFormatted}</div>
-                            <div class="text-[9px] text-gray-400">${timeStr}</div>
+                            <div class="text-xs font-bold text-gray-600">${date}</div>
+                            <div class="text-[9px] text-gray-400">${time}</div>
                         </td>
                         <td class="px-4 py-4">
                             <div class="text-sm font-black text-gray-800 tracking-tight">${ph.description}</div>
@@ -2296,9 +2274,6 @@ async function refreshPurchaseHistory() {
                     </tr>
                 `;
             }).join('');
-            
-            // Re-apply filter and update total
-            filterPurchaseHistory();
         }
     } catch (e) { console.error(e); }
 }
@@ -2352,59 +2327,6 @@ function showToast(message, type = 'success') {
         setTimeout(() => toast.remove(), 300);
     }, 5000);
 }
-
-function filterPurchaseHistory() {
-    const filterDate = document.getElementById('purchaseHistoryDateFilter').value;
-    const rows = document.querySelectorAll('.purchase-history-row');
-    const noResultRow = document.getElementById('purchaseHistoryNoFilterResult');
-    const emptyRow = document.querySelector('.purchase-history-empty');
-    
-    let total = 0;
-    let visibleCount = 0;
-
-    if (emptyRow && emptyRow.style.display !== 'none') {
-        emptyRow.style.display = 'none';
-    }
-
-    rows.forEach(row => {
-        const rowDate = row.getAttribute('data-date');
-        const amount = parseFloat(row.getAttribute('data-amount')) || 0;
-
-        if (!filterDate || rowDate === filterDate) {
-            row.style.display = '';
-            total += amount;
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-
-    if (visibleCount === 0 && rows.length > 0) {
-        if(noResultRow) noResultRow.classList.remove('hidden');
-    } else {
-        if(noResultRow) noResultRow.classList.add('hidden');
-    }
-
-    document.getElementById('purchaseHistoryTotal').innerHTML = '₱' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
-function clearPurchaseHistoryFilter() {
-    document.getElementById('purchaseHistoryDateFilter').value = '';
-    filterPurchaseHistory();
-}
-
-// Ensure total is calculated initially when modal is opened
-document.addEventListener('DOMContentLoaded', () => {
-    const dateInput = document.getElementById('purchaseHistoryDateFilter');
-    if(dateInput) {
-        // Set to local timezone's current date formatted as YYYY-MM-DD
-        const now = new Date();
-        const offset = now.getTimezoneOffset() * 60000;
-        const localISOTime = (new Date(now - offset)).toISOString().split('T')[0];
-        dateInput.value = localISOTime;
-    }
-    filterPurchaseHistory();
-});
 </script>
 @endpush
 @endsection
