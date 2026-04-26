@@ -192,87 +192,95 @@
 
     </div>
 
-    <!-- Main Analytics Grid -->
-    <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-lg shadow">
-            <div class="p-4 border-b">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-semibold text-gray-900">Revenue Trend</h3>
-                    <div class="flex gap-2">
-                        <button onclick="updateRevenueTrend('7')" id="btn-7days" class="px-2 py-1 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                            Last 7 Days
-                        </button>
-                        <button onclick="updateRevenueTrend('30')" id="btn-30days" class="px-2 py-1 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
-                            Last 30 Days
-                        </button>
-                        <button onclick="updateRevenueTrend('90')" id="btn-90days" class="px-2 py-1 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
-                            Last 3
-                        </button>
-                        <button onclick="updateRevenueTrend('365')" id="btn-365days" class="px-2 py-1 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
-                            Year
-                        </button>
+    <!-- Unit Performance (Full Width) -->
+    <div class="mt-4 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b bg-gray-50/50 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="p-1.5 bg-blue-100 rounded-lg">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-900 uppercase tracking-tight">Unit Performance</h3>
+            </div>
+            <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-widest border border-blue-100">Top 10 Performers</span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4">
+            <div class="lg:col-span-3 p-6">
+                <div style="height: 380px;">
+                    <canvas id="unitPerformanceChart"></canvas>
+                </div>
+            </div>
+            <!-- Executive Insight Panel -->
+            <div class="bg-gray-50 p-6 border-l border-gray-100 flex flex-col justify-center">
+                <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Executive Insights</h4>
+                <div class="space-y-8">
+                    <div>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Fleet Health</p>
+                        <div class="flex items-end gap-2">
+                            <p class="text-3xl font-black text-gray-900 leading-none">82%</p>
+                            <p class="text-xs font-bold text-green-600 flex items-center mb-0.5">
+                                <i data-lucide="trending-up" class="w-3 h-3 mr-0.5"></i> +2.4%
+                            </p>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-2 leading-relaxed font-medium">Most units are meeting over 80% of their monthly boundary targets.</p>
+                    </div>
+                    
+                    <div class="pt-6 border-t border-gray-200">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Top Performer</p>
+                        <p class="text-base font-black text-gray-900" id="insightTopPlate">--</p>
+                        <p class="text-[11px] text-gray-500 mt-2 font-medium">Consistency in daily collections makes this your most reliable asset.</p>
+                    </div>
+
+                    <div class="pt-6 border-t border-gray-200">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Legend</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded bg-blue-500 shadow-sm"></div>
+                                <span class="text-[10px] font-black text-gray-600 uppercase tracking-widest">Actual Collection</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded border-2 border-amber-500 bg-amber-500/20"></div>
+                                <span class="text-[10px] font-black text-gray-600 uppercase tracking-widest">Monthly Target</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="p-4">
-                <canvas id="revenueTrendChart" width="400" height="200"></canvas>
-            </div>
         </div>
+    </div>
 
-        <div class="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-            <div class="p-4 border-b bg-gray-50/50 flex justify-between items-center">
+    <!-- Revenue Trend (Full Width) -->
+    <div class="mt-4 bg-white rounded-lg shadow overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="p-1.5 bg-blue-100 rounded-lg">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+                    <div class="p-1.5 bg-blue-50 rounded-lg">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-blue-600"></i>
                     </div>
-                    <h3 class="text-base font-bold text-gray-900">Unit Performance</h3>
+                    <h3 class="text-base font-bold text-gray-900 uppercase tracking-tight">Revenue Trend</h3>
                 </div>
-                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-wider">Top 10 Performers</span>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3">
-                <div class="lg:col-span-2 p-4">
-                    <div style="height: 320px;">
-                        <canvas id="unitPerformanceChart"></canvas>
-                    </div>
-                </div>
-                <!-- Executive Insight Panel -->
-                <div class="bg-gray-50 p-6 border-l border-gray-100 flex flex-col justify-center">
-                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Executive Insights</h4>
-                    <div class="space-y-6">
-                        <div>
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Fleet Health</p>
-                            <div class="flex items-end gap-2">
-                                <p class="text-2xl font-black text-gray-900">82%</p>
-                                <p class="text-xs font-bold text-green-600 mb-1 flex items-center">
-                                    <i data-lucide="trending-up" class="w-3 h-3 mr-0.5"></i> +2.4%
-                                </p>
-                            </div>
-                            <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">Most units are meeting over 80% of their monthly boundary targets.</p>
-                        </div>
-                        
-                        <div class="pt-4 border-t border-gray-200">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Top Performer</p>
-                            <p class="text-sm font-black text-gray-900" id="insightTopPlate">--</p>
-                            <p class="text-[11px] text-gray-500 mt-1">Consistency in daily collections makes this your most reliable asset.</p>
-                        </div>
-
-                        <div class="pt-4 border-t border-gray-200">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">Legend</p>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded bg-blue-500"></div>
-                                    <span class="text-[11px] font-bold text-gray-600 uppercase">Actual Collection</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded border border-amber-500 bg-amber-500/20"></div>
-                                    <span class="text-[11px] font-bold text-gray-600 uppercase">Monthly Target</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex gap-2">
+                    <button onclick="updateRevenueTrend('7')" id="btn-7days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm">
+                        7 Days
+                    </button>
+                    <button onclick="updateRevenueTrend('30')" id="btn-30days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all border border-gray-200">
+                        30 Days
+                    </button>
+                    <button onclick="updateRevenueTrend('90')" id="btn-90days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all border border-gray-200">
+                        3 Months
+                    </button>
+                    <button onclick="updateRevenueTrend('365')" id="btn-365days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all border border-gray-200">
+                        1 Year
+                    </button>
                 </div>
             </div>
         </div>
+        <div class="p-4">
+            <canvas id="revenueTrendChart" style="width: 100%; height: 320px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Secondary Analytics Grid (Aligned for Balance) -->
+    <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <div class="bg-white rounded-lg shadow">
             <div class="p-4 border-b">
