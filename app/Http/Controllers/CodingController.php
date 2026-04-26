@@ -20,9 +20,9 @@ class CodingController extends Controller
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->whereRaw("cr.coding_day like CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci", [$search])
-                    ->orWhereRaw("cr.restricted_plate_numbers like CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci", [$search])
-                    ->orWhereRaw("cr.notes like CONCAT('%', ?, '%') COLLATE utf8mb4_unicode_ci", [$search]);
+                $q->where('cr.coding_day', 'like', "%{$search}%")
+                    ->orWhere('cr.restricted_plate_numbers', 'like', "%{$search}%")
+                    ->orWhere('cr.notes', 'like', "%{$search}%");
             });
         }
 
