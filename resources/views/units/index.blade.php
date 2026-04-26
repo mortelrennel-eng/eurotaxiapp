@@ -46,7 +46,7 @@
             box-shadow: 0 0 5px rgba(239, 68, 68, 0.6);
         }
 
-        /* Yellow Blink — Coding / Surveillance / Pending */
+        /* Yellow Blink — Coding / At Risk / Pending */
         .dot-yellow {
             width: 9px; height: 9px;
             background: #f59e0b;
@@ -57,7 +57,7 @@
             50%       { opacity: 0.15; }
         }
 
-        /* Orange pulse — Surveillance */
+        /* Orange pulse — At Risk */
         .dot-orange {
             width: 9px; height: 9px;
             background: #f97316;
@@ -640,7 +640,7 @@
                             <select name="status" id="editStatus"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="active">Active</option>
-                                <option value="surveillance">Surveillance / Missing</option>
+                                <option value="at_risk">At Risk / Missing</option>
                                 <option value="maintenance">Maintenance</option>
                                 <option value="coding">Coding</option>
                                 <option value="retired">Retired</option>
@@ -923,7 +923,7 @@
                             <i data-lucide="siren" class="w-5 h-5 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (Missing/Surveillance)</h3>
+                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (Missing/At Risk)</h3>
                             <p class="text-sm text-red-100 leading-tight">Units that are under monitoring and their inactive days</p>
                         </div>
                     </div>
@@ -1107,7 +1107,7 @@
                         <div class="text-center py-12">
                             <i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-500"></i>
                             <h4 class="text-lg font-bold text-gray-900">All Clear!</h4>
-                            <p class="text-gray-500">There are no units currently flagged as missing or under surveillance.</p>
+                            <p class="text-gray-500">There are no units currently flagged as missing or categorized as at risk.</p>
                         </div>
                     `;
                     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -1119,10 +1119,10 @@
                     const daysMissing = unit.days_inactive !== null && unit.days_inactive !== undefined ? unit.days_inactive : '?';
                     const daysColor = (daysMissing === '?' || daysMissing > 2) ? 'text-red-600 font-bold' : 'text-orange-600 font-bold';
                     const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
-                    const badge = unit.is_surveillance 
+                    const badge = unit.is_at_risk 
                         ? `<span class="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-bold uppercase tracking-wide">🚨 Manually Flagged</span>`
                         : `<span class="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded font-bold uppercase tracking-wide">⚠️ Auto-Detected</span>`;
-                    const borderColor = unit.is_surveillance ? 'border-red-500' : 'border-orange-400';
+                    const borderColor = unit.is_at_risk ? 'border-red-500' : 'border-orange-400';
                     
                     const suspectDisplay = unit.is_vacant 
                         ? `<span class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-bold italic tracking-tight">NO ASSIGNED DRIVER</span>`
@@ -1551,81 +1551,102 @@
                         if (m.parts_details && m.parts_details.length > 0) {
                             const parts = m.parts_details.filter(p => p.part_id != null);
                             const others = m.parts_details.filter(p => p.part_id == null);
-                            
-                            partsDetailsHtml = '<div class="mt-3 space-y-2">';
-                            
+
+                            partsDetailsHtml = '<div class="mt-4 space-y-3">';
+
                             if (parts.length > 0) {
-                                partsDetailsHtml += '<div class="bg-blue-50 p-2 rounded border border-blue-100"><div class="text-[10px] font-bold text-gray-600 uppercase mb-1">Parts Replaced</div>';
+                                partsDetailsHtml += '<div class="bg-blue-50 rounded-xl border border-blue-100 overflow-hidden"><div class="px-3 py-2 bg-blue-100 border-b border-blue-200"><span class="text-[10px] font-black text-blue-800 uppercase tracking-widest">🔧 Parts Replaced</span></div><div class="divide-y divide-blue-100">';
                                 parts.forEach(p => {
-                                    partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                                        <div class="flex-1">
-                                            <span class="text-xs font-medium text-gray-900">${p.part_name}</span>
-                                            ${p.quantity > 1 ? `<span class="text-xs text-gray-500 ml-1">(x${p.quantity})</span>` : ''}
+                                    const supplierBadge = p.supplier_name
+                                        ? `<span class="inline-block mt-0.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-bold truncate max-w-[120px]" title="${p.supplier_name}">${p.supplier_name}</span>`
+                                        : '';
+                                    partsDetailsHtml += `<div class="px-3 py-2 flex items-start justify-between gap-2">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-semibold text-gray-900 truncate leading-tight" title="${p.part_name}">${p.part_name}</p>
+                                            <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                                ${p.quantity > 1 ? `<span class="text-[9px] text-gray-500 font-bold">x${p.quantity}</span>` : ''}
+                                                ${supplierBadge}
+                                            </div>
                                         </div>
-                                        <div class="text-xs font-bold text-gray-900">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                        <span class="text-xs font-black text-blue-700 flex-shrink-0 ml-2">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                     </div>`;
                                 });
                                 const partsTotal = parts.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
-                                partsDetailsHtml += `<div class="flex justify-between items-center pt-1 mt-1 border-t border-gray-200">
-                                    <span class="text-xs font-bold text-gray-600 uppercase">Parts Subtotal</span>
-                                    <span class="text-xs font-black text-blue-600">₱${partsTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                partsDetailsHtml += `</div><div class="flex justify-between items-center px-3 py-2 bg-blue-100 border-t border-blue-200">
+                                    <span class="text-[10px] font-black text-blue-800 uppercase">Parts Subtotal</span>
+                                    <span class="text-xs font-black text-blue-700">₱${partsTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                 </div></div>`;
                             }
-                            
+
                             if (others.length > 0) {
-                                partsDetailsHtml += '<div class="bg-orange-50 p-2 rounded border border-orange-100"><div class="text-[10px] font-bold text-gray-600 uppercase mb-1">Other Costs & Services</div>';
+                                partsDetailsHtml += '<div class="bg-orange-50 rounded-xl border border-orange-100 overflow-hidden"><div class="px-3 py-2 bg-orange-100 border-b border-orange-200"><span class="text-[10px] font-black text-orange-800 uppercase tracking-widest">🛠 Other Costs & Services</span></div><div class="divide-y divide-orange-100">';
                                 others.forEach(o => {
-                                    partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-orange-100 last:border-0">
-                                        <div class="flex-1">
-                                            <span class="text-xs font-medium text-gray-900">${o.part_name}</span>
-                                        </div>
-                                        <div class="text-xs font-bold text-gray-900">₱${parseFloat(o.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                    partsDetailsHtml += `<div class="px-3 py-2 flex items-start justify-between gap-2">
+                                        <p class="text-xs font-semibold text-gray-900 flex-1 min-w-0 truncate leading-tight" title="${o.part_name}">${o.part_name}</p>
+                                        <span class="text-xs font-black text-orange-700 flex-shrink-0 ml-2">₱${parseFloat(o.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                     </div>`;
                                 });
                                 const othersTotal = others.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
-                                partsDetailsHtml += `<div class="flex justify-between items-center pt-1 mt-1 border-t border-orange-200">
-                                    <span class="text-xs font-bold text-gray-600 uppercase">Other Costs Subtotal</span>
-                                    <span class="text-xs font-black text-orange-600">₱${othersTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                partsDetailsHtml += `</div><div class="flex justify-between items-center px-3 py-2 bg-orange-100 border-t border-orange-200">
+                                    <span class="text-[10px] font-black text-orange-800 uppercase">Services Subtotal</span>
+                                    <span class="text-xs font-black text-orange-700">₱${othersTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                 </div></div>`;
                             }
-                            
+
                             partsDetailsHtml += '</div>';
                         }
-                        
-                        // Build driver info HTML if available
-                        let driverHtml = '';
-                        if (m.driver_name) {
-                            driverHtml = `<div class="bg-green-50 p-2 rounded border border-green-100 mb-2">
-                                <div class="flex items-center gap-1 mb-1 text-green-700">
-                                    <i data-lucide="user" class="w-3 h-3"></i>
-                                    <span class="text-[9px] font-black uppercase">Assigned Driver</span>
+
+                        const statusBadge = m.status === 'completed'
+                            ? `<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[9px] font-black uppercase tracking-widest">✓ Completed</span>`
+                            : m.status === 'cancelled'
+                                ? `<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[9px] font-black uppercase tracking-widest">✗ Cancelled</span>`
+                                : `<span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[9px] font-black uppercase tracking-widest">⏳ Pending</span>`;
+
+                        const driverHtml = m.driver_name
+                            ? `<div class="flex items-center gap-1.5">
+                                <span class="text-[9px] font-black text-gray-400 uppercase w-20 flex-shrink-0">Driver</span>
+                                <span class="text-xs font-semibold text-gray-800 truncate" title="${m.driver_name}">${m.driver_name}</span>
+                               </div>`
+                            : '';
+
+                        maintHtml += `
+                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                            {{-- Card Header --}}
+                            <div class="bg-gradient-to-r from-slate-700 to-slate-800 px-4 py-3 flex items-center justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-white font-black text-sm truncate leading-tight" title="${m.maintenance_type || m.type || 'Maintenance'}">${m.maintenance_type || m.type || 'Maintenance'}</p>
+                                    <p class="text-slate-300 text-[10px] font-medium">${m.date_started || m.date || 'No date'}</p>
                                 </div>
-                                <p class="text-xs font-bold text-green-900">${m.driver_name}</p>
-                            </div>`;
-                        }
-                        
-                        maintHtml += `<div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h5 class="font-semibold text-gray-900">${m.maintenance_type || m.type || 'Maintenance'}</h5>
-                                    <p class="text-sm text-gray-600">${m.date_started || m.date || ''}</p>
+                                <div class="flex-shrink-0 text-right">
+                                    <p class="text-orange-300 font-black text-base leading-tight">₱${parseFloat(m.total_cost || m.cost || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                    <p class="text-slate-400 text-[9px] uppercase font-bold">Total Cost</p>
                                 </div>
-                                <div class="text-right"><span class="text-lg font-bold text-orange-600">₱${parseFloat(m.total_cost || m.cost || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
                             </div>
-                            
-                            ${driverHtml}
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div><span class="text-gray-600">Mechanic:</span><p class="font-medium">${m.mechanic_name || 'N/A'}</p></div>
-                                <div><span class="text-gray-600">Status:</span><p class="font-medium">${m.status || 'Unknown'}</p></div>
-                                <div class="md:col-span-2"><span class="text-gray-600">Description:</span><p class="font-medium">${m.description || m.notes || 'No description'}</p></div>
+
+                            {{-- Card Body: 2-column info grid --}}
+                            <div class="px-4 py-3">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-2">
+                                    <div class="min-w-0">
+                                        <span class="text-[9px] font-black text-gray-400 uppercase block">Mechanic</span>
+                                        <p class="font-semibold text-gray-800 truncate" title="${m.mechanic_name || 'N/A'}">${m.mechanic_name || 'N/A'}</p>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <span class="text-[9px] font-black text-gray-400 uppercase block">Status</span>
+                                        <div class="mt-0.5">${statusBadge}</div>
+                                    </div>
+                                    ${driverHtml ? `<div class="col-span-2 min-w-0">${driverHtml}</div>` : ''}
+                                    <div class="col-span-2 min-w-0">
+                                        <span class="text-[9px] font-black text-gray-400 uppercase block">Description</span>
+                                        <p class="font-medium text-gray-700 text-xs leading-snug line-clamp-3">${m.description || m.notes || 'No description provided.'}</p>
+                                    </div>
+                                </div>
+
+                                ${partsDetailsHtml}
                             </div>
-                            
-                            ${partsDetailsHtml}
                         </div>`;
                     });
                 } else {
-                    maintHtml = `<div class="text-center py-8 text-gray-500"><i data-lucide="wrench" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i><p>No maintenance records found</p></div>`;
+                    maintHtml = `<div class="text-center py-12 text-gray-400"><i data-lucide="wrench" class="w-12 h-12 mx-auto mb-3 text-gray-200"></i><p class="font-semibold text-sm">No maintenance records found</p></div>`;
                 }
 
                 const roiPrgW = Math.min(100, Math.max(0, roiPct)).toFixed(1);
@@ -1645,9 +1666,9 @@
                                 <div>
                                     <div class="flex items-center gap-3 mb-1">
                                         <h3 class="text-2xl font-black tracking-tight leading-none">${unit.plate_number || ''}</h3>
-                                        <span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.status || ''}</span>
+                                        ${unit.status !== 'at_risk' ? `<span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.status || ''}</span>` : ''}
                                         <span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.unit_type || 'Standard'}</span>
-                                        ${unit.status === 'surveillance' ? `<span class="px-2.5 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border border-red-400">🚨 surveillance</span>` : ''}
+                                        ${unit.status === 'at_risk' ? `<span class="px-2.5 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border border-red-400">🚨 AT RISK</span>` : ''}
                                     </div>
                                     <p class="text-blue-100 font-medium">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
                                 </div>
@@ -1841,11 +1862,12 @@
                         <!-- Maintenance Tab -->
                         <div id="maintenance-tab" class="tab-content hidden animate-in fade-in duration-300">
                             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center justify-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
                                     <i data-lucide="wrench" class="w-5 h-5 text-blue-600"></i> Vehicle Maintenance Records
+                                    ${parseFloat(roi.total_expenses || 0) > 0 ? `<span class="ml-2 px-2 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded text-[10px] font-black uppercase">Total: ₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>` : ''}
                                 </h4>
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    ${maintHtml.replace(/border border-gray-200/g, 'bg-gray-50 border border-gray-100 shadow-sm').replace(/p-4/g, 'p-6').replace(/rounded-lg/g, 'rounded-2xl')}
+                                <div class="flex flex-col gap-6 max-w-3xl mx-auto">
+                                    ${maintHtml.replace(/border border-gray-200 bg-white/g, 'bg-gray-50 border border-gray-100 shadow-sm').replace(/p-4/g, 'p-6').replace(/rounded-lg/g, 'rounded-2xl')}
                                 </div>
                             </div>
                         </div>

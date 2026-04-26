@@ -562,48 +562,17 @@ class DriverBehaviorController extends Controller
         $pendingCharges = DB::table('driver_behavior')->where('charge_status', 'pending')->sum('total_charge_to_driver');
         
         $violationsToday = DB::table('driver_behavior')
-            ->whereDate('timestamp', now()->toDateString())
+            ->whereDate('timestamp', now()->format('Y-m-d'))
             ->count();
 
-        $violatorsToday = DB::table('driver_behavior')
-            ->whereDate('timestamp', now()->toDateString())
-            ->distinct('driver_id')
-            ->count('driver_id');
-
-        $chargesThisMonth = DB::table('driver_behavior')
-            ->whereMonth('timestamp', now()->month)
-            ->whereYear('timestamp', now()->year)
-            ->sum('total_charge_to_driver');
-
-        $chargesLastMonth = DB::table('driver_behavior')
-            ->whereMonth('timestamp', now()->subMonth()->month)
-            ->whereYear('timestamp', now()->subMonth()->year)
-            ->sum('total_charge_to_driver');
-
-        // Logic for "Eligible Last Month" (Drivers with no violations in the previous calendar month)
-        $startLastMonth = now()->subMonth()->startOfMonth()->toDateString();
-        $endLastMonth = now()->subMonth()->endOfMonth()->toDateString();
-        
-        $allDrivers = DB::table('drivers')->whereNull('deleted_at')->pluck('id');
-        $violatorsLastMonth = DB::table('driver_behavior')
-            ->whereBetween('timestamp', [$startLastMonth, $endLastMonth])
-            ->distinct('driver_id')
-            ->pluck('driver_id');
-            
-        $eligibleLastMonth = $allDrivers->diff($violatorsLastMonth)->count();
-
         return [
-            'incidents_period'    => (clone $base)->count(),
-            'violations_today'    => $violationsToday,
-            'violators_today'     => $violatorsToday,
-            'by_severity'         => $bySev,
-            'incident_types'      => $byType,
-            'total_violators'     => $totalViolators,
-            'total_charges'       => $totalCharges,
-            'pending_charges'     => $pendingCharges,
-            'charges_this_month'  => $chargesThisMonth,
-            'charges_last_month'  => $chargesLastMonth,
-            'eligible_last_month' => $eligibleLastMonth,
+            'incidents_period'  => (clone $base)->count(),
+            'violations_today'  => $violationsToday,
+            'by_severity'       => $bySev,
+            'incident_types'    => $byType,
+            'total_violators'   => $totalViolators,
+            'total_charges'     => $totalCharges,
+            'pending_charges'   => $pendingCharges,
         ];
     }
 

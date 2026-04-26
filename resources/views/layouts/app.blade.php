@@ -67,18 +67,18 @@
             // Notifications for header bell
             $headerNotifications = [];
             
-            // 1. HIGHEST PRIORITY: Manually flagged 'Surveillance' units
+            // 1. HIGHEST PRIORITY: Manually flagged 'At Risk' units
             $flaggedUnits = DB::table('units')
                 ->whereNull('deleted_at')
-                ->where('status', 'surveillance')
+                ->where('status', 'at_risk')
                 ->get();
                 
             foreach($flaggedUnits as $fu) {
                 $headerNotifications[] = [
-                    'id' => 'surveillance_' . $fu->id,
+                    'id' => 'at_risk_' . $fu->id,
                     'title' => '🚨 Flagged: ' . $fu->plate_number,
                     'message' => 'This unit is currently flagged as At Risk.',
-                    'type' => 'surveillance',
+                    'type' => 'at_risk',
                     'url' => route('units.index') . '?open_flagged=1',
                     'time' => 'Action Required',
                     'timestamp' => \Carbon\Carbon::parse($fu->updated_at ?? now())

@@ -73,10 +73,6 @@
         <div class="relative z-10 flex flex-col items-center text-center">
             <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['violations_today'] ?? 0 }}</p>
             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Violations Today</p>
-            <div class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full backdrop-blur-md">
-                <span class="text-[8px] font-black uppercase opacity-60">Today Violators:</span>
-                <span class="text-[10px] font-black">{{ $stats['violators_today'] ?? 0 }}</span>
-            </div>
         </div>
     </div>
 
@@ -87,11 +83,7 @@
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
             <p class="text-3xl font-black tracking-tighter leading-none">{{ $stats['total_violators'] ?? 0 }}</p>
-            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
-            <button onclick="switchTab('profiles')" class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full backdrop-blur-md transition-all active:scale-95">
-                <span class="text-[8px] font-black uppercase tracking-wider">View Profiles</span>
-                <i data-lucide="chevron-right" class="w-2.5 h-2.5"></i>
-            </button>
+             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Violators</p>
         </div>
     </div>
 
@@ -101,28 +93,10 @@
             <i data-lucide="banknote" class="w-16 h-16"></i>
         </div>
         <div class="relative z-10 flex flex-col items-center text-center">
-            <p class="text-xl font-black tracking-tighter leading-none" id="chargeDisplay">₱{{ number_format($stats['charges_this_month'] ?? 0, 0) }}</p>
-            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1" id="chargeLabel">Monthly Charges</p>
-            
-            <div class="mt-2 flex gap-1">
-                <button onclick="updateChargeCard('this')" class="px-2 py-0.5 bg-white/30 rounded-lg text-[8px] font-black uppercase hover:bg-white/40 transition-colors">This Month</button>
-                <button onclick="updateChargeCard('last')" class="px-2 py-0.5 bg-white/10 rounded-lg text-[8px] font-black uppercase hover:bg-white/20 transition-colors">Last Month</button>
-            </div>
+            <p class="text-xl font-black tracking-tighter leading-none">₱{{ number_format($stats['total_charges'] ?? 0, 0) }}</p>
+            <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Total Charges</p>
         </div>
     </div>
-    <script>
-        window.updateChargeCard = (p) => {
-            const display = document.getElementById('chargeDisplay');
-            const label = document.getElementById('chargeLabel');
-            if(p === 'this') {
-                display.innerText = '₱{{ number_format($stats['charges_this_month'] ?? 0, 0) }}';
-                label.innerText = 'Monthly Charges';
-            } else {
-                display.innerText = '₱{{ number_format($stats['charges_last_month'] ?? 0, 0) }}';
-                label.innerText = 'Last Month Charges';
-            }
-        };
-    </script>
 
     {{-- 4. ELIGIBLE INCENTIVE --}}
     <div class="stat-card-premium relative overflow-hidden bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl p-4 text-white shadow-lg shadow-yellow-100 group">
@@ -132,11 +106,6 @@
         <div class="relative z-10 flex flex-col items-center text-center">
             <p class="text-3xl font-black tracking-tighter leading-none">{{ count($incentive_summary['eligible'] ?? []) }}</p>
             <p class="text-[9px] font-black uppercase tracking-[0.1em] opacity-80 mt-1">Eligible Incentive</p>
-            
-            <div class="mt-2 flex items-center gap-1.5 px-3 py-1 bg-black/10 rounded-full">
-                <span class="text-[8px] font-black uppercase opacity-60">Last Month:</span>
-                <span class="text-[10px] font-black">{{ $stats['eligible_last_month'] ?? 0 }}</span>
-            </div>
         </div>
     </div>
 </div>
@@ -1120,6 +1089,7 @@ window.saveQuickPart = async function() {
 function refreshPartSearchDropdown() {
     const dropdown = document.getElementById('incidentPartDropdown');
     if(!dropdown) return;
+<<<<<<< HEAD
     dropdown.innerHTML = partsCatalog.map(p => {
         const isUnavailable = (parseInt(p.stock_quantity) || 0) <= 0;
         return `
@@ -1143,9 +1113,16 @@ function refreshPartSearchDropdown() {
                         ${isUnavailable ? '<span class="text-[8px] font-black text-red-500 uppercase mt-0.5">OUT OF STOCK</span>' : ''}
                     </div>
                 </div>
+=======
+    dropdown.innerHTML = partsCatalog.map(p => `
+        <div class="search-option part-search-option group" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
+            <div class="flex justify-between items-center w-full">
+                <div class="font-black text-xs text-gray-900">${p.name}</div>
+                <div class="text-[10px] font-black text-purple-600">₱${parseFloat(p.price).toFixed(2)}</div>
+>>>>>>> 4c1cdd2bd3520c10d18124eac3f2800181361d3d
             </div>
-        `;
-    }).join('');
+        </div>
+    `).join('');
 }
 
 function initPartSearch() {
@@ -1173,23 +1150,9 @@ function initPartSearch() {
 }
 
 function addPartToIncidentCart(part) {
-    const catalogItem = partsCatalog.find(p => p.id == part.id);
-    const stock = catalogItem ? (parseInt(catalogItem.stock_quantity) || 0) : 999;
-
     const existing = incidentPartsCart.find(p => p.id === part.id);
-    if (existing) {
-        if (existing.qty >= stock) {
-            alert(`⚠️ STOCK LIMIT REACHED: You cannot add more than ${stock} units for this part.`);
-            return;
-        }
-        existing.qty++;
-    } else {
-        if (stock < 1) {
-            alert(`⚠️ OUT OF STOCK: This part is currently unavailable.`);
-            return;
-        }
-        incidentPartsCart.push(part);
-    }
+    if(existing) existing.qty++;
+    else incidentPartsCart.push(part);
     refreshPartsCart();
 }
 
@@ -1218,15 +1181,7 @@ function refreshPartsCart() {
     computeTotal();
 }
 
-window.updatePartQty = (i, val) => { 
-    const part = incidentPartsCart[i];
-    const catalogItem = partsCatalog.find(p => p.id == part.id);
-    const stock = catalogItem ? (parseInt(catalogItem.stock_quantity) || 0) : 999;
-    let newVal = parseInt(val) || 1;
-    if (newVal > stock) { alert(`⚠️ ONLY ${stock} UNITS AVAILABLE.`); newVal = stock; }
-    incidentPartsCart[i].qty = newVal; 
-    refreshPartsCart(); 
-};
+window.updatePartQty = (i, val) => { incidentPartsCart[i].qty = parseInt(val) || 1; refreshPartsCart(); };
 window.togglePartCharge = (i, val) => { incidentPartsCart[i].isCharged = val; computeTotal(); };
 window.removePartFromIncident = (i) => { incidentPartsCart.splice(i, 1); refreshPartsCart(); };
 

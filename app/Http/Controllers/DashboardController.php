@@ -92,7 +92,7 @@ class DashboardController extends Controller
         $missingUnits = DB::table('units')
             ->leftJoin('drivers', 'units.current_turn_driver_id', '=', 'drivers.id')
             ->whereNull('units.deleted_at')
-            ->whereRaw('LOWER(units.status) NOT IN (?, ?, ?)', ['maintenance', 'surveillance', 'retired'])
+            ->whereRaw('LOWER(units.status) NOT IN (?, ?, ?)', ['maintenance', 'at_risk', 'retired'])
             ->whereNotNull('units.shift_deadline_at')
             ->where('units.shift_deadline_at', '<', now()->subHours(24))
             ->where(function($q) {

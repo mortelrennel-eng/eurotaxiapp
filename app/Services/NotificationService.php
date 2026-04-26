@@ -19,10 +19,10 @@ class NotificationService
 
         try {
             // 1. Flagged "At Risk" (Highest Priority)
-            $flagged = DB::table('units')->whereNull('deleted_at')->where('status', 'surveillance')->get();
+            $flagged = DB::table('units')->whereNull('deleted_at')->where('status', 'at_risk')->get();
             foreach($flagged as $f) {
                 $headerNotifications[] = [
-                    'id' => 'surv_' . $f->id, 'type' => 'surveillance', 'title' => '🚨 Flagged: ' . $f->plate_number,
+                    'id' => 'at_risk_' . $f->id, 'type' => 'at_risk', 'title' => '🚨 Flagged: ' . $f->plate_number,
                     'message' => 'This unit is currently flagged as At Risk.', 'url' => route('units.index') . '?open_flagged=1',
                     'time' => 'Action Required', 'timestamp' => Carbon::parse($f->updated_at ?? $now)
                 ];
