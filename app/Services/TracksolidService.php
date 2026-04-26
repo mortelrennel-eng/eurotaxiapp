@@ -316,43 +316,4 @@ class TracksolidService
             return null;
         }
     }
-    /**
-     * Send precise remote commands (like RELAY,1# for engine off)
-     * Note: Safety protocols in Concox/Jimi hardware usually require speed < 20km/h.
-     */
-    public function sendCommand(string $imei, string $command)
-    {
-        $token = $this->getAccessToken();
-        if (!$token) return ['success' => false, 'error' => 'Authentication failed.'];
-
-        $params = [
-            'method'       => 'jimi.device.command.send',
-            'app_key'      => $this->appKey,
-            'access_token' => $token,
-            'timestamp'    => $this->getTimestamp(),
-            'format'       => 'json',
-            'v'            => '1.0',
-            'sign_method'  => 'md5',
-            'imei'         => $imei,
-            'content'      => $command,
-        ];
-
-        $params['sign'] = $this->generateSignature($params);
-
-        try {
-            $response = Http::asForm()->post($this->apiUrl, $params);
-            $data = $response->json();
-
-            if (isset($data['code']) && $data['code'] == 0) {
-                return ['success' => true, 'result' => $data['result']];
-            }
-
-            Log::error('Tracksolid Command Error: ' . json_encode($data));
-            return ['success' => false, 'error' => $data['message'] ?? 'Unknown API error'];
-
-        } catch (\Exception $e) {
-            Log::error('Tracksolid Command Exception: ' . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
 }
