@@ -21,13 +21,9 @@
 
     <!-- Today's Focus Metrics -->
     @php
-        $totalFleetActive = \App\Models\Unit::where('status', '!=', 'Inactive')->count();
-        $totalFleetActive = $totalFleetActive > 0 ? $totalFleetActive : \App\Models\Unit::count();
-        $codingTodayCount = isset($today_units) ? $today_units->count() : ($coding_calendar[$today_name]->count() ?? 0);
-        $onRoadCount = max(0, $totalFleetActive - $codingTodayCount);
-        
-        // Basic simulation/check for units on coding day that might be marked 'Available' (on road)
-        $violationsCount = \App\Models\Unit::where('coding_day', $today_name)->where('status', 'Available')->count();
+        $codingTodayCount = $stats['today_coding'];
+        $onRoadCount = $stats['on_road'];
+        $violationsCount = $stats['violations'];
     @endphp
 
     <div class="mb-6 mt-2">
