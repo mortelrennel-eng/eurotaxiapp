@@ -49,6 +49,39 @@
         </form>
     </div>
 
+    @php
+        $tomorrow_date = date('Y-m-d', strtotime($date . ' +1 day'));
+        $tomorrow_name = date('l', strtotime($tomorrow_date));
+        $tomorrow_units = $coding_calendar[$tomorrow_name] ?? collect([]);
+        $tomorrow_count = $tomorrow_units->count();
+    @endphp
+
+    <!-- Tomorrow's Proactive Reminder Banner -->
+    <div class="mb-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-xl shadow-blue-200 p-5 flex flex-col md:flex-row gap-4 items-center justify-between text-white relative overflow-hidden transform hover:-translate-y-1 transition-all duration-300">
+        <!-- Decorative background elements -->
+        <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mt-10 -mr-10 pointer-events-none"></div>
+        <div class="absolute right-32 bottom-0 w-24 h-24 bg-blue-300 opacity-20 rounded-full blur-xl -mb-10 pointer-events-none"></div>
+        <div class="absolute left-10 top-1/2 w-40 h-40 bg-indigo-400 opacity-20 rounded-full blur-3xl -translate-y-1/2 pointer-events-none"></div>
+        
+        <div class="flex items-center gap-4 relative z-10 w-full md:w-auto">
+            <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md border border-white/20 shrink-0 shadow-inner">
+                <i data-lucide="bell-ring" class="w-7 h-7 text-yellow-300 animate-pulse"></i>
+            </div>
+            <div>
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-0.5">Quick-Action Insight</h3>
+                <p class="text-base font-medium leading-tight">Reminder: <strong class="text-yellow-300 font-black text-xl tabular-nums">{{ $tomorrow_count }}</strong> units will be coding tomorrow ({{ $tomorrow_name }}).</p>
+            </div>
+        </div>
+        <div class="relative z-10 w-full md:w-auto">
+            <form method="GET" action="{{ route('coding.index') }}" class="w-full">
+                <input type="hidden" name="date" value="{{ $tomorrow_date }}">
+                <button type="submit" class="w-full md:w-auto px-6 py-3 bg-white text-blue-700 text-xs font-black rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group">
+                    Prepare for Tomorrow <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('plateSearch');
@@ -145,18 +178,38 @@
             </h3>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+            @php $totalFleet = max(1, \App\Models\Unit::count()); @endphp
             @foreach($coding_calendar as $day => $day_units)
                 <div class="border rounded-2xl p-4 transition-all duration-300 {{ $day === $today_name ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-white shadow-[0_0_15px_rgba(59,130,246,0.3)] transform -translate-y-1 relative overflow-hidden' : 'border-gray-100 bg-gradient-to-br from-gray-50/80 to-white shadow-inner hover:shadow-md hover:-translate-y-0.5' }}">
                     @if($day === $today_name)
                         <div class="absolute top-0 right-0 w-16 h-16 bg-blue-400 blur-[30px] opacity-20 -mr-8 -mt-8 pointer-events-none"></div>
                     @endif
-                    <div class="flex items-center justify-between mb-4 relative z-10">
+                    <div class="flex items-center justify-between mb-2 relative z-10">
                         <h4 class="font-black {{ $day === $today_name ? 'text-blue-800' : 'text-gray-800' }} text-sm tracking-tight">{{ $day }}</h4>
                         <div class="flex items-center gap-1">
                             <span class="px-2 py-0.5 bg-white shadow-sm border border-gray-100 text-gray-500 text-[10px] font-black rounded-full">{{ $day_units->count() }}</span>
                             @if($day === $today_name)
                                 <span class="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded-full shadow-md shadow-blue-200">TODAY</span>
                             @endif
+                        </div>
+                    </div>
+
+                    {{-- Heatmap Progress Bar --}}
+                    @php
+                        $codingCount = $day_units->count();
+                        $percentage = round(($codingCount / $totalFleet) * 100);
+                        
+                        $barColor = 'bg-blue-400';
+                        if ($percentage >= 15) $barColor = 'bg-orange-400';
+                        if ($percentage >= 20) $barColor = 'bg-red-500';
+                    @endphp
+                    <div class="mb-4 relative z-10">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Fleet Impact</span>
+                            <span class="text-[9px] font-black {{ $percentage >= 20 ? 'text-red-600' : 'text-gray-600' }}">{{ $percentage }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 shadow-inner overflow-hidden">
+                            <div class="{{ $barColor }} h-1.5 rounded-full transition-all duration-1000" style="width: {{ $percentage }}%"></div>
                         </div>
                     </div>
                     <!-- Coding List Visibility: Maximum 2 units visible, then scroll -->
