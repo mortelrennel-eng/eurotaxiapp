@@ -26,7 +26,7 @@ class SparePartController extends Controller
     public function history()
     {
         $history = DB::table('expenses')
-            ->where('category', 'maintenance')
+            ->whereIn('category', ['Spare Parts Purchase', 'maintenance'])
             ->whereNull('deleted_at')
             ->orderByDesc('date')
             ->orderByDesc('created_at')
