@@ -208,6 +208,7 @@ class BoundaryController extends Controller
     public function store(Request $request)
     {
         $action = $request->input('action', '');
+        $now = now();
         
         if ($action === 'add_boundary') {
             $unit_id         = (int) $request->input('unit_id', 0);
@@ -220,7 +221,6 @@ class BoundaryController extends Controller
             $needs_maintenance_half = $request->has('needs_maintenance_half');
             $needs_maintenance_zero = $request->has('needs_maintenance_zero');
             $needs_maintenance = $needs_maintenance_half || $needs_maintenance_zero;
-            $now               = now();
             
             // Allow $boundary_amount to be 0 ONLY if $needs_maintenance_zero is true
                     $is_valid_amount = $needs_maintenance_zero ? ($boundary_amount >= 0) : ($boundary_amount > 0);
@@ -474,8 +474,6 @@ class BoundaryController extends Controller
                     }
 
                     // --- AUTOMATIC VIOLATION LOGGING TO CENTRAL FEED ---
-                    $now_ts = now();
-
                     if ($past_cutoff) {
                         DB::table('driver_behavior')->insert([
                             'unit_id'       => $unit_id,
@@ -483,8 +481,8 @@ class BoundaryController extends Controller
                             'incident_type' => 'late_boundary',
                             'severity'      => 'medium',
                             'description'   => 'Auto-logged [Late]: Boundary turned in past the 10:00 AM cutoff.',
-                            'timestamp'     => $now_ts,
-                            'created_at'    => $now_ts,
+                            'timestamp'     => $now,
+                            'created_at'    => $now,
                         ]);
                     }
                     if ($shortage > 0) {
@@ -494,8 +492,8 @@ class BoundaryController extends Controller
                             'incident_type' => 'short_boundary',
                             'severity'      => 'low',
                             'description'   => 'Auto-logged [Shortage]: Boundary payment was ₱' . number_format($shortage, 2) . ' short.',
-                            'timestamp'     => $now_ts,
-                            'created_at'    => $now_ts,
+                            'timestamp'     => $now,
+                            'created_at'    => $now,
                         ]);
                     }
                     if ($is_absent) {
@@ -505,8 +503,8 @@ class BoundaryController extends Controller
                             'incident_type' => 'other',
                             'severity'      => 'medium',
                             'description'   => 'Auto-logged [Absent]: Pilot is marked as Absent / No Show for this shift.',
-                            'timestamp'     => $now_ts,
-                            'created_at'    => $now_ts,
+                            'timestamp'     => $now,
+                            'created_at'    => $now,
                         ]);
                     }
 

@@ -100,7 +100,7 @@ const SalaryForm: React.FC = () => {
                 <IonLabel position="stacked">SELECT EMPLOYEE</IonLabel>
                 <IonSelect 
                   value={formData.employee_id} 
-                  onIonChange={e => setFormData({...formData, employee_id: e.detail.value})}
+                  onIonChange={e => setFormData({...formData, employee_id: String(e.detail.value)})}
                   interface="action-sheet"
                 >
                   {employees.map(emp => (
@@ -155,7 +155,7 @@ const SalaryForm: React.FC = () => {
                 <IonInput 
                   type="date" 
                   value={formData.pay_date} 
-                  onIonChange={e => setFormData({...formData, pay_date: e.detail.value!})} 
+                  onIonChange={e => setFormData({...formData, pay_date: String(e.detail.value!)})} 
                 />
               </IonItem>
 
@@ -164,7 +164,7 @@ const SalaryForm: React.FC = () => {
                 <IonInput 
                   placeholder="Additional information..." 
                   value={formData.notes} 
-                  onIonInput={e => setFormData({...formData, notes: e.detail.value!})} 
+                  onIonInput={e => setFormData({...formData, notes: String(e.detail.value!)})} 
                 />
               </IonItem>
             </IonList>

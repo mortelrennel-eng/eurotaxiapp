@@ -220,10 +220,10 @@ const AnalyticsPage: React.FC = () => {
                    }
                 }} />
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px' }}>
-                   <div style={{ display: 'flex', alignCircle: 'center', gap: '6px', fontSize: '10px', fontWeight: 700 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 700 }}>
                       <span style={{ width: '10px', height: '10px', background: '#ca8a04', borderRadius: '2px' }}></span> REVENUE
                    </div>
-                   <div style={{ display: 'flex', alignCircle: 'center', gap: '6px', fontSize: '10px', fontWeight: 700 }}>
+                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 700 }}>
                       <span style={{ width: '10px', height: '10px', background: '#64748b', borderRadius: '2px' }}></span> EXPENSES
                    </div>
                 </div>
