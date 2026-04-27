@@ -235,10 +235,16 @@ class BoundaryController extends Controller
                     $excess   = max(0, $actual_boundary - $boundary_amount);
                     $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
+                    if ($shortage > 0) {
+                        $has_incentive = false;
+                        $notes = trim($notes . " [Automatic Violation: Short Boundary]");
+                    }
+
                     $unit = \App\Models\Unit::find($unit_id);
                     $is_extra_driver = false;
                     $expected_driver_id = $unit ? $unit->current_turn_driver_id : $driver_id;
                     $has_incentive = true;
+                    $now = now();
 
                     $past_cutoff = $request->has('past_cutoff');
                     if ($past_cutoff) {
@@ -264,6 +270,7 @@ class BoundaryController extends Controller
                     $is_absent = false; // "Absent / No Show" logic removed per user request
 
                     if ($unit) {
+                        
                         // Shifting Deadline Check: Legacy auto-voiding for late returns removed per user request. 
                         // Incentives now only focus on the 10:00 AM Cut-off (Late Boundary).
                         $current_deadline = $unit->shift_deadline_at ? Carbon::parse($unit->shift_deadline_at) : Carbon::parse($date)->hour(10);
@@ -563,8 +570,9 @@ class BoundaryController extends Controller
                 $excess   = max(0, $actual_boundary - $boundary_amount);
                 $status   = $shortage > 0 ? 'shortage' : ($excess > 0 ? 'excess' : 'paid');
 
-                if (!$boundary->has_incentive) {
-                    $has_incentive = false; // Kept late status from original stamp
+                if ($shortage > 0) {
+                    $has_incentive = false;
+                    $clean_notes .= " [Automatic Violation: Short Boundary]";
                 }
 
                 $boundary->update([
@@ -573,10 +581,24 @@ class BoundaryController extends Controller
                     'shortage'        => $shortage,
                     'excess'          => $excess,
                     'status'          => $status,
-                    'notes'           => $clean_notes,
+                    'notes'           => trim($clean_notes),
                     'has_incentive'   => $has_incentive,
                     'vehicle_damaged' => $vehicle_damaged ? 1 : 0,
                 ]);
+
+                // --- Auto-log Shortage to Driver Performance for UPDATES ---
+                if ($shortage > 0) {
+                    $now_ts = now();
+                    DB::table('driver_behavior')->insert([
+                        'unit_id'       => $boundary->unit_id,
+                        'driver_id'     => $boundary->driver_id,
+                        'incident_type' => 'short_boundary',
+                        'severity'      => 'low',
+                        'description'   => 'Auto-logged [Shortage/Update]: Boundary update resulted in a ₱' . number_format($shortage, 2) . ' shortage.',
+                        'timestamp'     => $now_ts,
+                        'created_at'    => $now_ts,
+                    ]);
+                }
 
                 return redirect()->route('boundaries.index')->with('success', 'Boundary record updated successfully');
             } else {

@@ -81,64 +81,63 @@
 @section('content')
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showUnitsModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-gray-600">Total Units</p>
-                        <p class="text-xl font-bold text-gray-900" data-stat="active_units">{{ $stats['active_units'] }}</p>
-                        <p class="text-xs text-gray-500">
-                            <span class="text-green-600">{{ $stats['roi_units'] }} ROI Achieved</span>
-                        </p>
-                    </div>
-                    <div class="p-2 bg-yellow-100 rounded-full">
-                        <i data-lucide="car" class="w-5 h-5 text-yellow-600"></i>
-                    </div>
+
+        {{-- Total Units --}}
+        <div onclick="showUnitsModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1">Total Units</p>
+                    <p class="text-white text-3xl font-black leading-none mb-1" data-stat="active_units">{{ $stats['active_units'] }}</p>
+                    <p class="text-blue-200 text-xs font-medium"><span class="text-emerald-300 font-bold">{{ $stats['roi_units'] }}</span> ROI Achieved</p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="car" class="w-7 h-7 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showDailyBoundaryModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-gray-600">Daily Boundary Collection</p>
-                        <p class="text-xl font-bold text-gray-900" data-stat="today_boundary">{{ formatCurrency($stats['today_boundary']) }}</p>
-                        <p class="text-xs text-gray-400 font-medium tracking-tight">Daily Target: <span data-stat="daily_target">{{ formatCurrency($stats['daily_target']) }}</span></p>
-                    </div>
-                    <div class="p-2 bg-green-100 rounded-full">
-                        <i data-lucide="dollar-sign" class="w-5 h-5 text-green-600"></i>
-                    </div>
+        {{-- Daily Boundary Collection --}}
+        <div onclick="showDailyBoundaryModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #065f46 0%, #059669 60%, #34d399 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-emerald-200 text-xs font-semibold uppercase tracking-widest mb-1">Daily Boundary Collection</p>
+                    <p class="text-white text-2xl font-black leading-none mb-1" data-stat="today_boundary">{{ formatCurrency($stats['today_boundary']) }}</p>
+                    <p class="text-emerald-200 text-xs font-medium">Target: <span class="text-white font-bold" data-stat="daily_target">{{ formatCurrency($stats['daily_target']) }}</span></p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="dollar-sign" class="w-7 h-7 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showNetIncomeModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-gray-600">Net Income Today</p>
-                        <p class="text-xl font-bold text-green-600" data-stat="net_income">{{ formatCurrency($stats['net_income']) }}</p>
-                        <p class="text-xs text-gray-400 font-medium tracking-tight">After all expenses</p>
-                    </div>
-                    <div class="p-2 bg-green-100 rounded-full">
-                        <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
-                    </div>
+        {{-- Net Income Today --}}
+        <div onclick="showNetIncomeModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #14532d 0%, #16a34a 60%, #4ade80 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-green-200 text-xs font-semibold uppercase tracking-widest mb-1">Net Income Today</p>
+                    <p class="text-white text-2xl font-black leading-none mb-1" data-stat="net_income">{{ formatCurrency($stats['net_income']) }}</p>
+                    <p class="text-green-200 text-xs font-medium">After all expenses</p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="trending-up" class="w-7 h-7 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showMaintenanceUnitsModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-gray-600">Units Under Maintenance</p>
-                        <p class="text-xl font-bold text-gray-900" data-stat="maintenance_units">{{ $stats['maintenance_units'] }}</p>
-                        <p class="text-xs text-gray-400 font-medium tracking-tight" data-stat="maintenance_subtitle">Units ongoing maintenance</p>
-                    </div>
-                    <div class="p-2 bg-orange-100 rounded-full">
-                        <i data-lucide="wrench" class="w-5 h-5 text-orange-600"></i>
-                    </div>
+        {{-- Units Under Maintenance --}}
+        <div onclick="showMaintenanceUnitsModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #7c2d12 0%, #ea580c 60%, #fb923c 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-orange-200 text-xs font-semibold uppercase tracking-widest mb-1">Units Under Maintenance</p>
+                    <p class="text-white text-3xl font-black leading-none mb-1" data-stat="maintenance_units">{{ $stats['maintenance_units'] }}</p>
+                    <p class="text-orange-200 text-xs font-medium" data-stat="maintenance_subtitle">Units ongoing maintenance</p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="wrench" class="w-7 h-7 text-white"></i>
                 </div>
             </div>
         </div>
@@ -147,131 +146,141 @@
 
     <!-- Quick Stats -->
     <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showActiveDriversModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-gray-500">Active Drivers</p>
-                        <p class="text-xl font-bold text-gray-900" data-stat="active_drivers">{{ $stats['active_drivers'] }}</p>
-                    </div>
-                    <div class="p-2 bg-blue-100 rounded-full">
-                        <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
-                    </div>
+
+        {{-- Active Drivers --}}
+        <div onclick="showActiveDriversModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 60%, #818cf8 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">Active Drivers</p>
+                    <p class="text-white text-3xl font-black leading-none" data-stat="active_drivers">{{ $stats['active_drivers'] }}</p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="users" class="w-7 h-7 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showExpensesModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-gray-500">Total Expenses Today</p>
-                        <p class="text-xl font-bold text-red-600" data-stat="total_expenses_today">{{ formatCurrency($stats['total_expenses_today']) }}</p>
-                    </div>
-                    <div class="p-2 bg-red-100 rounded-full">
-                        <i data-lucide="trending-down" class="w-6 h-6 text-red-600"></i>
-                    </div>
+        {{-- Total Expenses Today --}}
+        <div onclick="showExpensesModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 60%, #f87171 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-red-200 text-xs font-semibold uppercase tracking-widest mb-1">Total Expenses Today</p>
+                    <p class="text-white text-2xl font-black leading-none" data-stat="total_expenses_today">{{ formatCurrency($stats['total_expenses_today']) }}</p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="trending-down" class="w-7 h-7 text-white"></i>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow card-hover cursor-pointer hover:shadow-lg transition-shadow" onclick="showCodingUnitsModal()">
-            <div class="p-4">
-                <div class="flex items-center justify-between">
+        {{-- Coding Units Today --}}
+        <div onclick="showCodingUnitsModal()" class="card-hover cursor-pointer group relative overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" style="background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 60%, #a78bfa 100%);">
+            <div class="absolute inset-0 opacity-10" style="background: radial-gradient(circle at 80% 20%, #fff 0%, transparent 60%);"></div>
+            <div class="relative p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-violet-200 text-xs font-semibold uppercase tracking-widest mb-1">Coding Units Today</p>
+                    <p class="text-white text-3xl font-black leading-none mb-1" data-stat="coding_units">{{ $stats['coding_units'] }}</p>
+                    <p class="text-violet-200 text-[10px] font-bold uppercase tracking-tight">{{ now()->timezone('Asia/Manila')->format('l') }}</p>
+                </div>
+                <div class="p-3 rounded-2xl" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
+                    <i data-lucide="calendar" class="w-7 h-7 text-white"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Unit Performance (Full Width) -->
+    <div class="mt-4 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b bg-gray-50/50 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="p-1.5 bg-blue-100 rounded-lg">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+                </div>
+                <h3 class="text-base font-bold text-gray-900 uppercase tracking-tight">Unit Performance</h3>
+            </div>
+            <span class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-widest border border-blue-100">Top 10 Performers</span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4">
+            <div class="lg:col-span-3 p-6">
+                <div style="height: 380px;">
+                    <canvas id="unitPerformanceChart"></canvas>
+                </div>
+            </div>
+            <!-- Executive Insight Panel -->
+            <div class="bg-gray-50 p-6 border-l border-gray-100 flex flex-col justify-center">
+                <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Executive Insights</h4>
+                <div class="space-y-8">
                     <div>
-                        <p class="text-xs font-medium text-gray-600 uppercase tracking-widest">Coding Units Today</p>
-                        <p class="text-xl font-bold text-blue-600 animate-pulse" data-stat="coding_units">{{ $stats['coding_units'] }}</p>
-                        <p class="text-[10px] text-gray-400 font-black tracking-tight mt-1 uppercase">Unit coding today ({{ now()->timezone('Asia/Manila')->format('l') }})</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Fleet Health</p>
+                        <div class="flex items-end gap-2">
+                            <p class="text-3xl font-black text-gray-900 leading-none">82%</p>
+                            <p class="text-xs font-bold text-green-600 flex items-center mb-0.5">
+                                <i data-lucide="trending-up" class="w-3 h-3 mr-0.5"></i> +2.4%
+                            </p>
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-2 leading-relaxed font-medium">Most units are meeting over 80% of their monthly boundary targets.</p>
                     </div>
-                    <div class="p-2 bg-blue-100 rounded-full">
-                        <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
+                    
+                    <div class="pt-6 border-t border-gray-200">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">Top Performer</p>
+                        <p class="text-base font-black text-gray-900" id="insightTopPlate">--</p>
+                        <p class="text-[11px] text-gray-500 mt-2 font-medium">Consistency in daily collections makes this your most reliable asset.</p>
+                    </div>
+
+                    <div class="pt-6 border-t border-gray-200">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Legend</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded bg-blue-500 shadow-sm"></div>
+                                <span class="text-[10px] font-black text-gray-600 uppercase tracking-widest">Actual Collection</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-3 h-3 rounded border-2 border-amber-500 bg-amber-500/20"></div>
+                                <span class="text-[10px] font-black text-gray-600 uppercase tracking-widest">Monthly Target</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Analytics Grid -->
-    <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-lg shadow">
-            <div class="p-4 border-b">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-base font-semibold text-gray-900">Revenue Trend</h3>
-                    <div class="flex gap-2">
-                        <button onclick="updateRevenueTrend('7')" id="btn-7days" class="px-2 py-1 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-                            Last 7 Days
-                        </button>
-                        <button onclick="updateRevenueTrend('30')" id="btn-30days" class="px-2 py-1 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
-                            Last 30 Days
-                        </button>
-                        <button onclick="updateRevenueTrend('90')" id="btn-90days" class="px-2 py-1 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
-                            Last 3
-                        </button>
-                        <button onclick="updateRevenueTrend('365')" id="btn-365days" class="px-2 py-1 text-xs rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">
-                            Year
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="p-4">
-                <canvas id="revenueTrendChart" width="400" height="200"></canvas>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
-            <div class="p-4 border-b bg-gray-50/50 flex justify-between items-center">
+    <!-- Revenue Trend (Full Width) -->
+    <div class="mt-4 bg-white rounded-lg shadow overflow-hidden">
+        <div class="p-4 border-b">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="p-1.5 bg-blue-100 rounded-lg">
-                        <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-600"></i>
+                    <div class="p-1.5 bg-blue-50 rounded-lg">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-blue-600"></i>
                     </div>
-                    <h3 class="text-base font-bold text-gray-900">Unit Performance</h3>
+                    <h3 class="text-base font-bold text-gray-900 uppercase tracking-tight">Revenue Trend</h3>
                 </div>
-                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-full uppercase tracking-wider">Top 10 Performers</span>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3">
-                <div class="lg:col-span-2 p-4">
-                    <div style="height: 320px;">
-                        <canvas id="unitPerformanceChart"></canvas>
-                    </div>
-                </div>
-                <!-- Executive Insight Panel -->
-                <div class="bg-gray-50 p-6 border-l border-gray-100 flex flex-col justify-center">
-                    <h4 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Executive Insights</h4>
-                    <div class="space-y-6">
-                        <div>
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Fleet Health</p>
-                            <div class="flex items-end gap-2">
-                                <p class="text-2xl font-black text-gray-900">82%</p>
-                                <p class="text-xs font-bold text-green-600 mb-1 flex items-center">
-                                    <i data-lucide="trending-up" class="w-3 h-3 mr-0.5"></i> +2.4%
-                                </p>
-                            </div>
-                            <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">Most units are meeting over 80% of their monthly boundary targets.</p>
-                        </div>
-                        
-                        <div class="pt-4 border-t border-gray-200">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Top Performer</p>
-                            <p class="text-sm font-black text-gray-900" id="insightTopPlate">--</p>
-                            <p class="text-[11px] text-gray-500 mt-1">Consistency in daily collections makes this your most reliable asset.</p>
-                        </div>
-
-                        <div class="pt-4 border-t border-gray-200">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-2">Legend</p>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded bg-blue-500"></div>
-                                    <span class="text-[11px] font-bold text-gray-600 uppercase">Actual Collection</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2.5 h-2.5 rounded border border-amber-500 bg-amber-500/20"></div>
-                                    <span class="text-[11px] font-bold text-gray-600 uppercase">Monthly Target</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex gap-2">
+                    <button onclick="updateRevenueTrend('7')" id="btn-7days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm">
+                        7 Days
+                    </button>
+                    <button onclick="updateRevenueTrend('30')" id="btn-30days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all border border-gray-200">
+                        30 Days
+                    </button>
+                    <button onclick="updateRevenueTrend('90')" id="btn-90days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all border border-gray-200">
+                        3 Months
+                    </button>
+                    <button onclick="updateRevenueTrend('365')" id="btn-365days" class="px-3 py-1 text-[10px] font-bold uppercase rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all border border-gray-200">
+                        1 Year
+                    </button>
                 </div>
             </div>
         </div>
+        <div class="p-4">
+            <canvas id="revenueTrendChart" style="width: 100%; height: 320px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Secondary Analytics Grid (Aligned for Balance) -->
+    <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         <div class="bg-white rounded-lg shadow">
             <div class="p-4 border-b">
@@ -1225,29 +1234,36 @@
         try {
             const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
             const weeklyData = @json($weekly_data);
-            console.log('Weekly Data:', weeklyData);
+            const wGrad1 = weeklyCtx.createLinearGradient(0, 0, 0, 300);
+            wGrad1.addColorStop(0, 'rgba(234,179,8,0.25)'); wGrad1.addColorStop(1, 'rgba(234,179,8,0.01)');
+            const wGrad2 = weeklyCtx.createLinearGradient(0, 0, 0, 300);
+            wGrad2.addColorStop(0, 'rgba(239,68,68,0.2)'); wGrad2.addColorStop(1, 'rgba(239,68,68,0.01)');
+            const wGrad3 = weeklyCtx.createLinearGradient(0, 0, 0, 300);
+            wGrad3.addColorStop(0, 'rgba(34,197,94,0.25)'); wGrad3.addColorStop(1, 'rgba(34,197,94,0.01)');
             window.weeklyChart = new Chart(weeklyCtx, {
                 type: 'line',
                 data: {
                     labels: weeklyData.map(d => d.day),
                     datasets: [
-                        { label: 'Boundary', data: weeklyData.map(d => d.boundary), borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,0.1)', borderWidth: 2, tension: 0.4 },
-                        { label: 'Expenses', data: weeklyData.map(d => d.expenses), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 2, tension: 0.4 },
-                        { label: 'Net Income', data: weeklyData.map(d => d.net), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }
+                        { label: 'Boundary', data: weeklyData.map(d => d.boundary), borderColor: '#eab308', backgroundColor: wGrad1, borderWidth: 2.5, tension: 0.45, fill: true, pointBackgroundColor: '#eab308', pointRadius: 4, pointHoverRadius: 7 },
+                        { label: 'Expenses', data: weeklyData.map(d => d.expenses), borderColor: '#ef4444', backgroundColor: wGrad2, borderWidth: 2.5, tension: 0.45, fill: true, pointBackgroundColor: '#ef4444', pointRadius: 4, pointHoverRadius: 7 },
+                        { label: 'Net Income', data: weeklyData.map(d => d.net), borderColor: '#22c55e', backgroundColor: wGrad3, borderWidth: 2.5, tension: 0.45, fill: true, pointBackgroundColor: '#22c55e', pointRadius: 4, pointHoverRadius: 7 }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, pointStyleWidth: 10, font: { size: 12, weight: '600' }, padding: 18 } },
+                        tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', padding: 14, cornerRadius: 12, callbacks: { label: ctx => ` ${ctx.dataset.label}: ₱${ctx.parsed.y.toLocaleString()}` } }
+                    },
                     scales: {
-                        y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
+                        x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11, weight: '600' }, color: '#64748b' } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 }, color: '#64748b', callback: v => '₱' + v.toLocaleString() } }
                     }
                 }
             });
-        } catch (error) {
-            console.error('Weekly Chart Error:', error);
-        }
+        } catch (error) { console.error('Weekly Chart Error:', error); }
 
         // Unit Status Chart
         try {
@@ -1270,29 +1286,42 @@
             console.error('Unit Status Chart Error:', error);
         }
 
-        // Revenue Trend Chart
+        // Revenue Trend Chart - Premium Line
         try {
             const revenueTrendCtx = document.getElementById('revenueTrendChart').getContext('2d');
             const revenueTrendData = @json($revenue_trend);
-            console.log('Revenue Trend Data:', revenueTrendData);
+            const rGrad = revenueTrendCtx.createLinearGradient(0, 0, 0, 320);
+            rGrad.addColorStop(0, 'rgba(37,99,235,0.3)'); rGrad.addColorStop(0.6, 'rgba(37,99,235,0.08)'); rGrad.addColorStop(1, 'rgba(37,99,235,0)');
             window.revenueTrendChart = new Chart(revenueTrendCtx, {
                 type: 'line',
                 data: {
                     labels: revenueTrendData.map(d => d.date),
-                    datasets: [{ label: 'Revenue', data: revenueTrendData.map(d => d.revenue), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', borderWidth: 2, tension: 0.4 }]
+                    datasets: [{
+                        label: 'Revenue', data: revenueTrendData.map(d => d.revenue),
+                        borderColor: '#2563eb', backgroundColor: rGrad,
+                        borderWidth: 3, tension: 0.45, fill: true,
+                        pointBackgroundColor: '#fff', pointBorderColor: '#2563eb', pointBorderWidth: 2.5,
+                        pointRadius: 5, pointHoverRadius: 8, pointHoverBackgroundColor: '#2563eb'
+                    }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15,23,42,0.95)', padding: 14, cornerRadius: 12,
+                            callbacks: { label: ctx => ` Revenue: ₱${ctx.parsed.y.toLocaleString()}` }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, ticks: { callback: function (value) { return '₱' + value.toLocaleString(); } } }
+                        x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' }, color: '#94a3b8', maxRotation: 45 } },
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                             ticks: { font: { size: 11 }, color: '#94a3b8', callback: v => '₱' + v.toLocaleString() } }
                     }
                 }
             });
-        } catch (error) {
-            console.error('Revenue Trend Chart Error:', error);
-        }
+        } catch (error) { console.error('Revenue Trend Chart Error:', error); }
 
         // Unit Performance Chart - Modernized Horizontal Enterprise View
         try {
@@ -1391,14 +1420,12 @@
             console.error('Unit Performance Chart Error:', error);
         }
 
-        // Expense Breakdown Chart
+        // Expense Breakdown Chart - Premium Pie
         try {
             const expenseBreakdownCtx = document.getElementById('expenseBreakdownChart').getContext('2d');
             let expenseBreakdownData = @json($expense_breakdown);
-            
             let isPlaceholder = false;
-            // Check if data exists and has values
-            if (!expenseBreakdownData || expenseBreakdownData.length === 0 || 
+            if (!expenseBreakdownData || expenseBreakdownData.length === 0 ||
                 (Array.isArray(expenseBreakdownData) && expenseBreakdownData.every(d => d.amount === 0))) {
                 isPlaceholder = true;
                 expenseBreakdownData = [
@@ -1409,81 +1436,44 @@
                     { category: 'Others', amount: 1200 }
                 ];
             }
-
+            const pieColors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#06b6d4'];
+            const pieHover = ['#dc2626','#d97706','#059669','#2563eb','#7c3aed','#db2777','#0891b2'];
             window.expenseBreakdownChart = new Chart(expenseBreakdownCtx, {
-                type: 'doughnut',
+                type: 'pie',
                 data: {
                     labels: expenseBreakdownData.map(d => d.category),
-                    datasets: [{
-                        data: expenseBreakdownData.map(d => d.amount),
-                        backgroundColor: [
-                            '#ef4444', // Red
-                            '#f59e0b', // Amber
-                            '#10b981', // Emerald
-                            '#3b82f6', // Blue
-                            '#8b5cf6', // Violet
-                            '#ec4899'  // Pink
-                        ],
-                        borderWidth: 2,
-                        hoverOffset: 25,
-                        borderRadius: 8
-                    }]
+                    datasets: [{ data: expenseBreakdownData.map(d => d.amount), backgroundColor: pieColors, hoverBackgroundColor: pieHover, borderWidth: 3, borderColor: '#fff', hoverOffset: 12 }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%',
+                    responsive: true, maintainAspectRatio: false,
                     plugins: {
-                        legend: { 
-                            position: 'right',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                font: { size: 12, weight: '600' }
-                            }
-                        },
-                        title: {
-                            display: isPlaceholder,
-                            text: '✨ Monthly Spending (Sample Mode)',
-                            color: '#94a3b8',
-                            font: {
-                                size: 14,
-                                weight: 'normal',
-                                style: 'italic'
-                            },
-                            padding: { bottom: 15 }
-                        },
+                        legend: { position: 'right', labels: { usePointStyle: true, pointStyleWidth: 12, font: { size: 12, weight: '600' }, padding: 16, color: '#374151' } },
                         tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            padding: 15,
-                            cornerRadius: 12,
+                            backgroundColor: 'rgba(15,23,42,0.95)', padding: 14, cornerRadius: 12,
                             callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return ` ${label}: ₱${value.toLocaleString()} (${percentage}%)`;
+                                label: function(ctx) {
+                                    const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                                    const pct = ((ctx.parsed / total) * 100).toFixed(1);
+                                    return ` ${ctx.label}: ₱${ctx.parsed.toLocaleString()} (${pct}%)`;
                                 }
                             }
-                        }
-                    }
+                        },
+                        datalabels: { color: '#fff', font: { weight: 'bold', size: 12 }, formatter: (val, ctx) => { const total = ctx.dataset.data.reduce((a,b)=>a+b,0); const pct = ((val/total)*100).toFixed(0); return pct > 5 ? pct+'%' : ''; } }
+                    },
+                    animation: { animateRotate: true, duration: 900, easing: 'easeOutQuart' }
                 }
             });
-        } catch (error) {
-            console.error('Expense Chart Error:', error);
-        }
+        } catch (error) { console.error('Expense Chart Error:', error); }
 
 
 
 
-        // Top Drivers Chart
+        // Top Drivers Chart - Premium Horizontal Bar
         try {
             const topDriversCtx = document.getElementById('topDriversChart').getContext('2d');
             let topDriversData = @json($top_drivers);
-            
             let isPlaceholder = false;
-            if (!topDriversData || topDriversData.length === 0 || 
+            if (!topDriversData || topDriversData.length === 0 ||
                 (Array.isArray(topDriversData) && topDriversData.every(d => d.score === 0))) {
                 isPlaceholder = true;
                 topDriversData = [
@@ -1494,192 +1484,81 @@
                     { name: 'Rodri Hernandez', score: 20, total: 30000 }
                 ];
             }
-
-            // Custom Gradient for a premium feel
-            const gradient = topDriversCtx.createLinearGradient(0, 0, 400, 0);
-            gradient.addColorStop(0, '#10b981'); // Emerald 500
-            gradient.addColorStop(1, '#0ea5e9'); // Sky 500
-
+            const barColors = topDriversData.map((_, i) => i===0?'#2563eb':i===1?'#7c3aed':i===2?'#0891b2':'#64748b');
             window.topDriversChart = new Chart(topDriversCtx, {
                 type: 'bar',
                 data: {
-                    labels: topDriversData.map((d, i) => {
-                        const trophy = i === 0 ? '🏆 ' : '';
-                        const rank = i + 1;
-                        const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
-                        return `${trophy}${rank}${suffix} - ${d.name}`;
-                    }),
-                    datasets: [{
-                        label: 'Reliability Score',
-                        data: topDriversData.map(d => d.score),
-                        backgroundColor: gradient,
-                        borderColor: '#059669',
-                        borderWidth: 0,
-                        borderRadius: 20, // More rounded for a modern look
-                        barThickness: 32,
-                        hoverBackgroundColor: '#06d6a0',
-                    }]
+                    labels: topDriversData.map((d,i) => { const medals=['🥇','🥈','🥉']; return `${medals[i]||'  '} ${d.name}`; }),
+                    datasets: [{ label: 'Reliability Score', data: topDriversData.map(d => d.score),
+                        backgroundColor: barColors, borderColor: barColors, borderWidth: 0,
+                        borderRadius: 10, borderSkipped: false, barThickness: 28 }]
                 },
                 options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        title: {
-                            display: isPlaceholder,
-                            text: '✨ Elite Performance Board (Sample)',
-                            color: '#10b981',
-                            font: { 
-                                size: 14,
-                                weight: 'bold',
-                                style: 'italic'
-                            },
-                            padding: { bottom: 15 }
-                        },
-                        datalabels: {
-                            display: true,
-                            color: '#fff',
-                            anchor: 'end',
-                            align: 'start',
-                            offset: 10,
-                            font: { weight: 'bold', size: 12 },
-                            formatter: (value) => value > 0 ? value : ''
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)', // Slate 900
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 },
-                            padding: 15,
-                            cornerRadius: 12,
-                            displayColors: false,
+                        tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', padding: 14, cornerRadius: 12, displayColors: false,
                             callbacks: {
-                                label: function(context) {
-                                    return ` ⭐ Reliability: ${context.parsed.x} clean service days`;
-                                },
-                                footer: (items) => {
-                                    const index = items[0].dataIndex;
-                                    const amount = topDriversData[index].total;
-                                    return ` 💰 Total Revenue: ₱${amount.toLocaleString()}`;
-                                }
+                                label: ctx => ` ⭐ Reliability: ${ctx.parsed.x} clean service days`,
+                                footer: items => { const amt = topDriversData[items[0].dataIndex].total; return ` ₱ Total Revenue: ₱${amt.toLocaleString()}`; }
                             }
-                        }
+                        },
+                        datalabels: { color: '#fff', font: { weight: 'bold', size: 12 }, anchor: 'end', align: 'start', offset: 8, formatter: v => v>0?v:'' }
                     },
                     scales: {
-                        x: { 
-                            beginAtZero: true,
-                            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
-                            ticks: { font: { size: 11, weight: '500' } }
-                        },
-                        y: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: { 
-                                font: { size: 13, weight: '600' },
-                                color: '#334155'
-                            }
-                        }
+                        x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false }, ticks: { font: { size: 11, weight: '500' }, color: '#94a3b8' } },
+                        y: { grid: { display: false, drawBorder: false }, ticks: { font: { size: 13, weight: '600' }, color: '#1e293b' } }
                     },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeOutQuart'
-                    }
+                    animation: { duration: 1200, easing: 'easeOutQuart' }
                 }
             });
-        } catch (error) {
-            console.error('Top Drivers Chart Error:', error);
-        }
+        } catch (error) { console.error('Top Drivers Chart Error:', error); }
 
 
 
 
-        // Unit Status Distribution Chart
+        // Unit Status Distribution Chart - Premium Donut
         try {
             const unitStatusDistCtx = document.getElementById('unitStatusDistributionChart').getContext('2d');
             const unitStatusDistData = @json($unit_status_distribution_data);
-        
-            const vibrantColors = [
-                '#10b981', // Emerald (Active)
-                '#3b82f6', // Blue (Maintenance)
-                '#f59e0b', // Amber (Coding)
-                '#ef4444'  // Red (Retired)
-            ];
-
-            const chartConfig = {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: vibrantColors,
-                        borderWidth: 2,
-                        hoverOffset: 20,
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: {
-                        legend: { 
-                            position: 'right',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                font: { size: 12, weight: '600' }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            padding: 12,
-                            cornerRadius: 10,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                    return ` ${label}: ${value} units (${percentage}%)`;
-                                }
-                            }
-                        },
-                        datalabels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 13 },
-                            formatter: (value, ctx) => {
-                                const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = sum > 0 ? ((value / sum) * 100).toFixed(0) : 0;
-                                return percentage > 5 ? percentage + '%' : '';
-                            }
-                        }
-                    }
-                }
-            };
-
+            const donutColors = ['#10b981','#3b82f6','#f59e0b','#ef4444'];
+            const donutHover = ['#059669','#2563eb','#d97706','#dc2626'];
+            let distLabels, distValues, distIsPlaceholder = false;
             if (!unitStatusDistData || unitStatusDistData.length === 0 || unitStatusDistData.every(d => d.count === 0)) {
-                const placeholderData = [
-                    { status: 'Active', count: 5 },
-                    { status: 'Maintenance', count: 2 },
-                    { status: 'Coding', count: 1 },
-                    { status: 'Retired', count: 0 }
-                ];
-                chartConfig.data.labels = placeholderData.map(d => d.status);
-                chartConfig.data.datasets[0].data = placeholderData.map(d => d.count);
-                chartConfig.options.plugins.title = {
-                    display: true,
-                    text: '✨ Fleet Status (Sample Mode)',
-                    color: '#94a3b8',
-                    font: { style: 'italic', size: 13 }
-                };
+                distIsPlaceholder = true;
+                distLabels = ['Active','Maintenance','Coding','Retired'];
+                distValues = [5,2,1,0];
             } else {
-                chartConfig.data.labels = unitStatusDistData.map(d => d.status);
-                chartConfig.data.datasets[0].data = unitStatusDistData.map(d => d.count);
+                distLabels = unitStatusDistData.map(d => d.status);
+                distValues = unitStatusDistData.map(d => d.count);
             }
-
-            window.unitStatusDistChart = new Chart(unitStatusDistCtx, chartConfig);
-        } catch (error) {
-            console.error('Unit Status Distribution Chart Error:', error);
-        }
+            const totalUnits = distValues.reduce((a,b) => a+b, 0);
+            window.unitStatusDistChart = new Chart(unitStatusDistCtx, {
+                type: 'doughnut',
+                data: { labels: distLabels, datasets: [{ data: distValues, backgroundColor: donutColors, hoverBackgroundColor: donutHover, borderWidth: 4, borderColor: '#fff', hoverOffset: 16 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '72%',
+                    plugins: {
+                        legend: { position: 'right', labels: { usePointStyle: true, pointStyleWidth: 12, font: { size: 12, weight: '600' }, padding: 18, color: '#374151',
+                            generateLabels: (chart) => chart.data.labels.map((label, i) => ({ text: `${label}: ${chart.data.datasets[0].data[i]}`, fillStyle: donutColors[i], strokeStyle: '#fff', lineWidth: 2, index: i })) } },
+                        tooltip: { backgroundColor: 'rgba(15,23,42,0.95)', padding: 14, cornerRadius: 12,
+                            callbacks: { label: ctx => { const total = ctx.dataset.data.reduce((a,b)=>a+b,0); const pct = total>0?((ctx.parsed/total)*100).toFixed(1):0; return ` ${ctx.label}: ${ctx.parsed} units (${pct}%)`; } } },
+                        datalabels: { color: '#fff', font: { weight: 'bold', size: 13 }, formatter: (val, ctx) => { const sum = ctx.dataset.data.reduce((a,b)=>a+b,0); const pct = sum>0?((val/sum)*100).toFixed(0):0; return pct>5?pct+'%':''; } }
+                    },
+                    animation: { animateRotate: true, duration: 900, easing: 'easeOutQuart' }
+                },
+                plugins: [{ id: 'donutCenter', afterDraw(chart) {
+                    const { ctx, chartArea: { left, top, right, bottom } } = chart;
+                    const cx = (left+right)/2, cy = (top+bottom)/2;
+                    ctx.save();
+                    ctx.font = 'bold 28px Inter, sans-serif'; ctx.fillStyle = '#0f172a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(totalUnits, cx, cy-10);
+                    ctx.font = '600 11px Inter, sans-serif'; ctx.fillStyle = '#94a3b8';
+                    ctx.fillText('TOTAL UNITS', cx, cy+14);
+                    ctx.restore();
+                }}]
+            });
+        } catch (error) { console.error('Unit Status Distribution Chart Error:', error); }
 
         // Revenue Trend Period Selection
         function updateRevenueTrend(period) {

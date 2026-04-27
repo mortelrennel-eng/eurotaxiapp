@@ -480,4 +480,57 @@ class LiveTrackingController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    // ─── AJAX: Engine Control (Kill/Restore) ────────────────────
+    public function engineControl(Request $request)
+    {
+        try {
+            $request->validate([
+                'unit_id' => 'required|integer',
+                'action'  => 'required|in:kill,restore'
+            ]);
+
+            $unit = DB::table('units')->where('id', $request->unit_id)->first();
+            if (!$unit || !$unit->imei) {
+                return response()->json(['success' => false, 'error' => 'Vehicle has no GPS IMEI registered.']);
+            }
+
+            // SAFETY CRITICAL CHECK
+            if ($request->action === 'kill') {
+                $gps = DB::table('gps_tracking')->where('unit_id', $unit->id)->first();
+                $speed = $gps ? (float)$gps->speed : 0;
+                
+                // Block if moving > 20 km/h to prevent accidents
+                if ($speed > 20) {
+                    return response()->json([
+                        'success' => false, 
+                        'error' => "Safety Lock Active: Vehicle is traveling too fast ({$speed} km/h). Cannot cut engine above 20km/h."
+                    ]);
+                }
+            }
+
+            // Send to Tracksolid
+            $result = $this->tracksolid->sendEngineCommand($unit->imei, $request->action);
+
+            if ($result['success']) {
+                // Log the action for auditing
+                DB::table('system_alerts')->insert([
+                    'title' => "Engine " . strtoupper($request->action) . ": {$unit->plate_number}",
+                    'message' => "Remote engine {$request->action} command delivered successfully via Tracksolid.",
+                    'type' => $request->action === 'kill' ? 'danger' : 'success',
+                    'is_resolved' => false,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+                return response()->json(['success' => true, 'message' => "Engine " . ($request->action === 'kill' ? 'cut-off' : 'restored') . " command sent to unit."]);
+            } else {
+                return response()->json(['success' => false, 'error' => $result['error']]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Engine Control Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Internal server error: ' . $e->getMessage()], 500);
+        }
+    }
 }

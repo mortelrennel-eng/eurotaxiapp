@@ -33,7 +33,7 @@ class DriverBehaviorController extends Controller
         $date_to         = $request->input('date_to', now()->timezone('Asia/Manila')->toDateString());
         $tab             = $request->input('tab', 'incidents');
         $page            = max(1, (int) $request->input('page', 1));
-        $limit           = 15;
+        $limit           = 10;
         $offset          = ($page - 1) * $limit;
 
         // ── Unified incident feed: driver_behavior with eager loading ──

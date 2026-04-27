@@ -19,6 +19,63 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #ca8a04; }
     </style>
 
+    <!-- Today's Focus Metrics -->
+    @php
+        $codingTodayCount = $stats['today_coding'];
+        $onRoadCount = $stats['on_road'];
+        $violationsCount = $stats['violations'];
+    @endphp
+
+    <div class="mb-6 mt-2">
+        <h2 class="text-sm font-black text-gray-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <i data-lucide="target" class="w-4 h-4 text-blue-600"></i> Today's Focus
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Metric 1: Total Coding Today -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-red-50 rounded-full blur-xl group-hover:bg-red-100 transition-colors pointer-events-none"></div>
+                <div class="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center shrink-0 relative z-10">
+                    <i data-lucide="ban" class="w-6 h-6 text-red-500"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Coding Today</p>
+                    <p class="text-3xl font-black text-gray-800 tabular-nums leading-none">{{ $codingTodayCount }}</p>
+                </div>
+            </div>
+
+            <!-- Metric 2: On-Road Units -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full blur-xl group-hover:bg-emerald-100 transition-colors pointer-events-none"></div>
+                <div class="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 relative z-10">
+                    <i data-lucide="navigation" class="w-6 h-6 text-emerald-500"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">On-Road Units</p>
+                    <p class="text-3xl font-black text-gray-800 tabular-nums leading-none">{{ $onRoadCount }}</p>
+                </div>
+            </div>
+
+            <!-- Metric 3: Garage/Coding Alert -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                <div class="absolute -right-4 -top-4 w-24 h-24 {{ $violationsCount > 0 ? 'bg-orange-50' : 'bg-gray-50' }} rounded-full blur-xl group-hover:bg-orange-100 transition-colors pointer-events-none"></div>
+                <div class="w-14 h-14 rounded-full {{ $violationsCount > 0 ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50 border border-gray-100' }} flex items-center justify-center shrink-0 relative z-10 transition-colors">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 {{ $violationsCount > 0 ? 'text-orange-500 animate-pulse' : 'text-gray-400' }}"></i>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Garage/Coding Alert</p>
+                    @if($violationsCount > 0)
+                        <div class="flex items-end gap-2">
+                            <p class="text-3xl font-black text-orange-600 tabular-nums leading-none">{{ $violationsCount }}</p>
+                            <span class="text-[9px] font-bold text-orange-500 uppercase tracking-widest mb-1 animate-pulse">On Road!</span>
+                        </div>
+                    @else
+                        <p class="text-lg font-black text-gray-500 leading-tight mt-1">All Safe</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Date Filter & Actions -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
         <form method="GET" action="{{ route('coding.index') }}" class="flex flex-col md:flex-row gap-4 items-center">
@@ -47,6 +104,39 @@
 
 
         </form>
+    </div>
+
+    @php
+        $tomorrow_date = date('Y-m-d', strtotime($date . ' +1 day'));
+        $tomorrow_name = date('l', strtotime($tomorrow_date));
+        $tomorrow_units = $coding_calendar[$tomorrow_name] ?? collect([]);
+        $tomorrow_count = $tomorrow_units->count();
+    @endphp
+
+    <!-- Tomorrow's Proactive Reminder Banner -->
+    <div class="mb-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-xl shadow-blue-200 p-5 flex flex-col md:flex-row gap-4 items-center justify-between text-white relative overflow-hidden transform hover:-translate-y-1 transition-all duration-300">
+        <!-- Decorative background elements -->
+        <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -mt-10 -mr-10 pointer-events-none"></div>
+        <div class="absolute right-32 bottom-0 w-24 h-24 bg-blue-300 opacity-20 rounded-full blur-xl -mb-10 pointer-events-none"></div>
+        <div class="absolute left-10 top-1/2 w-40 h-40 bg-indigo-400 opacity-20 rounded-full blur-3xl -translate-y-1/2 pointer-events-none"></div>
+        
+        <div class="flex items-center gap-4 relative z-10 w-full md:w-auto">
+            <div class="p-3 bg-white/10 rounded-xl backdrop-blur-md border border-white/20 shrink-0 shadow-inner">
+                <i data-lucide="bell-ring" class="w-7 h-7 text-yellow-300 animate-pulse"></i>
+            </div>
+            <div>
+                <h3 class="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-0.5">Quick-Action Insight</h3>
+                <p class="text-base font-medium leading-tight">Reminder: <strong class="text-yellow-300 font-black text-xl tabular-nums">{{ $tomorrow_count }}</strong> units will be coding tomorrow ({{ $tomorrow_name }}).</p>
+            </div>
+        </div>
+        <div class="relative z-10 w-full md:w-auto">
+            <form method="GET" action="{{ route('coding.index') }}" class="w-full">
+                <input type="hidden" name="date" value="{{ $tomorrow_date }}">
+                <button type="submit" class="w-full md:w-auto px-6 py-3 bg-white text-blue-700 text-xs font-black rounded-xl shadow-lg hover:bg-blue-50 hover:shadow-xl transition-all uppercase tracking-widest flex items-center justify-center gap-2 group">
+                    Prepare for Tomorrow <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -145,25 +235,62 @@
             </h3>
         </div>
         <div class="p-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+            @php $totalFleet = max(1, \App\Models\Unit::count()); @endphp
             @foreach($coding_calendar as $day => $day_units)
-                <div class="border rounded-2xl p-4 transition-all {{ $day === $today_name ? 'border-yellow-400 bg-yellow-50/30' : 'border-gray-100 bg-white' }}">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="font-black text-gray-800 text-sm tracking-tight">{{ $day }}</h4>
+                <div class="border rounded-2xl p-4 transition-all duration-300 {{ $day === $today_name ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-white shadow-[0_0_15px_rgba(59,130,246,0.3)] transform -translate-y-1 relative overflow-hidden' : 'border-gray-100 bg-gradient-to-br from-gray-50/80 to-white shadow-inner hover:shadow-md hover:-translate-y-0.5' }}">
+                    @if($day === $today_name)
+                        <div class="absolute top-0 right-0 w-16 h-16 bg-blue-400 blur-[30px] opacity-20 -mr-8 -mt-8 pointer-events-none"></div>
+                    @endif
+                    <div class="flex items-center justify-between mb-2 relative z-10">
+                        <h4 class="font-black {{ $day === $today_name ? 'text-blue-800' : 'text-gray-800' }} text-sm tracking-tight">{{ $day }}</h4>
                         <div class="flex items-center gap-1">
-                            <span class="px-2 py-0.5 bg-gray-100 text-gray-500 text-[10px] font-black rounded-full">{{ $day_units->count() }}</span>
+                            <span class="px-2 py-0.5 bg-white shadow-sm border border-gray-100 text-gray-500 text-[10px] font-black rounded-full">{{ $day_units->count() }}</span>
                             @if($day === $today_name)
-                                <span class="px-2 py-0.5 bg-yellow-400 text-white text-[8px] font-black rounded-full shadow-sm">TODAY</span>
+                                <span class="px-2 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded-full shadow-md shadow-blue-200">TODAY</span>
                             @endif
                         </div>
                     </div>
+
+                    {{-- Heatmap Progress Bar --}}
+                    @php
+                        $codingCount = $day_units->count();
+                        $percentage = round(($codingCount / $totalFleet) * 100);
+                        
+                        $barColor = 'bg-blue-400';
+                        if ($percentage >= 15) $barColor = 'bg-orange-400';
+                        if ($percentage >= 20) $barColor = 'bg-red-500';
+                    @endphp
+                    <div class="mb-4 relative z-10">
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Fleet Impact</span>
+                            <span class="text-[9px] font-black {{ $percentage >= 20 ? 'text-red-600' : 'text-gray-600' }}">{{ $percentage }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 shadow-inner overflow-hidden">
+                            <div class="{{ $barColor }} h-1.5 rounded-full transition-all duration-1000" style="width: {{ $percentage }}%"></div>
+                        </div>
+                    </div>
                     <!-- Coding List Visibility: Maximum 2 units visible, then scroll -->
-                    <div class="space-y-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                    <div class="space-y-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar relative z-10">
                         @forelse($day_units as $u)
-                            <div class="text-[11px] p-2 bg-white rounded-xl border border-gray-50 shadow-sm text-gray-700 font-bold text-center hover:border-blue-400 transition-colors cursor-default">
-                                <div class="text-blue-600 uppercase">{{ $u->plate_number }}</div>
+                            @php
+                                $type = strtolower($u->unit_type ?? 'sedan');
+                                $pillClass = 'bg-blue-50/80 border-blue-100 text-blue-700 hover:bg-blue-100 hover:border-blue-300';
+                                $iconName = 'car';
+                                
+                                if (str_contains($type, 'suv')) {
+                                    $pillClass = 'bg-emerald-50/80 border-emerald-100 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300';
+                                    $iconName = 'car-front';
+                                } elseif (str_contains($type, 'van')) {
+                                    $pillClass = 'bg-purple-50/80 border-purple-100 text-purple-700 hover:bg-purple-100 hover:border-purple-300';
+                                    $iconName = 'bus-front';
+                                }
+                            @endphp
+                            <div title="{{ ucfirst($type) }} - {{ $u->make }} {{ $u->model }}" class="text-[11px] flex justify-center items-center gap-1.5 px-3 py-1.5 {{ $pillClass }} backdrop-blur-sm rounded-full border shadow-sm font-black text-center hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group">
+                                <i data-lucide="{{ $iconName }}" class="w-3.5 h-3.5 opacity-70 group-hover:opacity-100 transition-opacity"></i>
+                                <span class="uppercase tracking-widest">{{ $u->plate_number }}</span>
                             </div>
                         @empty
-                            <div class="text-[10px] text-gray-300 italic text-center py-2">No units</div>
+                            <div class="text-[10px] text-gray-400 italic text-center py-2 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">No units</div>
                         @endforelse
                     </div>
                 </div>

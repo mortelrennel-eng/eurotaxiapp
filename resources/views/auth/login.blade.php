@@ -16,7 +16,11 @@
     <link rel="icon" type="image/png" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
     <link rel="apple-touch-icon" href="{{ asset('favicon_euro_transparent.png') }}?v=1.5">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <script>
         // Prevent back button caching
@@ -41,19 +45,21 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
-            background-color: #f9fafb;
+            background-color: #0a0f1e;
+            font-family: 'Inter', sans-serif;
         }
 
         .flip-container {
             perspective: 1500px;
             width: 100%;
-            height: 100%;
+            max-width: 420px;
         }
 
         .flipper {
+            display: grid;
+            align-items: center;
             position: relative;
             width: 100%;
-            height: 100%;
             transform-style: preserve-3d;
             transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
@@ -96,16 +102,17 @@
 
         .form-wrapper {
             width: 100%;
-            max-width: 320px;
-            padding: 1rem 1.2rem;
+            max-width: 380px;
+            padding: 2rem 2.2rem;
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 24px 48px -12px rgba(0, 0, 0, 0.05);
+            background: rgba(255,255,255,0.97);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 8px rgba(59,130,246,0.07);
+            border: 1px solid rgba(255,255,255,0.7);
             margin: auto;
         }
 
@@ -118,13 +125,16 @@
             display: block;
         }
 
-        .flipper.state-login .login-panel,
+        .flipper.state-login .front-face .login-panel,
         .flipper.state-register .back-face .register-panel,
-        .flipper.state-forgot .forgot-panel {
-            display: block;
+        .flipper.state-forgot .front-face .forgot-panel {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .flipper.state-login .forgot-panel,
+        .flipper.state-register .front-face,
         .flipper.state-forgot .login-panel {
             display: none;
         }
@@ -187,21 +197,22 @@
         .input-group input,
         .input-group select {
             width: 100%;
-            padding: 0.45rem 0.5rem 0.45rem 2rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            font-size: 0.8rem;
+            padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0.65rem;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
             transition: all 0.2s ease;
-            background: #ffffff;
-            color: #1f2937;
+            background: #f8fafc;
+            color: #1e293b;
         }
 
         .input-group input:focus,
         .input-group select:focus {
             outline: none;
             border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+            background: #fff;
         }
 
         .input-icon-wrapper i {
@@ -220,9 +231,9 @@
             position: relative;
             display: flex;
             align-items: center;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
-            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0.65rem;
+            background: #f8fafc;
             transition: border-color 0.3s ease, box-shadow 0.3s ease;
             margin-bottom: 0.4rem;
             width: 100%;
@@ -231,13 +242,14 @@
         .pw-group:focus-within,
         .ph-phone-wrapper:focus-within {
             border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
+            background: #fff !important;
         }
 
         .pw-group .pw-icon {
             flex-shrink: 0;
-            padding: 0 0.35rem 0 0.7rem;
-            color: #9ca3af;
+            padding: 0 0.35rem 0 0.75rem;
+            color: #94a3b8;
             font-size: 0.875rem;
             pointer-events: none;
         }
@@ -249,9 +261,10 @@
             outline: none !important;
             box-shadow: none !important;
             background: transparent !important;
-            padding: 0.45rem 2rem 0.45rem 0.25rem !important;
-            font-size: 0.8rem;
-            color: #1f2937;
+            padding: 0.6rem 2rem 0.6rem 0.25rem !important;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
         }
 
         .toggle-password {
@@ -283,40 +296,46 @@
 
         .btn-primary {
             width: 100%;
-            padding: 0.65rem;
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             color: white;
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             font-size: 0.9375rem;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.01em;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 0.75rem;
+            box-shadow: 0 4px 15px rgba(37,99,235,0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.45);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
         }
 
         .btn-secondary {
             width: 100%;
-            padding: 0.6rem;
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            padding: 0.7rem;
+            background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
             color: white;
             border: none;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             font-size: 0.875rem;
-            font-weight: 600;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 0.5rem;
+            box-shadow: 0 4px 15px rgba(124,58,237,0.3);
         }
 
         .btn-secondary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+            box-shadow: 0 12px 28px rgba(124, 58, 237, 0.45);
         }
 
         .forgot-options {
@@ -532,27 +551,27 @@
             filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
         }
 
-        @media (max-width: 768px) {
-            .split-layout {
-                flex-direction: column;
+        @media (max-width: 1024px) {
+            .split-container {
+                flex-direction: column !important;
+                overflow-y: auto !important;
             }
-
-            .left-side {
-                height: 40vh;
-                flex-shrink: 0;
+            .branding-side, .auth-side {
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
             }
-
-            .right-side {
-                height: 60vh;
-                flex-shrink: 0;
+            .branding-side {
+                padding: 4rem 2rem 2rem !important;
             }
-
-            .logo-container {
-                max-width: 260px;
+            .auth-side {
+                padding: 1rem 1rem 4rem !important;
             }
-
             .logo-image {
-                max-height: 200px;
+                max-width: 160px;
+            }
+            h1 {
+                font-size: 2rem !important;
             }
         }
 
@@ -635,52 +654,83 @@
     <!-- Message Toast -->
     <div id="messageToast" class="message-toast"></div>
 
-    <!-- Main Split Layout -->
-    <div class="split-layout flex" style="height:100vh; overflow:hidden;">
+    <!-- Full Screen Layout -->
+    <div class="split-container" style="position:relative;height:100vh;width:100vw;display:flex;overflow:hidden;">
 
-        <!-- Left Side - Static Image -->
-        <div class="left-side w-full md:w-1/2 h-full relative overflow-hidden">
-            <img src="{{ asset('uploads/1000053201.jpg') }}" alt="Eurotaxisystem" class="w-full h-full object-cover">
+        <!-- Full Screen Background Image -->
+        <img src="{{ asset('uploads/1000053201.jpg') }}" alt="Eurotaxisystem" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;">
 
-            <!-- Overlay Content -->
-            <div class="absolute inset-0 frosted-overlay flex flex-col">
-                <!-- Logo at top -->
-                <div class="text-center px-8 pt-16">
-                    <div class="logo-container mx-auto logo-bounce">
-                        <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxisystem Logo" class="logo-image">
-                    </div>
+        <!-- Overlay: lighter on right, darker on left -->
+        <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(105deg,rgba(8,12,35,0.88) 0%,rgba(12,20,55,0.85) 45%,rgba(20,40,100,0.65) 70%,rgba(30,58,138,0.45) 100%);"></div>
+
+        <!-- LEFT HALF: Large Branding -->
+        <div class="branding-side" style="position:relative;z-index:10;width:50%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;">
+            <div style="transform: translateY(-5vh); display: flex; flex-direction: column; align-items: center;">
+                <!-- Logo -->
+                <div class="logo-bounce" style="margin-bottom:1rem;">
+                    <img src="{{ asset('uploads/logo.png') }}" alt="Eurotaxi Inc." style="width:380px;max-width:100%;filter:drop-shadow(0 0 40px rgba(59,130,246,0.55));object-fit:contain;">
                 </div>
-
-                <!-- Icons -->
-                <div class="flex-1 flex items-start justify-center px-8 pt-16">
-                    <div class="flex justify-center gap-16">
-                        <div class="text-center icon-animate-1">
-                            <i class="fas fa-users text-3xl mb-2 text-white text-shadow-light"></i>
-                            <p class="text-sm text-white text-shadow-light">{{ $driversCount ?? '0' }} Drivers</p>
+                <p style="color:#bfdbfe;font-size:0.95rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;margin:0 0 1.5rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
+                <!-- Animation Stats Container -->
+                <div style="display: flex; gap: 3rem; margin-top: 1rem; animation: logoBounce 2s ease-out;">
+                    <!-- Drivers Lottie Animation -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <lottie-player 
+                            src="{{ asset('animations/drivers.json') }}" 
+                            background="transparent" 
+                            speed="1" 
+                            style="width: 170px; height: 170px; filter: drop-shadow(0 4px 15px rgba(59,130,246,0.3));"
+                            loop 
+                            autoplay>
+                        </lottie-player>
+                        <div style="text-align: center; margin-top: -15px;">
+                            <p style="color:#fff;font-weight:800;font-size:2.2rem;margin:0;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{{ $driversCount ?? '0' }}</p>
+                            <p style="color:#93c5fd;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin:0; margin-top: 5px;">Partner Drivers</p>
                         </div>
-                        <div class="text-center icon-animate-3">
-                            <i class="fas fa-car text-3xl mb-2 text-white text-shadow-light"></i>
-                            <p class="text-sm text-white text-shadow-light">{{ $unitsCount ?? '0' }} Units</p>
+                    </div>
+
+                    <!-- Units Lottie Animation -->
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <lottie-player 
+                            src="{{ asset('animations/taxi_units.json') }}" 
+                            background="transparent" 
+                            speed="1" 
+                            style="width: 170px; height: 170px; filter: drop-shadow(0 4px 15px rgba(52,211,153,0.3));"
+                            loop 
+                            autoplay>
+                        </lottie-player>
+                        <div style="text-align: center; margin-top: -15px;">
+                            <p style="color:#fff;font-weight:800;font-size:2.2rem;margin:0;line-height:1;text-shadow:0 2px 10px rgba(0,0,0,0.5);">{{ $unitsCount ?? '0' }}</p>
+                            <p style="color:#93c5fd;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin:0; margin-top: 5px;">Taxi Units</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+
+            <!-- Bottom copyright -->
+            <p style="position:absolute;bottom:1.5rem;color:rgba(147,197,253,0.5);font-size:0.7rem;font-family:'Inter',sans-serif;">&copy; {{ date('Y') }} Eurotaxi Inc. All rights reserved.</p>
         </div>
 
-        <!-- Right Side - 3D Flip Forms -->
-        <div class="right-side w-full md:w-1/2 bg-gray-50" style="height:100vh; overflow:hidden;">
-            <div class="flip-container" style="height:100%;">
-                <div class="flipper state-login" id="flipper">
+        <!-- RIGHT HALF: Login Card -->
+        <div class="auth-side" style="position:relative;z-index:10;width:50%;height:100%;display:flex;align-items:center;justify-content:center;padding:2rem;">
+            <div class="flip-container" style="width:100%;max-width:430px;perspective:1500px;">
+                <div class="flipper state-login" id="flipper" style="position:relative;width:100%;transform-style:preserve-3d;transition:transform 0.8s cubic-bezier(0.4,0,0.2,1);">
 
                     <!-- Front Face - Login & Forgot -->
-                    <div class="flip-face front-face">
-                        <div class="form-wrapper">
+                    <div class="front-face" style="grid-area:1/1;width:100%;backface-visibility:hidden;">
+                        <div class="form-wrapper" style="max-width:100%;border-radius:1.25rem;box-shadow:0 30px 70px rgba(0,0,0,0.45),0 0 0 1px rgba(0,0,0,0.06);background:#fff;padding:2.2rem 2.4rem;">
 
                             <!-- Login Panel -->
                             <div class="form-panel login-panel">
-                                <div class="text-center mb-5">
-                                    <h2 class="text-2xl font-bold text-gray-800 mb-1">Welcome Back</h2>
-                                    <p class="text-gray-600">Sign in to your account</p>
+                                <!-- Card Header -->
+                                <div style="margin-bottom:1.5rem;">
+                                    <h2 style="font-size:1.6rem;font-weight:800;color:#1e293b;margin:0 0 4px;font-family:'Inter',sans-serif;">Welcome to <span style="color:#2563eb;">Eurotaxi</span></h2>
+                                    <p style="color:#64748b;font-size:0.85rem;margin:0 0 1.2rem;font-family:'Inter',sans-serif;">Fleet Management System</p>
+                                    <!-- Divider -->
+                                    <hr style="border:none;border-top:1.5px solid #e2e8f0;margin-bottom:1rem;">
+                                    <!-- Role Badge -->
+                                    <p style="color:#2563eb;font-size:0.78rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;font-family:'Inter',sans-serif;margin:0;">FLEET ADMINISTRATOR</p>
                                 </div>
 
                                 @if($errors->any())
@@ -730,9 +780,8 @@
                                             class="text-blue-600 hover:underline text-sm">Forgot password?</button>
                                     </div>
 
-                                    <button type="submit" class="btn-primary">
-                                        <i class="fas fa-sign-in-alt mr-2"></i>
-                                        Sign In
+                                    <button type="submit" class="btn-primary" style="letter-spacing:0.08em;font-size:0.95rem;">
+                                        SIGN IN
                                     </button>
                                 </form>
 
@@ -868,13 +917,13 @@
                                         </button>
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </div>{{-- /.forgot-panel --}}
+                        </div>{{-- /.form-wrapper front --}}
+                    </div>{{-- /.front face --}}
 
                     <!-- Back Face - Register -->
-                    <div class="flip-face back-face">
-                        <div class="form-wrapper">
+                    <div class="back-face" style="grid-area:1/1;width:100%;backface-visibility:hidden;transform:rotateY(180deg);">
+                        <div class="form-wrapper" style="max-width:100%;box-shadow:0 25px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.08);background:rgba(255,255,255,0.97);">
                             <div class="form-panel register-panel">
                                 <div class="text-center mb-3">
                                     <h2 class="text-xl font-bold text-gray-800 mb-0.5">Create Account</h2>
@@ -1043,14 +1092,14 @@
                                         </button>
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </div>{{-- /.register-panel --}}
+                        </div>{{-- /.form-wrapper --}}
+                    </div>{{-- /.back face relative div --}}
 
-                </div>
-            </div>
-        </div>
-    </div>
+                </div>{{-- /.flipper --}}
+            </div>{{-- /.flip-container --}}
+        </div>{{-- /.centered card container --}}
+    </div>{{-- /.full screen layout --}}
 
     <!-- MFA Verification Modal -->
     <div id="mfaModal" class="mfa-modal-overlay">

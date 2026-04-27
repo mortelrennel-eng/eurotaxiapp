@@ -43,11 +43,24 @@ class UnitController extends Controller
                     ->where('status', '!=', 'cancelled')
                     ->selectRaw('COALESCE(SUM(cost), 0)'),
                 'gps_device_count' => DB::table('gps_devices')
-                    ->whereColumn('unit_id', 'u.id')
-                    ->selectRaw('COUNT(*)'),
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('unit_id', 'u.id'),
                 'dashcam_device_count' => DB::table('dashcam_devices')
+                    ->selectRaw('COUNT(*)')
+                    ->whereColumn('unit_id', 'u.id'),
+                'latest_odo' => DB::table('maintenance')
+                    ->select('odometer_reading')
                     ->whereColumn('unit_id', 'u.id')
-                    ->selectRaw('COUNT(*)'),
+                    ->whereNull('deleted_at')
+                    ->orderBy('date_completed', 'desc')
+                    ->limit(1),
+                'last_service_odo' => DB::table('maintenance')
+                    ->select('odometer_reading')
+                    ->whereColumn('unit_id', 'u.id')
+                    ->whereNull('deleted_at')
+                    ->where('status', 'completed')
+                    ->orderBy('date_completed', 'desc')
+                    ->limit(1),
             ]);
 
         if (!empty($search)) {
@@ -93,7 +106,21 @@ class UnitController extends Controller
                 break;
         }
 
-        $total_units = $query->count();
+        // Calculate Contextual Stats (Unpaginated but Filtered)
+        $stats = [
+            'total'    => $query->count(),
+            'on_road'  => (clone $query)->where('u.status', 'active')
+                            ->where(function($q) {
+                                $q->whereNotNull('u.driver_id')->orWhereNotNull('u.secondary_driver_id');
+                            })->count(),
+            'garage'   => (clone $query)->where('u.status', 'active')
+                            ->whereNull('u.driver_id')->whereNull('u.secondary_driver_id')
+                            ->count(),
+            'workshop' => (clone $query)->where('u.status', 'maintenance')->count(),
+            'coding'   => (clone $query)->where('u.status', 'coding')->count(),
+        ];
+
+        $total_units = $stats['total'];
         $units = $query->offset($offset)->limit($limit)->get();
 
         // Fetch all boundary rules once to avoid N+1
@@ -133,11 +160,18 @@ class UnitController extends Controller
             )
             ->get();
 
+        // Determine view mode for both AJAX and full-page loads
+        $view_mode = $request->input('view', 'table');
+
         if ($request->ajax()) {
-            return view('units.partials._units_table', compact('units', 'pagination', 'search', 'status_filter', 'sort'))->render();
+            $partial = ($view_mode === 'grid')
+                ? 'units.partials._units_grid'
+                : 'units.partials._units_table';
+            
+            return view($partial, compact('units', 'pagination', 'search', 'status_filter', 'sort'))->render();
         }
 
-        return view('units.index', compact('units', 'pagination', 'search', 'status_filter', 'all_drivers', 'sort', 'boundary_rules'));
+        return view('units.index', compact('units', 'pagination', 'search', 'status_filter', 'all_drivers', 'sort', 'boundary_rules', 'view_mode', 'stats'));
     }
 
     public function store(Request $request)
@@ -441,8 +475,10 @@ class UnitController extends Controller
         // Add detailed parts and cost breakdown for each maintenance record
         foreach ($maintenance_records as &$record) {
             $parts = DB::table('maintenance_parts')
-                ->where('maintenance_id', $record->id)
-                ->orderBy('part_name')
+                ->leftJoin('spare_parts', 'maintenance_parts.part_id', '=', 'spare_parts.id')
+                ->where('maintenance_parts.maintenance_id', $record->id)
+                ->select('maintenance_parts.*', 'spare_parts.supplier')
+                ->orderBy('maintenance_parts.part_name')
                 ->get();
             
             $record->parts_details = $parts;
@@ -696,19 +732,50 @@ class UnitController extends Controller
                 $unit->last_boundary_date = $lastDate->format('M d, Y g:i A');
                 $unit->days_inactive = max(0, $lastDate->diffInDays(now()));
                 
-                // Identify the last driver who held the unit from the boundary record
-                if ($lastBoundary->driver_id) {
-                    $lastDriver = DB::table('drivers')
-                        ->where('id', $lastBoundary->driver_id)
-                        ->select('first_name', 'last_name', 'contact_number')
+                // Identify the SUSPECT driver (The one who took the unit AFTER the last boundary)
+                $lastBoundaryDriverId = $lastBoundary->driver_id;
+                $suspectDriverId = null;
+
+                // Priority 1: If it's a 2/2 Sharing unit, swap based on last boundary
+                if ($unit->driver_id && $unit->secondary_driver_id) {
+                    if ($lastBoundaryDriverId == $unit->driver_id) {
+                        $suspectDriverId = $unit->secondary_driver_id;
+                    } else {
+                        $suspectDriverId = $unit->driver_id;
+                    }
+                } 
+                // Priority 2: If it's a Solo unit, the assigned driver is the suspect
+                else if ($unit->driver_id || $unit->secondary_driver_id) {
+                    $suspectDriverId = $unit->driver_id ?? $unit->secondary_driver_id;
+                }
+                // Priority 3: If it's Vacant, nobody is assigned
+                else {
+                    $suspectDriverId = null;
+                }
+
+                if ($suspectDriverId) {
+                    $suspect = DB::table('drivers')
+                        ->where('id', $suspectDriverId)
+                        ->select('id', 'first_name', 'last_name', 'contact_number')
                         ->first();
-                    $unit->last_known_driver = $lastDriver 
-                        ? trim($lastDriver->first_name . ' ' . $lastDriver->last_name)
+                    
+                    $unit->suspect_driver = $suspect 
+                        ? trim($suspect->first_name . ' ' . $suspect->last_name)
                         : 'Unknown';
-                    $unit->last_driver_contact = $lastDriver->contact_number ?? null;
+                    $unit->suspect_contact = $suspect->contact_number ?? null;
+                    $unit->is_vacant = false;
                 } else {
-                    $unit->last_known_driver = 'Not recorded';
-                    $unit->last_driver_contact = null;
+                    $unit->suspect_driver = 'NO ASSIGNED DRIVER';
+                    $unit->suspect_contact = null;
+                    $unit->is_vacant = true;
+                }
+
+                // Keep last driver info for reference context
+                if ($lastBoundaryDriverId) {
+                    $lastD = DB::table('drivers')->where('id', $lastBoundaryDriverId)->select('first_name', 'last_name')->first();
+                    $unit->last_known_driver = $lastD ? trim($lastD->first_name . ' ' . $lastD->last_name) : 'Unknown';
+                } else {
+                    $unit->last_known_driver = 'None';
                 }
             } else {
                 $unit->last_boundary_date = null;
@@ -766,6 +833,66 @@ class UnitController extends Controller
                 ]);
             }
         }
+    }
+
+    public function quickStats(Request $request)
+    {
+        $search = $request->input('search', '');
+        $status_filter = $request->input('status', '');
+
+        // Base query for both global and filtered
+        $baseQuery = DB::table('units')->whereNull('deleted_at');
+
+        // Helper to calculate stats from a query
+        $getStats = function($q) {
+            return [
+                'total'    => (clone $q)->count(),
+                'on_road'  => (clone $q)->where('status', 'active')
+                                ->where(function($sub) {
+                                    $sub->whereNotNull('driver_id')->orWhereNotNull('secondary_driver_id');
+                                })->count(),
+                'garage'   => (clone $q)->where('status', 'active')
+                                ->whereNull('driver_id')->whereNull('secondary_driver_id')
+                                ->count(),
+                'workshop' => (clone $q)->where('status', 'maintenance')->count(),
+                'coding'   => (clone $q)->where('status', 'coding')->count(),
+            ];
+        };
+
+        $global = $getStats($baseQuery);
+
+        // Apply filters for the filtered stats
+        $filteredQuery = clone $baseQuery;
+        if (!empty($search)) {
+            $filteredQuery->where(function ($q) use ($search) {
+                $q->where('plate_number', 'like', "%{$search}%")
+                  ->orWhere('make', 'like', "%{$search}%")
+                  ->orWhere('model', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($status_filter)) {
+            if ($status_filter === 'available') {
+                $filteredQuery->whereNull('driver_id')->whereNull('secondary_driver_id');
+            } elseif ($status_filter === '1_2') {
+                $filteredQuery->where(function($q) {
+                    $q->whereNotNull('driver_id')->whereNull('secondary_driver_id')
+                      ->orWhereNull('driver_id')->whereNotNull('secondary_driver_id');
+                });
+            } elseif ($status_filter === '2_2') {
+                $filteredQuery->whereNotNull('driver_id')->whereNotNull('secondary_driver_id');
+            } else {
+                $filteredQuery->where('status', $status_filter);
+            }
+        }
+
+        $filtered = $getStats($filteredQuery);
+
+        return response()->json([
+            'is_filtered' => !empty($search) || !empty($status_filter),
+            'global'      => $global,
+            'filtered'    => $filtered
+        ]);
     }
 
     private function importExcel($file)

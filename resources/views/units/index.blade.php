@@ -3,18 +3,84 @@
 @section('title', 'Unit Management - Euro System')
 @section('page-heading', 'Unit Management')
 @section('page-subheading', 'Manage your fleet of taxi units')
+@section('main-padding', 'p-0')
 
 @push('styles')
     <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         #unitDetailMap { z-index: 1; }
+
+        /* ── Live Status Dots ─────────────────────────────────── */
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .status-dot .dot {
+            flex-shrink: 0;
+            border-radius: 9999px;
+            position: relative;
+        }
+
+        /* Green Pulse — Active / On Road */
+        .dot-green {
+            width: 9px; height: 9px;
+            background: #22c55e;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse-green 1.8s ease-in-out infinite;
+        }
+        @keyframes pulse-green {
+            0%   { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0.7); }
+            70%  { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0);   }
+            100% { box-shadow: 0 0 0 0   rgba(34, 197, 94, 0);   }
+        }
+
+        /* Red Static — Maintenance (no animation, solid danger) */
+        .dot-red {
+            width: 9px; height: 9px;
+            background: #ef4444;
+            box-shadow: 0 0 5px rgba(239, 68, 68, 0.6);
+        }
+
+        /* Yellow Blink — Coding / At Risk / Pending */
+        .dot-yellow {
+            width: 9px; height: 9px;
+            background: #f59e0b;
+            animation: blink-yellow 1.1s step-start infinite;
+        }
+        @keyframes blink-yellow {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.15; }
+        }
+
+        /* Orange pulse — At Risk */
+        .dot-orange {
+            width: 9px; height: 9px;
+            background: #f97316;
+            box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+            animation: pulse-orange 2.2s ease-in-out infinite;
+        }
+        @keyframes pulse-orange {
+            0%   { box-shadow: 0 0 0 0   rgba(249, 115, 22, 0.7); }
+            70%  { box-shadow: 0 0 0 6px rgba(249, 115, 22, 0);   }
+            100% { box-shadow: 0 0 0 0   rgba(249, 115, 22, 0);   }
+        }
+
+        /* Gray Static — Retired / Vacant */
+        .dot-gray {
+            width: 9px; height: 9px;
+            background: #9ca3af;
+        }
     </style>
 @endpush
 
 @section('content')
     <!-- Search and Filters -->
-    <div class="bg-white rounded-lg shadow p-2 mb-1">
+    <div class="bg-white px-6 py-4 border-b border-gray-200">
         <form method="GET" action="{{ route('units.index') }}" class="flex flex-col md:flex-row gap-2">
             <div class="md:w-48">
                 <div class="relative">
@@ -53,7 +119,22 @@
                     <option value="retired" {{ $status_filter === 'retired' ? 'selected' : '' }}>Retired</option>
                 </select>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
+                {{-- ── View Mode Toggle (Premium Labeled Pill) ─────── --}}
+                <div class="flex items-center bg-gray-900/5 p-1 rounded-xl border border-gray-200/80 gap-0.5 shadow-inner">
+                    <button type="button" onclick="setViewMode('table')" id="btn-view-table"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all duration-200 uppercase tracking-wide whitespace-nowrap">
+                        <i data-lucide="table-properties" class="w-3.5 h-3.5"></i>
+                        <span>Table</span>
+                    </button>
+                    <button type="button" onclick="setViewMode('grid')" id="btn-view-grid"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-black transition-all duration-200 uppercase tracking-wide whitespace-nowrap">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Cards</span>
+                    </button>
+                    <input type="hidden" name="view" id="viewModeInput" value="table">
+                </div>
+
                 <button type="button" onclick="showFlaggedUnitsModal()" class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 text-xs font-semibold shadow-sm">
                     <i data-lucide="siren" class="w-3.5 h-3.5"></i> Flagged Units
                 </button>
@@ -69,9 +150,76 @@
         </form>
     </div>
 
-    <!-- Units Table Container -->
-    <div id="unitsTableContainer" class="bg-white rounded-lg shadow overflow-hidden">
-        @include('units.partials._units_table')
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- Quick Stats Bar — updates in real-time with filters/search    -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div id="quickStatsBar" class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-b border-gray-700/50 px-6 py-4 flex items-center justify-between gap-4 text-white min-h-[40px]">
+        <!-- Stats pills -->
+        <div class="flex items-center gap-1 flex-wrap">
+            <!-- Filtered badge (hidden by default) -->
+            <span id="qs-filter-badge" class="hidden mr-2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-yellow-400 text-gray-900 tracking-wide animate-pulse">
+                ⚡ Filtered
+            </span>
+
+            <!-- Total -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+                <span class="text-[11px] font-bold text-gray-300">Total</span>
+                <span id="qs-total" class="text-[13px] font-black text-white tabular-nums">{{ $stats['total'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- On Road -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 hover:bg-green-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_6px_rgba(74,222,128,0.8)]"></div>
+                <span class="text-[11px] font-bold text-green-300">On Road</span>
+                <span id="qs-onroad" class="text-[13px] font-black text-green-400 tabular-nums">{{ $stats['on_road'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- Garage / Vacant -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 hover:bg-blue-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_6px_rgba(96,165,250,0.8)]"></div>
+                <span class="text-[11px] font-bold text-blue-300">Garage</span>
+                <span id="qs-garage" class="text-[13px] font-black text-blue-400 tabular-nums">{{ $stats['garage'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- Workshop / Maintenance -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_6px_rgba(250,204,21,0.8)]"></div>
+                <span class="text-[11px] font-bold text-yellow-300">Workshop</span>
+                <span id="qs-workshop" class="text-[13px] font-black text-yellow-400 tabular-nums">{{ $stats['workshop'] ?? '—' }}</span>
+            </div>
+
+            <span class="text-gray-600 select-none">·</span>
+
+            <!-- Coding -->
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 hover:bg-red-500/30 transition-all cursor-default select-none">
+                <div class="w-2 h-2 rounded-full bg-red-400 animate-pulse shadow-[0_0_6px_rgba(248,113,113,0.8)]"></div>
+                <span class="text-[11px] font-bold text-red-300">Coding</span>
+                <span id="qs-coding" class="text-[13px] font-black text-red-400 tabular-nums">{{ $stats['coding'] ?? '—' }}</span>
+            </div>
+        </div>
+
+        <!-- Right side: last updated hint -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <div id="qs-loading" class="hidden w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <span id="qs-context" class="text-[10px] text-gray-500 font-medium italic hidden">showing filtered results</span>
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(74,222,128,0.8)] animate-pulse" title="Live"></div>
+        </div>
+    </div>
+
+    <!-- Units Container — renders table or grid based on view_mode -->
+    <div id="unitsTableContainer" class="bg-white overflow-hidden">
+        @if(($view_mode ?? 'table') === 'grid')
+            @include('units.partials._units_grid')
+        @else
+            @include('units.partials._units_table')
+        @endif
     </div>
 
     {{-- Add Unit Modal --}}
@@ -492,7 +640,7 @@
                             <select name="status" id="editStatus"
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="active">Active</option>
-                                <option value="surveillance">Surveillance / Missing</option>
+                                <option value="at_risk">At Risk / Missing</option>
                                 <option value="maintenance">Maintenance</option>
                                 <option value="coding">Coding</option>
                                 <option value="retired">Retired</option>
@@ -734,10 +882,10 @@
     </div>
 
     {{-- Unit Details Modal --}}
-    <div id="unitDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
-            {{-- Modal Header (blue gradient matching Units Overview) --}}
-            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 shrink-0">
+    <div id="unitDetailsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] flex flex-col overflow-hidden">
+            {{-- Modal Header (Deep Navy matching login page) --}}
+            <div class="bg-slate-800 p-4 shrink-0">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-white bg-opacity-20 rounded-lg">
@@ -775,7 +923,7 @@
                             <i data-lucide="siren" class="w-5 h-5 text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (Missing/Surveillance)</h3>
+                            <h3 class="text-lg font-bold text-white leading-tight">Flagged Units (Missing/At Risk)</h3>
                             <p class="text-sm text-red-100 leading-tight">Units that are under monitoring and their inactive days</p>
                         </div>
                     </div>
@@ -798,12 +946,96 @@
 
 @push('scripts')
 <script>
+    let currentViewMode = localStorage.getItem('unitViewMode') || 'table';
+    
+    function setViewMode(mode) {
+        currentViewMode = mode;
+        localStorage.setItem('unitViewMode', mode);
+        document.getElementById('viewModeInput').value = mode;
+        
+        // Update UI — premium pill toggle active states
+        const btnTable = document.getElementById('btn-view-table');
+        const btnGrid  = document.getElementById('btn-view-grid');
+        
+        if (mode === 'table') {
+            // Table ACTIVE
+            btnTable.classList.add('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnTable.classList.remove('text-gray-400');
+            // Grid INACTIVE
+            btnGrid.classList.remove('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnGrid.classList.add('text-gray-400');
+        } else {
+            // Grid ACTIVE
+            btnGrid.classList.add('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnGrid.classList.remove('text-gray-400');
+            // Table INACTIVE
+            btnTable.classList.remove('bg-white', 'text-yellow-600', 'shadow-md', 'shadow-yellow-100/80');
+            btnTable.classList.add('text-gray-400');
+        }
+        
+        performSearch(1); // Re-fetch with new view mode
+    }
+
     let searchTimer;
     const searchInput = document.querySelector('input[name="search"]');
     const statusFilter = document.querySelector('select[name="status"]');
     const sortFilter = document.querySelector('select[name="sort"]');
     const tableContainer = document.getElementById('unitsTableContainer');
 
+    // ── Quick Stats ─────────────────────────────────────────────────
+    const QUICK_STATS_URL = '{{ route("units.quick-stats") }}';
+
+    function animateCount(el, target) {
+        if (!el) return;
+        const current = parseInt(el.textContent.replace(/\D/g,'')) || 0;
+        if (current === target) { el.textContent = target; return; }
+        const step = target > current ? 1 : -1;
+        const diff = Math.abs(target - current);
+        const delay = diff > 20 ? 16 : diff > 10 ? 30 : 50;
+        let val = current;
+        const tick = () => {
+            val += step;
+            el.textContent = val;
+            if (val !== target) setTimeout(tick, delay);
+        };
+        setTimeout(tick, delay);
+    }
+
+    function refreshQuickStats() {
+        const search = searchInput ? searchInput.value : '';
+        const status = statusFilter ? statusFilter.value : '';
+        const loading = document.getElementById('qs-loading');
+        if (loading) loading.classList.remove('hidden');
+
+        fetch(`${QUICK_STATS_URL}?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (loading) loading.classList.add('hidden');
+
+            const d = data.is_filtered ? data.filtered : data.global;
+
+            animateCount(document.getElementById('qs-total'),    d.total);
+            animateCount(document.getElementById('qs-onroad'),   d.on_road);
+            animateCount(document.getElementById('qs-garage'),   d.garage);
+            animateCount(document.getElementById('qs-workshop'), d.workshop);
+            animateCount(document.getElementById('qs-coding'),   d.coding);
+
+            const badge   = document.getElementById('qs-filter-badge');
+            const context = document.getElementById('qs-context');
+            if (data.is_filtered) {
+                badge?.classList.remove('hidden');
+                context?.classList.remove('hidden');
+            } else {
+                badge?.classList.add('hidden');
+                context?.classList.add('hidden');
+            }
+        })
+        .catch(() => { if (loading) loading.classList.add('hidden'); });
+    }
+
+    // ── performSearch ───────────────────────────────────────────────
     function performSearch(page = 1) {
         const query = searchInput.value;
         const status = statusFilter.value;
@@ -813,7 +1045,7 @@
         tableContainer.style.opacity = '0.5';
         tableContainer.style.pointerEvents = 'none';
 
-        fetch(`{{ route('units.index') }}?search=${encodeURIComponent(query)}&status=${status}&sort=${sort}&page=${page}`, {
+        fetch(`{{ route('units.index') }}?search=${encodeURIComponent(query)}&status=${status}&sort=${sort}&page=${page}&view=${currentViewMode}`, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             }
@@ -834,16 +1066,25 @@
 
     searchInput.addEventListener('input', () => {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => performSearch(1), 300);
+        searchTimer = setTimeout(() => {
+            performSearch(1);
+            refreshQuickStats();
+        }, 300);
     });
 
-    statusFilter.addEventListener('change', () => performSearch(1));
+    statusFilter.addEventListener('change', () => {
+        performSearch(1);
+        refreshQuickStats();
+    });
     sortFilter.addEventListener('change', () => performSearch(1));
 
     window.changePage = function(page) {
         performSearch(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    // Load quick stats on initial page load
+    refreshQuickStats();
 
     window.showFlaggedUnitsModal = function() {
         const modal = document.getElementById('flaggedUnitsModal');
@@ -866,7 +1107,7 @@
                         <div class="text-center py-12">
                             <i data-lucide="check-circle" class="w-16 h-16 mx-auto mb-4 text-green-500"></i>
                             <h4 class="text-lg font-bold text-gray-900">All Clear!</h4>
-                            <p class="text-gray-500">There are no units currently flagged as missing or under surveillance.</p>
+                            <p class="text-gray-500">There are no units currently flagged as missing or categorized as at risk.</p>
                         </div>
                     `;
                     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -878,14 +1119,20 @@
                     const daysMissing = unit.days_inactive !== null && unit.days_inactive !== undefined ? unit.days_inactive : '?';
                     const daysColor = (daysMissing === '?' || daysMissing > 2) ? 'text-red-600 font-bold' : 'text-orange-600 font-bold';
                     const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
-                    const badge = unit.is_surveillance 
+                    const badge = unit.is_at_risk 
                         ? `<span class="text-[9px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded font-bold uppercase tracking-wide">🚨 Manually Flagged</span>`
                         : `<span class="text-[9px] px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded font-bold uppercase tracking-wide">⚠️ Auto-Detected</span>`;
-                    const borderColor = unit.is_surveillance ? 'border-red-500' : 'border-orange-400';
-                    const driverDisplay = unit.last_known_driver || 'Unknown';
-                    const contactDisplay = unit.last_driver_contact 
-                        ? `<a href="tel:${unit.last_driver_contact}" class="text-blue-600 font-semibold hover:underline">${unit.last_driver_contact}</a>`
-                        : `<span class="text-gray-400 italic">No contact</span>`;
+                    const borderColor = unit.is_at_risk ? 'border-red-500' : 'border-orange-400';
+                    
+                    const suspectDisplay = unit.is_vacant 
+                        ? `<span class="bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-bold italic tracking-tight">NO ASSIGNED DRIVER</span>`
+                        : `<span class="font-black text-gray-900">${unit.suspect_driver || 'Unknown'}</span>`;
+                    
+                    const contactDisplay = unit.is_vacant 
+                        ? `<span class="text-gray-400 italic">--</span>`
+                        : (unit.suspect_contact 
+                            ? `<a href="tel:${unit.suspect_contact}" class="text-blue-600 font-semibold hover:underline">${unit.suspect_contact}</a>`
+                            : `<span class="text-gray-400 italic">No contact</span>`);
 
                     html += `
                         <div class="bg-white border-l-4 ${borderColor} shadow-sm rounded-lg p-3">
@@ -899,16 +1146,20 @@
                                     
                                     <div class="mt-2 bg-gray-50 rounded p-2 border border-gray-100 space-y-1">
                                         <div class="flex items-center gap-1.5 text-[11px]">
-                                            <span class="text-gray-400 w-20 flex-shrink-0">Last Driver:</span>
-                                            <span class="font-semibold text-gray-800">${driverDisplay}</span>
+                                            <span class="${unit.is_vacant ? 'text-gray-400' : 'text-red-500'} font-bold w-24 flex-shrink-0 uppercase">SUSPECT:</span>
+                                            ${suspectDisplay}
                                         </div>
                                         <div class="flex items-center gap-1.5 text-[11px]">
-                                            <span class="text-gray-400 w-20 flex-shrink-0">Contact:</span>
+                                            <span class="text-gray-400 w-24 flex-shrink-0">Contact # :</span>
                                             ${contactDisplay}
                                         </div>
-                                        <div class="flex items-center gap-1.5 text-[11px]">
-                                            <span class="text-gray-400 w-20 flex-shrink-0">Last Boundary:</span>
-                                            <span class="text-gray-600">${unit.last_boundary_date || '<span class="italic text-gray-400">No record</span>'}</span>
+                                        <div class="flex items-center gap-1.5 text-[10px] pt-1 mt-1 border-t border-gray-100">
+                                            <span class="text-gray-400 w-24 flex-shrink-0">Last Return By:</span>
+                                            <span class="text-gray-600 italic font-medium">${unit.last_known_driver || 'None'}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 text-[10px]">
+                                            <span class="text-gray-400 w-24 flex-shrink-0">Return Date:</span>
+                                            <span class="text-gray-600">${unit.last_boundary_date || 'No record'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1300,81 +1551,102 @@
                         if (m.parts_details && m.parts_details.length > 0) {
                             const parts = m.parts_details.filter(p => p.part_id != null);
                             const others = m.parts_details.filter(p => p.part_id == null);
-                            
-                            partsDetailsHtml = '<div class="mt-3 space-y-2">';
-                            
+
+                            partsDetailsHtml = '<div class="mt-4 space-y-3">';
+
                             if (parts.length > 0) {
-                                partsDetailsHtml += '<div class="bg-blue-50 p-2 rounded border border-blue-100"><div class="text-[10px] font-bold text-gray-600 uppercase mb-1">Parts Replaced</div>';
+                                partsDetailsHtml += '<div class="bg-blue-50 rounded-xl border border-blue-100 overflow-hidden"><div class="px-3 py-2 bg-blue-100 border-b border-blue-200"><span class="text-[10px] font-black text-blue-800 uppercase tracking-widest">🔧 Parts Replaced</span></div><div class="divide-y divide-blue-100">';
                                 parts.forEach(p => {
-                                    partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-gray-100 last:border-0">
-                                        <div class="flex-1">
-                                            <span class="text-xs font-medium text-gray-900">${p.part_name}</span>
-                                            ${p.quantity > 1 ? `<span class="text-xs text-gray-500 ml-1">(x${p.quantity})</span>` : ''}
+                                    const supplierBadge = p.supplier_name
+                                        ? `<span class="inline-block mt-0.5 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-[9px] font-bold truncate max-w-[120px]" title="${p.supplier_name}">${p.supplier_name}</span>`
+                                        : '';
+                                    partsDetailsHtml += `<div class="px-3 py-2 flex items-start justify-between gap-2">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-semibold text-gray-900 truncate leading-tight" title="${p.part_name}">${p.part_name}</p>
+                                            <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                                ${p.quantity > 1 ? `<span class="text-[9px] text-gray-500 font-bold">x${p.quantity}</span>` : ''}
+                                                ${supplierBadge}
+                                            </div>
                                         </div>
-                                        <div class="text-xs font-bold text-gray-900">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                        <span class="text-xs font-black text-blue-700 flex-shrink-0 ml-2">₱${parseFloat(p.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                     </div>`;
                                 });
                                 const partsTotal = parts.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
-                                partsDetailsHtml += `<div class="flex justify-between items-center pt-1 mt-1 border-t border-gray-200">
-                                    <span class="text-xs font-bold text-gray-600 uppercase">Parts Subtotal</span>
-                                    <span class="text-xs font-black text-blue-600">₱${partsTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                partsDetailsHtml += `</div><div class="flex justify-between items-center px-3 py-2 bg-blue-100 border-t border-blue-200">
+                                    <span class="text-[10px] font-black text-blue-800 uppercase">Parts Subtotal</span>
+                                    <span class="text-xs font-black text-blue-700">₱${partsTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                 </div></div>`;
                             }
-                            
+
                             if (others.length > 0) {
-                                partsDetailsHtml += '<div class="bg-orange-50 p-2 rounded border border-orange-100"><div class="text-[10px] font-bold text-gray-600 uppercase mb-1">Other Costs & Services</div>';
+                                partsDetailsHtml += '<div class="bg-orange-50 rounded-xl border border-orange-100 overflow-hidden"><div class="px-3 py-2 bg-orange-100 border-b border-orange-200"><span class="text-[10px] font-black text-orange-800 uppercase tracking-widest">🛠 Other Costs & Services</span></div><div class="divide-y divide-orange-100">';
                                 others.forEach(o => {
-                                    partsDetailsHtml += `<div class="flex justify-between items-center py-1 border-b border-orange-100 last:border-0">
-                                        <div class="flex-1">
-                                            <span class="text-xs font-medium text-gray-900">${o.part_name}</span>
-                                        </div>
-                                        <div class="text-xs font-bold text-gray-900">₱${parseFloat(o.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                    partsDetailsHtml += `<div class="px-3 py-2 flex items-start justify-between gap-2">
+                                        <p class="text-xs font-semibold text-gray-900 flex-1 min-w-0 truncate leading-tight" title="${o.part_name}">${o.part_name}</p>
+                                        <span class="text-xs font-black text-orange-700 flex-shrink-0 ml-2">₱${parseFloat(o.total || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                     </div>`;
                                 });
                                 const othersTotal = others.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
-                                partsDetailsHtml += `<div class="flex justify-between items-center pt-1 mt-1 border-t border-orange-200">
-                                    <span class="text-xs font-bold text-gray-600 uppercase">Other Costs Subtotal</span>
-                                    <span class="text-xs font-black text-orange-600">₱${othersTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                partsDetailsHtml += `</div><div class="flex justify-between items-center px-3 py-2 bg-orange-100 border-t border-orange-200">
+                                    <span class="text-[10px] font-black text-orange-800 uppercase">Services Subtotal</span>
+                                    <span class="text-xs font-black text-orange-700">₱${othersTotal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
                                 </div></div>`;
                             }
-                            
+
                             partsDetailsHtml += '</div>';
                         }
-                        
-                        // Build driver info HTML if available
-                        let driverHtml = '';
-                        if (m.driver_name) {
-                            driverHtml = `<div class="bg-green-50 p-2 rounded border border-green-100 mb-2">
-                                <div class="flex items-center gap-1 mb-1 text-green-700">
-                                    <i data-lucide="user" class="w-3 h-3"></i>
-                                    <span class="text-[9px] font-black uppercase">Assigned Driver</span>
+
+                        const statusBadge = m.status === 'completed'
+                            ? `<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[9px] font-black uppercase tracking-widest">✓ Completed</span>`
+                            : m.status === 'cancelled'
+                                ? `<span class="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-[9px] font-black uppercase tracking-widest">✗ Cancelled</span>`
+                                : `<span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-[9px] font-black uppercase tracking-widest">⏳ Pending</span>`;
+
+                        const driverHtml = m.driver_name
+                            ? `<div class="flex items-center gap-1.5">
+                                <span class="text-[9px] font-black text-gray-400 uppercase w-20 flex-shrink-0">Driver</span>
+                                <span class="text-xs font-semibold text-gray-800 truncate" title="${m.driver_name}">${m.driver_name}</span>
+                               </div>`
+                            : '';
+
+                        maintHtml += `
+                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                            {{-- Card Header --}}
+                            <div class="bg-gradient-to-r from-slate-700 to-slate-800 px-4 py-3 flex items-center justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-white font-black text-sm truncate leading-tight" title="${m.maintenance_type || m.type || 'Maintenance'}">${m.maintenance_type || m.type || 'Maintenance'}</p>
+                                    <p class="text-slate-300 text-[10px] font-medium">${m.date_started || m.date || 'No date'}</p>
                                 </div>
-                                <p class="text-xs font-bold text-green-900">${m.driver_name}</p>
-                            </div>`;
-                        }
-                        
-                        maintHtml += `<div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h5 class="font-semibold text-gray-900">${m.maintenance_type || m.type || 'Maintenance'}</h5>
-                                    <p class="text-sm text-gray-600">${m.date_started || m.date || ''}</p>
+                                <div class="flex-shrink-0 text-right">
+                                    <p class="text-orange-300 font-black text-base leading-tight">₱${parseFloat(m.total_cost || m.cost || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                    <p class="text-slate-400 text-[9px] uppercase font-bold">Total Cost</p>
                                 </div>
-                                <div class="text-right"><span class="text-lg font-bold text-orange-600">₱${parseFloat(m.total_cost || m.cost || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
                             </div>
-                            
-                            ${driverHtml}
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div><span class="text-gray-600">Mechanic:</span><p class="font-medium">${m.mechanic_name || 'N/A'}</p></div>
-                                <div><span class="text-gray-600">Status:</span><p class="font-medium">${m.status || 'Unknown'}</p></div>
-                                <div class="md:col-span-2"><span class="text-gray-600">Description:</span><p class="font-medium">${m.description || m.notes || 'No description'}</p></div>
+
+                            {{-- Card Body: 2-column info grid --}}
+                            <div class="px-4 py-3">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-2">
+                                    <div class="min-w-0">
+                                        <span class="text-[9px] font-black text-gray-400 uppercase block">Mechanic</span>
+                                        <p class="font-semibold text-gray-800 truncate" title="${m.mechanic_name || 'N/A'}">${m.mechanic_name || 'N/A'}</p>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <span class="text-[9px] font-black text-gray-400 uppercase block">Status</span>
+                                        <div class="mt-0.5">${statusBadge}</div>
+                                    </div>
+                                    ${driverHtml ? `<div class="col-span-2 min-w-0">${driverHtml}</div>` : ''}
+                                    <div class="col-span-2 min-w-0">
+                                        <span class="text-[9px] font-black text-gray-400 uppercase block">Description</span>
+                                        <p class="font-medium text-gray-700 text-xs leading-snug line-clamp-3">${m.description || m.notes || 'No description provided.'}</p>
+                                    </div>
+                                </div>
+
+                                ${partsDetailsHtml}
                             </div>
-                            
-                            ${partsDetailsHtml}
                         </div>`;
                     });
                 } else {
-                    maintHtml = `<div class="text-center py-8 text-gray-500"><i data-lucide="wrench" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i><p>No maintenance records found</p></div>`;
+                    maintHtml = `<div class="text-center py-12 text-gray-400"><i data-lucide="wrench" class="w-12 h-12 mx-auto mb-3 text-gray-200"></i><p class="font-semibold text-sm">No maintenance records found</p></div>`;
                 }
 
                 const roiPrgW = Math.min(100, Math.max(0, roiPct)).toFixed(1);
@@ -1383,75 +1655,368 @@
                 const bndPrgW = invPerMonth > 0 ? Math.min(100, (mthBnd / invPerMonth) * 100).toFixed(1) : 0;
 
                 document.getElementById('unitDetailsContent').innerHTML = `
-                <div class="space-y-2">
-                    <!-- Unit Header - Miniaturized -->
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-2 rounded-lg text-white">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="flex items-center gap-2 mb-0.5">
-                                    <h3 class="text-sm font-bold leading-none">${unit.plate_number || ''}</h3>
-                                    <span class="px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-[9px] font-medium uppercase tracking-wider">${unit.status || ''}</span>
-                                    <span class="px-1.5 py-0.5 bg-white bg-opacity-20 rounded-full text-[9px] font-medium uppercase tracking-wider">${unit.unit_type || 'Standard'}</span>
-                                    ${unit.status === 'surveillance' ? `<span class="px-1.5 py-0.5 bg-red-500 text-white rounded-full text-[9px] font-bold uppercase tracking-wider animate-pulse">🚨 Under Surveillance</span>` : ''}
+                <div class="space-y-6">
+                    <!-- Unit Summary Card (Top) -->
+                    <div class="bg-slate-800 p-6 rounded-2xl text-white shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-4">
+                                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                                    <i data-lucide="car" class="w-8 h-8 text-white"></i>
                                 </div>
-                                <p class="text-[10px] text-blue-100 leading-tight">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
+                                <div>
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-2xl font-black tracking-tight leading-none">${unit.plate_number || ''}</h3>
+                                        ${unit.status !== 'at_risk' ? `<span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.status || ''}</span>` : ''}
+                                        <span class="px-2.5 py-1 bg-white bg-opacity-20 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/20">${unit.unit_type || 'Standard'}</span>
+                                        ${unit.status === 'at_risk' ? `<span class="px-2.5 py-1 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse border border-red-400">🚨 AT RISK</span>` : ''}
+                                    </div>
+                                    <p class="text-blue-100 font-medium">${(unit.make || '') + ' ' + (unit.model || '') + ' (' + (unit.year || '') + ')'}</p>
+                                </div>
                             </div>
                             <div class="text-right">
-                                <div class="text-sm font-bold leading-none mb-0.5">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
-                                <p class="text-blue-100 text-[9px]">Daily Boundary Rate</p>
+                                <div class="text-2xl font-black leading-none mb-1">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</div>
+                                <p class="text-blue-100 text-xs font-bold uppercase tracking-widest opacity-80">Daily Boundary Rate</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tabs Navigation - Miniaturized -->
-                    <div class="border-b border-gray-200">
-                        <nav class="-mb-px flex space-x-3 overflow-x-auto pb-1.5 scrollbar-thin">
-                            <button onclick="showTab('overview')" class="tab-btn py-1 px-0.5 border-b-2 border-blue-500 font-medium text-[11px] text-blue-600 whitespace-nowrap" data-tab="overview">Overview</button>
-                            <button onclick="showTab('drivers')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="drivers">Drivers</button>
-                            <button onclick="showTab('coding')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="coding">Coding</button>
-                            <button onclick="showTab('boundary')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="boundary">Boundary</button>
-                            <button onclick="showTab('maintenance')" class="tab-btn py-1 px-0.5 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="maintenance">Maintenance</button>
-                            <button onclick="showTab('roi')" class="tab-btn py-1.5 px-1 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="roi">ROI</button>
-                            <button onclick="showTab('location')" class="tab-btn py-1.5 px-1 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="location">Location</button>
-                            <button onclick="showTab('dashcam')" class="tab-btn py-1.5 px-1 border-b-2 border-transparent font-medium text-[11px] text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap" data-tab="dashcam">Dashcam</button>
+                    <!-- Justified Tabs Navigation -->
+                    <div class="border-b border-gray-100 bg-gray-50/50 rounded-t-xl p-1">
+                        <nav class="flex w-full gap-1">
+                            <button onclick="showTab('overview')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-blue-600 font-black text-[10px] uppercase tracking-widest text-blue-600 transition-all duration-200" data-tab="overview">Overview</button>
+                            <button onclick="showTab('drivers')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="drivers">Drivers</button>
+                            <button onclick="showTab('coding')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="coding">Coding</button>
+                            <button onclick="showTab('boundary')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="boundary">Boundary</button>
+                            <button onclick="showTab('maintenance')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="maintenance">Maintenance</button>
+                            <button onclick="showTab('roi')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="roi">ROI</button>
+                            <button onclick="showTab('location')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="location">Location</button>
+                            <button onclick="showTab('dashcam')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all duration-200" data-tab="dashcam">Dashcam</button>
                         </nav>
                     </div>
 
-                    <!-- Tab Content - Miniaturized and Fitted -->
-                    <div id="tabContent" style="min-height: 420px;">
+                    <!-- Tab Content Area -->
+                    <div id="tabContent" class="min-h-[480px]">
                         <!-- Overview Tab -->
-                        <div id="overview-tab" class="tab-content">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-blue-100 rounded-md"><i data-lucide="users" class="w-3.5 h-3.5 text-blue-600"></i></div><div><p class="text-[10px] text-gray-500">Drivers</p><p class="text-xs font-bold leading-tight">${assignedDrivers.length}/2</p></div></div></div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-green-100 rounded-md"><i data-lucide="calendar" class="w-3.5 h-3.5 text-green-600"></i></div><div><p class="text-[10px] text-gray-500">Next Coding</p><p class="text-xs font-bold leading-tight">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + 'd'}</p></div></div></div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-purple-100 rounded-md"><i data-lucide="trending-up" class="w-3.5 h-3.5 text-purple-600"></i></div><div><p class="text-[10px] text-gray-500">ROI</p><p class="text-xs font-bold leading-tight">${roiPct.toFixed(1)}%</p></div></div></div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2"><div class="flex items-center gap-1.5"><div class="p-1 bg-orange-100 rounded-md"><i data-lucide="wrench" class="w-3.5 h-3.5 text-orange-600"></i></div><div><p class="text-[10px] text-gray-500">Maint</p><p class="text-xs font-bold leading-tight">${maint.length}</p></div></div></div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <div class="bg-white border border-gray-200 rounded-lg p-2">
-                                    <h4 class="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1"><i data-lucide="info" class="w-3.5 h-3.5"></i> Basic Info</h4>
-                                    <div class="space-y-1 text-[11px]">
-                                        <div class="flex justify-between"><span class="text-gray-600">Plate Number:</span><span class="font-medium">${unit.plate_number || ''}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-600">Vehicle:</span><span class="font-medium">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-600">Year:</span><span class="font-medium">${unit.year || ''}</span></div>
-                                        ${unit.motor_no ? `<div class="flex justify-between"><span class="text-gray-600">Motor No:</span><span class="font-medium font-mono text-[10px]">${unit.motor_no}</span></div>` : ''}
-                                        ${unit.chassis_no ? `<div class="flex justify-between"><span class="text-gray-600">Chassis No:</span><span class="font-medium font-mono text-[10px]">${unit.chassis_no}</span></div>` : ''}
-                                        <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="px-1.5 py-0.5 text-[10px] rounded-full bg-green-100 text-green-800">${unit.status ? unit.status.charAt(0).toUpperCase() + unit.status.slice(1) : ''}</span></div>
-                                        <div class="flex justify-between border-t border-gray-100 pt-1 mt-1"><span class="text-gray-500">Created:</span><span class="text-gray-600">${unit.created_by_name || 'System'} - ${unit.created_at_fmt || 'N/A'}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Updated:</span><span class="text-gray-600">${unit.updated_by_name || 'System'} - ${unit.updated_at_fmt || 'N/A'}</span></div>
-                                        <div class="flex justify-between border-t border-gray-100 pt-1 mt-1"><span class="text-black font-semibold">Boundary:</span><span class="font-bold text-blue-700">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+                        <div id="overview-tab" class="tab-content animate-in fade-in duration-300">
+                            <!-- Quick Stats Grid -->
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-blue-50 rounded-xl"><i data-lucide="users" class="w-5 h-5 text-blue-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Drivers</p><p class="text-xl font-black text-gray-900">${assignedDrivers.length}/2</p></div>
                                     </div>
                                 </div>
-                                <div class="bg-white border border-gray-200 rounded-lg p-2">
-                                    <h4 class="text-xs font-semibold text-gray-900 mb-1.5 flex items-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> Assignment</h4>
-                                    <div class="space-y-1 text-[11px]">
-                                        <div class="flex justify-between"><span class="text-gray-500">Drivers:</span><span class="font-medium">${assignedDrivers.length}/2</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Status:</span><span class="px-1 py-0.5 rounded-full text-[10px] ${assignedDrivers.length >= 2 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">${assignedDrivers.length >= 2 ? 'Full' : 'Available'}</span></div>
-                                        ${driversOverviewHtml ? '<div class="mt-1.5 space-y-1">' + driversOverviewHtml.replace(/p-3/g, 'p-1.5').replace(/text-sm/g, 'text-[10px]') + '</div>' : ''}
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-green-50 rounded-xl"><i data-lucide="calendar" class="w-5 h-5 text-green-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Next Coding</p><p class="text-xl font-black text-gray-900">${daysUntilCoding === 0 ? 'Today' : daysUntilCoding + 'd'}</p></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-purple-50 rounded-xl"><i data-lucide="trending-up" class="w-5 h-5 text-purple-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">ROI</p><p class="text-xl font-black text-gray-900">${roiPct.toFixed(1)}%</p></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-2.5 bg-orange-50 rounded-xl"><i data-lucide="wrench" class="w-5 h-5 text-orange-600"></i></div>
+                                        <div><p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">Maint Jobs</p><p class="text-xl font-black text-gray-900">${maint.length}</p></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Main Info Grid -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <!-- Basic Info Card -->
+                                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                    <h4 class="text-xs font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
+                                        <i data-lucide="info" class="w-4 h-4 text-blue-600"></i> Basic Information
+                                    </h4>
+                                    <div class="space-y-4 text-sm">
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Plate Number</span><span class="font-black text-gray-900 bg-gray-50 px-2 py-1 rounded">${unit.plate_number || ''}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Vehicle</span><span class="font-black text-gray-700">${(unit.make || '') + ' ' + (unit.model || '')}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Year</span><span class="font-black text-gray-700">${unit.year || ''}</span></div>
+                                        <div class="flex justify-between items-center pt-3 border-t border-gray-50"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Created By</span><span class="font-bold text-gray-600 text-xs">${unit.created_by_name || 'System'}</span></div>
+                                        <div class="flex justify-between items-center"><span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Last Update</span><span class="font-bold text-gray-600 text-xs">${unit.updated_at_fmt || 'N/A'}</span></div>
+                                        <div class="flex justify-between items-center pt-4 border-t border-gray-50 mt-4">
+                                            <span class="text-gray-900 font-black uppercase text-[11px] tracking-widest">Active Rate</span>
+                                            <span class="text-2xl font-black text-blue-600">₱${parseFloat(unit.boundary_rate || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Assignment Card -->
+                                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                    <h4 class="text-xs font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
+                                        <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Driver Assignment
+                                    </h4>
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span class="text-gray-400 font-bold uppercase text-[10px] tracking-tight">Status</span>
+                                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${assignedDrivers.length >= 2 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}">${assignedDrivers.length >= 2 ? 'Full' : 'Available'}</span>
+                                        </div>
+                                        ${driversOverviewHtml ? '<div class="space-y-3">' + driversOverviewHtml.replace(/bg-gray-50/g, 'bg-gray-50 border border-gray-100 rounded-xl p-4') + '</div>' : `
+                                            <div class="text-center py-10">
+                                                <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                    <i data-lucide="user-x" class="w-6 h-6 text-gray-300"></i>
+                                                </div>
+                                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">No Drivers Assigned</p>
+                                            </div>
+                                        `}
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Drivers Tab -->
+                        <div id="drivers-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="users" class="w-5 h-5 text-blue-600"></i> Assigned Drivers Details
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    ${driversTabHtml.replace(/border border-gray-200/g, 'bg-gray-50 border border-gray-100 shadow-sm').replace(/p-4/g, 'p-6').replace(/rounded-lg/g, 'rounded-2xl')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coding Tab -->
+                        <div id="coding-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i> MMDA Coding Schedule
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                                        <h5 class="font-black text-xs text-gray-400 uppercase tracking-widest mb-6 border-b border-gray-200 pb-2">Current Unit Status</h5>
+                                        <div class="space-y-4 text-sm">
+                                            <div class="flex justify-between items-center"><span class="text-gray-500 font-bold uppercase text-[10px]">Coding Day</span><span class="px-3 py-1 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest">${codingDay}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-500 font-bold uppercase text-[10px]">Plate Ending</span><span class="font-black text-gray-900 text-lg">${lastChar || '-'}</span></div>
+                                            <div class="flex justify-between items-center"><span class="text-gray-500 font-bold uppercase text-[10px]">Next Schedule</span><span class="font-black text-gray-900">${nextCodingDate || '-'}</span></div>
+                                            <div class="flex justify-between items-center pt-4 border-t border-gray-200"><span class="text-gray-500 font-bold uppercase text-[10px]">Remaining</span><span class="font-black ${daysUntilCoding === 0 ? 'text-red-600' : 'text-green-600'} text-lg">${daysUntilCoding === 0 ? 'TODAY' : daysUntilCoding + ' Days'}</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-inner">
+                                        <h5 class="font-black text-xs text-gray-400 uppercase tracking-widest mb-4">Standard MMDA Reference</h5>
+                                        <div class="space-y-2">
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Monday</span>
+                                                <span class="font-black text-blue-600">1, 2</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Tuesday</span>
+                                                <span class="font-black text-blue-600">3, 4</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Wednesday</span>
+                                                <span class="font-black text-blue-600">5, 6</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Thursday</span>
+                                                <span class="font-black text-blue-600">7, 8</span>
+                                            </div>
+                                            <div class="flex justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <span class="font-black text-gray-600 text-[10px] uppercase">Friday</span>
+                                                <span class="font-black text-blue-600">9, 0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boundary Tab -->
+                        <div id="boundary-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="coins" class="w-5 h-5 text-blue-600"></i> Boundary Collection History
+                                </h4>
+                                ${boundaryRowsHtml ? `
+                                    <div class="overflow-hidden border border-gray-100 rounded-2xl shadow-sm">
+                                        <table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
+                                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Driver</th>
+                                                    <th class="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Remarks</th>
+                                                    <th class="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-gray-100">
+                                                ${boundaryRowsHtml}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : `
+                                    <div class="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                        <div class="p-4 bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                                            <i data-lucide="banknote" class="w-8 h-8 text-gray-300"></i>
+                                        </div>
+                                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest">No transaction history found</p>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+
+                        <!-- Maintenance Tab -->
+                        <div id="maintenance-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center justify-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="wrench" class="w-5 h-5 text-blue-600"></i> Vehicle Maintenance Records
+                                    ${parseFloat(roi.total_expenses || 0) > 0 ? `<span class="ml-2 px-2 py-0.5 bg-orange-50 text-orange-600 border border-orange-100 rounded text-[10px] font-black uppercase">Total: ₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>` : ''}
+                                </h4>
+                                <div class="flex flex-col gap-6 max-w-3xl mx-auto">
+                                    ${maintHtml.replace(/border border-gray-200 bg-white/g, 'bg-gray-50 border border-gray-100 shadow-sm').replace(/p-4/g, 'p-6').replace(/rounded-lg/g, 'rounded-2xl')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROI Tab -->
+                        <div id="roi-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="space-y-6">
+                                <div class="bg-gradient-to-br from-indigo-600 to-purple-700 p-8 rounded-2xl text-white shadow-xl relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 p-8 opacity-10">
+                                        <i data-lucide="trending-up" class="w-32 h-32"></i>
+                                    </div>
+                                    <h4 class="text-xl font-black mb-6 uppercase tracking-widest flex items-center gap-3">
+                                        <i data-lucide="bar-chart-3" class="w-6 h-6"></i> ROI Performance Analysis
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                                            <p class="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Investment</p>
+                                            <p class="text-2xl font-black">₱${parseFloat(roi.total_investment || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        </div>
+                                        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                                            <p class="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Net Revenue</p>
+                                            <p class="text-2xl font-black text-green-300">₱${parseFloat(roi.total_revenue || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        </div>
+                                        <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+                                            <p class="text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-1">Total Expenses</p>
+                                            <p class="text-2xl font-black text-red-300">₱${parseFloat(roi.total_expenses || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                                        <h4 class="text-xs font-black text-gray-900 mb-6 uppercase tracking-widest border-b border-gray-50 pb-3">Key Metrics</h4>
+                                        <div class="space-y-6">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">ROI Percentage</span>
+                                                <span class="text-2xl font-black text-${roiColor}-600">${roiPct.toFixed(1)}%</span>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Payback Period</span>
+                                                <span class="text-2xl font-black text-blue-600">${parseFloat(roi.payback_period || 0).toFixed(1)} <span class="text-sm font-bold text-gray-400 uppercase">mths</span></span>
+                                            </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-gray-400 font-bold uppercase text-[10px] tracking-widest">Avg Monthly Revenue</span>
+                                                <span class="text-2xl font-black text-green-600">₱${parseFloat(roi.monthly_revenue || roi.monthly_boundary || 0).toLocaleString('en-PH', {minimumFractionDigits:2})}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
+                                        <h4 class="text-xs font-black text-gray-900 mb-8 uppercase tracking-widest border-b border-gray-50 pb-3">Goal Progress</h4>
+                                        <div class="space-y-8">
+                                            <div>
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Investment Achievement</span>
+                                                    <span class="text-sm font-black text-indigo-600">${roiPct.toFixed(1)}%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-100 rounded-full h-4 p-1 shadow-inner">
+                                                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full shadow-sm" style="width:${roiPrgW}%"></div>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="flex justify-between items-center mb-2">
+                                                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Monthly Target Efficiency</span>
+                                                    <span class="text-sm font-black text-green-600">₱${invPerMonth.toLocaleString('en-PH', {minimumFractionDigits:0})} Target</span>
+                                                </div>
+                                                <div class="w-full bg-gray-100 rounded-full h-4 p-1 shadow-inner">
+                                                    <div class="bg-gradient-to-r from-green-400 to-emerald-600 h-2 rounded-full shadow-sm" style="width:${bndPrgW}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location Tab -->
+                        <div id="location-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="map-pin" class="w-5 h-5 text-blue-600"></i> Real-time GPS Location
+                                </h4>
+                                <div class="space-y-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Current Address</p>
+                                            <p class="text-xs font-black text-gray-900">${locInfo.current_location || 'Not Available'}</p>
+                                        </div>
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Last Update</p>
+                                            <p class="text-xs font-black text-gray-900">${locInfo.last_location_update || 'Never'}</p>
+                                        </div>
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between">
+                                            <div>
+                                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">GPS Status</p>
+                                                <span class="px-2 py-1 text-[9px] font-black uppercase rounded-full ${locInfo.gps_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${locInfo.gps_enabled ? 'Active' : 'Offline'}</span>
+                                            </div>
+                                            <i data-lucide="satellite" class="w-6 h-6 ${locInfo.gps_enabled ? 'text-green-500' : 'text-red-400'}"></i>
+                                        </div>
+                                    </div>
+                                    <div id="unitDetailMapContainer" class="relative rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 flex flex-col items-center justify-center p-12 text-center shadow-inner" style="height: 400px;">
+                                        <div class="mb-6 p-6 bg-blue-100 rounded-full shadow-sm animate-pulse">
+                                            <i data-lucide="navigation" class="w-12 h-12 text-blue-600"></i>
+                                        </div>
+                                        <h4 class="text-lg font-black text-gray-900 mb-2 uppercase tracking-tight">Tracksolid Pro Enterprise</h4>
+                                        <p class="text-sm text-gray-500 mb-8 max-w-md mx-auto">This unit is tracked via real-time satellite identification. Access the full live map for movement history and geofencing.</p>
+                                        
+                                        <a href="/live-tracking?unit=${unit.id}" class="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-2xl transition-all shadow-lg hover:shadow-blue-200 hover:-translate-y-1 uppercase tracking-widest">
+                                            <i data-lucide="map" class="w-5 h-5"></i>
+                                            Open Live Tracking Map
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dashcam Tab -->
+                        <div id="dashcam-tab" class="tab-content hidden animate-in fade-in duration-300">
+                            <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-black text-gray-900 mb-6 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-4">
+                                    <i data-lucide="video" class="w-5 h-5 text-blue-600"></i> Dashcam & Surveillance
+                                </h4>
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div class="lg:col-span-1 space-y-4">
+                                        <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+                                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Device Status</p>
+                                            <div class="space-y-4 text-xs font-bold">
+                                                <div class="flex justify-between items-center"><span>System</span><span class="px-2 py-1 rounded-full ${dashcam.dashcam_enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} text-[10px]">${dashcam.dashcam_enabled ? 'ENABLED' : 'DISABLED'}</span></div>
+                                                <div class="flex justify-between items-center"><span>Connection</span><span class="px-2 py-1 rounded-full ${dashcam.dashcam_status === 'Online' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} text-[10px]">${dashcam.dashcam_status || 'OFFLINE'}</span></div>
+                                                <div class="flex justify-between items-center pt-2 border-t border-gray-200"><span>Storage</span><span class="text-indigo-600 font-black">${parseFloat(dashcam.storage_used || 0).toFixed(1)} / ${parseFloat(dashcam.storage_total || 32).toFixed(0)} GB</span></div>
+                                            </div>
+                                        </div>
+                                        <div class="bg-blue-600 rounded-2xl p-5 text-white shadow-lg">
+                                            <h5 class="text-xs font-black uppercase tracking-widest mb-2">Remote Access</h5>
+                                            <p class="text-[10px] text-blue-100 mb-4 font-medium">Request a live stream or download recorded footage from the cloud.</p>
+                                            <button class="w-full py-3 bg-white text-blue-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-colors">Request Stream</button>
+                                        </div>
+                                    </div>
+                                    <div class="lg:col-span-2 bg-gray-900 rounded-2xl flex flex-col items-center justify-center min-h-[300px] border border-gray-800 shadow-inner relative overflow-hidden">
+                                        <div class="absolute top-4 left-4 flex items-center gap-2">
+                                            <div class="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                                            <span class="text-white/40 text-[9px] font-black uppercase tracking-widest">No Active Stream</span>
+                                        </div>
+                                        <i data-lucide="video-off" class="w-16 h-16 text-white/10 mb-4"></i>
+                                        <p class="text-white/30 text-xs font-black uppercase tracking-widest">Preview Unavailable</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                         <!-- Drivers Tab -->
                         <div id="drivers-tab" class="tab-content hidden">
@@ -1905,6 +2470,7 @@ function resetAddUnitModal() {
 
 // Real-time table filtering
 document.addEventListener('DOMContentLoaded', function() {
+    setViewMode(currentViewMode);
     const searchInput = document.getElementById('tableSearchInput');
     const tableBody = document.querySelector('tbody.bg-white.divide-y.divide-gray-200');
     

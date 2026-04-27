@@ -27,7 +27,7 @@ class DriverManagementController extends Controller
             ->leftJoin('users as creator', 'd.created_by', '=', 'creator.id')
             ->leftJoin('users as editor', 'd.updated_by', '=', 'editor.id')
             ->select(
-                'd.id', 'd.user_id', 'd.first_name', 'd.last_name', 'd.nickname',
+                'd.id', 'd.user_id', 'd.first_name', 'd.last_name',
                 'd.license_number', 'd.license_expiry',
                 'd.contact_number', 'd.hire_date', 'd.daily_boundary_target',
                 'd.driver_type', 'd.driver_status',
@@ -403,7 +403,7 @@ class DriverManagementController extends Controller
         Driver::create([
             'first_name'            => $request->first_name,
             'last_name'             => $request->last_name,
-            'nickname'              => $request->nickname,
+
             'license_number'        => $request->license_number,
             'license_expiry'        => $request->license_expiry,
             'contact_number'        => $request->contact_number,
@@ -442,7 +442,7 @@ class DriverManagementController extends Controller
         $driver_instance->update([
             'first_name'            => $request->first_name,
             'last_name'             => $request->last_name,
-            'nickname'              => $request->nickname,
+
             'license_number'        => $request->license_number,
             'license_expiry'        => $request->license_expiry,
             'contact_number'        => $request->contact_number,

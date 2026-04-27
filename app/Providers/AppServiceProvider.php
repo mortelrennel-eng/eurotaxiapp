@@ -96,6 +96,28 @@ class AppServiceProvider extends ServiceProvider
 
                 $view->with('maintNotifs', $maintNotifs);
 
+                // Global Notifications for Low Stock Spare Parts (<= 5)
+                $lowStockParts = \Illuminate\Support\Facades\DB::table('spare_parts')
+                    ->where('stock_quantity', '<=', 5)
+                    ->get();
+                
+                $stockNotifs = [];
+                foreach ($lowStockParts as $p) {
+                    $qty = (int)($p->stock_quantity ?? 0);
+                    $statusText = $qty === 0 ? 'OUT OF STOCK' : 'Low Stock';
+                    $timeLabel = $qty === 0 ? 'REORDER NOW' : 'Critical';
+                    
+                    $stockNotifs[] = [
+                        'type' => 'low_stock',
+                        'title' => '⚠ ' . $statusText . ': ' . $p->name,
+                        'message' => "Only {$qty} items remaining in inventory. Please reorder from " . ($p->supplier ?? 'supplier') . ".",
+                        'url' => route('maintenance.index', ['open_inventory' => 1]),
+                        'time' => $timeLabel,
+                        'timestamp' => \Carbon\Carbon::parse($p->updated_at ?? now())
+                    ];
+                }
+                $view->with('stockNotifs', $stockNotifs);
+
             } catch (\Exception $e) {
                 // If DB is missing during initial setup, silently ignore
             }

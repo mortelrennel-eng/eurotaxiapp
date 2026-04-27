@@ -38,7 +38,11 @@ class OfficeExpenseController extends Controller
         }
 
         $total = $query->count();
-        $expenses = $query->orderByDesc('e.date')->offset($offset)->limit($limit)->get();
+        $expenses = $query->orderByDesc('e.date')
+                          ->orderByDesc('e.created_at')
+                          ->offset($offset)
+                          ->limit($limit)
+                          ->get();
 
         $totals = DB::table('expenses')
             ->whereNull('deleted_at')
@@ -48,23 +52,48 @@ class OfficeExpenseController extends Controller
 
         $categories = DB::table('expenses')->whereNull('deleted_at')->distinct()->pluck('category');
 
-        // Calculate statistics
         $thisMonth = date('Y-m');
         $lastMonth = date('Y-m', strtotime('-1 month'));
-        
+
+        $thisMonthAmount = DB::table('expenses')
+            ->whereNull('deleted_at')
+            ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$thisMonth])
+            ->sum('amount') ?? 0;
+            
+        $lastMonthAmount = DB::table('expenses')
+            ->whereNull('deleted_at')
+            ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$lastMonth])
+            ->sum('amount') ?? 0;
+
+        $changePercent = 0;
+        if ($lastMonthAmount > 0) {
+            $changePercent = round((($thisMonthAmount - $lastMonthAmount) / $lastMonthAmount) * 100, 1);
+        }
+
         $stats = [
-            'this_month' => DB::table('expenses')
-                ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$thisMonth])
+            'today' => DB::table('expenses')
+                ->whereNull('deleted_at')
+                ->whereDate('date', date('Y-m-d'))
                 ->sum('amount') ?? 0,
-            'last_month' => DB::table('expenses')
-                ->whereRaw('DATE_FORMAT(date, "%Y-%m") = ?', [$lastMonth])
-                ->sum('amount') ?? 0,
+            'this_month' => $thisMonthAmount,
+            'last_month' => $lastMonthAmount,
+            'monthly_change' => $changePercent,
+            'total_records' => DB::table('expenses')->whereNull('deleted_at')->count(),
             'by_category' => DB::table('expenses')
                 ->selectRaw('category, COUNT(*) as count, SUM(amount) as total')
+                ->whereNull('deleted_at')
                 ->whereBetween('date', [$date_from, $date_to])
                 ->groupBy('category')
                 ->get(),
         ];
+
+        if ($request->wantsJson() || $request->input('format') === 'json') {
+            if ($request->route('id')) {
+                $expense = DB::table('expenses')->where('id', $request->route('id'))->first();
+                return response()->json($expense);
+            }
+            return response()->json(['expenses' => $expenses, 'stats' => $stats]);
+        }
 
         $pagination = [
             'page' => $page,
@@ -83,7 +112,10 @@ class OfficeExpenseController extends Controller
             ->orderBy('plate_number')
             ->get();
 
-        return view('office-expenses.index', compact('expenses', 'pagination', 'search', 'category', 'date_from', 'date_to', 'totals', 'categories', 'stats', 'units'));
+        $spareParts = \App\Models\SparePart::orderBy('name')->get();
+        $suppliers = DB::table('suppliers')->orderBy('name')->get();
+
+        return view('office-expenses.index', compact('expenses', 'pagination', 'search', 'category', 'date_from', 'date_to', 'totals', 'categories', 'stats', 'units', 'spareParts', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -91,22 +123,68 @@ class OfficeExpenseController extends Controller
         $request->validate([
             'category' => 'required|string',
             'description' => 'required|string',
+            'vendor_name' => 'nullable|string',
             'amount' => 'required|numeric',
+            'payment_method' => 'nullable|string',
             'date' => 'required|date',
             'reference_number' => 'nullable|string',
             'unit_id' => 'nullable|integer',
+            'spare_part_id' => 'nullable|string', // Changed to string to allow 'new'
+            'new_part_name' => 'nullable|string',
+            'update_master' => 'nullable|integer',
+            'quantity' => 'nullable|integer',
+            'unit_price' => 'nullable|numeric',
         ]);
 
-        // Use Eloquent to trigger TrackChanges trait
-        Expense::create([
+        $sparePartId = $request->spare_part_id;
+        $finalDescription = $request->description;
+
+        // If it's an existing part but user modified Price or Supplier
+        if (is_numeric($sparePartId) && $request->update_master == 1) {
+            $existingPart = \App\Models\SparePart::find($sparePartId);
+            if ($existingPart) {
+                $existingPart->update([
+                    'price' => $request->unit_price ?: $existingPart->price,
+                    'supplier' => $request->vendor_name ?: $existingPart->supplier
+                ]);
+            }
+        }
+
+        // If it's a new part, register it in inventory first
+        if ($sparePartId === 'new' && $request->new_part_name) {
+            $newPart = \App\Models\SparePart::create([
+                'name' => $request->new_part_name,
+                'price' => $request->unit_price ?: 0,
+                'stock_quantity' => 0, // Will be incremented below
+                'supplier' => $request->vendor_name ?: 'Unspecified Supplier'
+            ]);
+            $sparePartId = $newPart->id;
+            $finalDescription = "REGISTERED & PURCHASED: " . $request->new_part_name;
+        }
+
+        $expense = Expense::create([
             'category' => $request->category,
-            'description' => $request->description,
+            'description' => $finalDescription,
+            'vendor_name' => $request->vendor_name,
             'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
             'date' => $request->date,
             'reference_number' => $request->reference_number,
             'unit_id' => $request->unit_id ?: null,
+            'spare_part_id' => is_numeric($sparePartId) ? $sparePartId : null,
+            'quantity' => $request->quantity,
+            'unit_price' => $request->unit_price,
             'recorded_by' => auth()->id(),
+            'created_by' => auth()->id(),
         ]);
+
+        // If it's a spare parts purchase, increment stock
+        if ($request->category === 'Spare Parts Purchase' && $sparePartId && $request->quantity > 0) {
+            $part = \App\Models\SparePart::find($sparePartId);
+            if ($part) {
+                $part->increment('stock_quantity', $request->quantity);
+            }
+        }
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense added successfully');
     }
@@ -116,21 +194,25 @@ class OfficeExpenseController extends Controller
         $request->validate([
             'category' => 'required|string',
             'description' => 'required|string',
+            'vendor_name' => 'nullable|string',
             'amount' => 'required|numeric',
+            'payment_method' => 'nullable|string',
             'date' => 'required|date',
             'reference_number' => 'nullable|string',
             'unit_id' => 'nullable|integer',
         ]);
 
-        // Use Eloquent to trigger TrackChanges trait
         $expense = Expense::findOrFail($id);
         $expense->update([
             'category' => $request->category,
             'description' => $request->description,
+            'vendor_name' => $request->vendor_name,
             'amount' => $request->amount,
+            'payment_method' => $request->payment_method,
             'date' => $request->date,
             'reference_number' => $request->reference_number,
             'unit_id' => $request->unit_id ?: null,
+            'updated_by' => auth()->id(),
         ]);
 
         return redirect()->route('office-expenses.index')->with('success', 'Expense updated successfully');

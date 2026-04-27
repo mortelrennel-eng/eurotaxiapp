@@ -25,29 +25,29 @@
     </div>
 
     <div class="border-b border-gray-200">
-        <nav class="-mb-px flex space-x-8">
-            <button onclick="showTab('overview')" class="tab-btn py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" data-tab="overview">
+        <nav class="-mb-px flex w-full">
+            <button onclick="showTab('overview')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-blue-500 font-bold text-xs uppercase tracking-wider text-blue-600 transition-all duration-200" data-tab="overview">
                 Overview
             </button>
-            <button onclick="showTab('drivers')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="drivers">
+            <button onclick="showTab('drivers')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="drivers">
                 Drivers
             </button>
-            <button onclick="showTab('coding')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="coding">
+            <button onclick="showTab('coding')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="coding">
                 Coding
             </button>
-            <button onclick="showTab('boundary')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="boundary">
+            <button onclick="showTab('boundary')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="boundary">
                 Boundary
             </button>
-            <button onclick="showTab('maintenance')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="maintenance">
+            <button onclick="showTab('maintenance')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="maintenance">
                 Maintenance
             </button>
-            <button onclick="showTab('roi')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="roi">
+            <button onclick="showTab('roi')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="roi">
                 ROI
             </button>
-            <button onclick="showTab('location')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="location">
+            <button onclick="showTab('location')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="location">
                 Location
             </button>
-            <button onclick="showTab('dashcam')" class="tab-btn py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="dashcam">
+            <button onclick="showTab('dashcam')" class="tab-btn flex-1 py-3 px-1 border-b-2 border-transparent font-bold text-xs uppercase tracking-wider text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-all duration-200" data-tab="dashcam">
                 Dashcam
             </button>
         </nav>
@@ -55,125 +55,139 @@
 
     <div id="tabContent">
         <div id="overview-tab" class="tab-content">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-                <div class="bg-white border border-gray-200 rounded-lg p-3">
-                    <div class="flex items-center gap-2">
-                        <div class="p-2 bg-blue-100 rounded-lg">
-                            <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-blue-50 rounded-lg">
+                            <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Drivers</p>
-                            <p class="text-lg font-bold">{{ count($assigned_drivers) }}/2</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Drivers</p>
+                            <p class="text-xl font-black text-gray-900">{{ count($assigned_drivers) }}/2</p>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white border border-gray-200 rounded-lg p-3">
-                    <div class="flex items-center gap-2">
-                        <div class="p-2 bg-green-100 rounded-lg">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-green-600"></i>
+                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-green-50 rounded-lg">
+                            <i data-lucide="calendar" class="w-5 h-5 text-green-600"></i>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Status</p>
-                            <p class="text-lg font-bold">{{ ucfirst($unit->status ?? '') }}</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Next Coding</p>
+                            <p class="text-xl font-black text-gray-900">{{ $days_until_coding ?? 0 }}d</p>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white border border-gray-200 rounded-lg p-3">
-                    <div class="flex items-center gap-2">
-                        <div class="p-2 bg-purple-100 rounded-lg">
-                            <i data-lucide="calendar" class="w-4 h-4 text-purple-600"></i>
+                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-purple-50 rounded-lg">
+                            <i data-lucide="trending-up" class="w-5 h-5 text-purple-600"></i>
                         </div>
                         <div>
-                            <p class="text-sm text-gray-600">Next Coding</p>
-                            <p class="text-lg font-bold">{{ $next_coding_date ?? 'Not Set' }}</p>
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">ROI</p>
+                            <p class="text-xl font-black text-gray-900">{{ number_format((float) ($roi_data['roi_percentage'] ?? 0), 1) }}%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-orange-50 rounded-lg">
+                            <i data-lucide="wrench" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-black tracking-widest">Maint</p>
+                            <p class="text-xl font-black text-gray-900">{{ count($maintenance_records) }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white border border-gray-200 rounded-lg p-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white border border-gray-200 rounded-lg p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <i data-lucide="info" class="w-5 h-5"></i>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {{-- Basic Information Section --}}
+                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <h4 class="text-sm font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
+                        <i data-lucide="info" class="w-4 h-4 text-blue-600"></i>
                         Basic Information
                     </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Plate Number:</span>
-                            <span class="font-medium">{{ $unit->plate_number }}</span>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center group">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-tight">Plate Number</span>
+                            <span class="font-black text-gray-900 bg-gray-50 px-2 py-1 rounded">{{ $unit->plate_number }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Vehicle:</span>
-                            <span class="font-medium">{{ ($unit->make ?? '') . ' ' . ($unit->model ?? '') }}</span>
+                        <div class="flex justify-between items-center group">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-tight">Vehicle</span>
+                            <span class="font-black text-gray-700">{{ ($unit->make ?? '') . ' ' . ($unit->model ?? '') }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Year:</span>
-                            <span class="font-medium">{{ $unit->year }}</span>
+                        <div class="flex justify-between items-center group">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-tight">Year</span>
+                            <span class="font-black text-gray-700">{{ $unit->year }}</span>
                         </div>
-                        @if($unit->motor_no)
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Motor No:</span>
-                            <span class="font-medium font-mono text-sm">{{ $unit->motor_no }}</span>
-                        </div>
-                        @endif
-                        @if($unit->chassis_no)
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Chassis No:</span>
-                            <span class="font-medium font-mono text-sm">{{ $unit->chassis_no }}</span>
-                        </div>
-                        @endif
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Status:</span>
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                                {{ ucfirst($unit->status ?? '') }}
+                        <div class="flex justify-between items-center group">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-tight">Status</span>
+                            <span class="px-3 py-1 text-[10px] font-black uppercase rounded-full bg-green-50 text-green-600 border border-green-100">
+                                {{ $unit->status ?? 'Active' }}
                             </span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Active Rate (Today):</span>
-                            <span class="font-bold text-blue-600">₱{{ number_format((float) $displayRate, 2) }}</span>
-                        </div>
-                        <div class="pt-3 border-t border-gray-100 mt-3">
-                            <div class="grid grid-cols-2 gap-2">
+                        
+                        <div class="pt-4 border-t border-gray-50 mt-4">
+                            <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <span class="text-[10px] text-gray-500 uppercase font-semibold block">Input by</span>
-                                    <span class="text-xs font-medium text-gray-900">{{ $unit->created_by_name ?? 'System' }}</span>
+                                    <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest block mb-1">Created</span>
+                                    <span class="text-[11px] font-bold text-gray-600">{{ !empty($unit->created_at) ? \Carbon\Carbon::parse($unit->created_at)->format('M d, Y h:i A') : 'System' }}</span>
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-gray-500 uppercase font-semibold block">Last Edit</span>
-                                    <span class="text-xs font-medium text-gray-900">{{ $unit->updated_by_name ?? 'System' }}</span>
+                                    <span class="text-[9px] text-gray-400 uppercase font-black tracking-widest block mb-1">Updated</span>
+                                    <span class="text-[11px] font-bold text-gray-600">{{ !empty($unit->updated_at) ? \Carbon\Carbon::parse($unit->updated_at)->format('M d, Y h:i A') : 'System' }}</span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="flex justify-between items-center pt-4 border-t border-gray-50 mt-4">
+                            <span class="text-xs font-black text-gray-900 uppercase tracking-widest">Boundary Rate</span>
+                            <span class="text-xl font-black text-blue-600">₱{{ number_format((float) $displayRate, 2) }}</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white border border-gray-200 rounded-lg p-6">
-                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <i data-lucide="users" class="w-5 h-5"></i>
-                        Driver Assignment
+                {{-- Driver Assignment Section --}}
+                <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <h4 class="text-sm font-black text-gray-900 mb-5 flex items-center gap-2 uppercase tracking-widest border-b border-gray-50 pb-3">
+                        <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
+                        Assignment
                     </h4>
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Assigned Drivers:</span>
-                            <span class="font-medium">{{ count($assigned_drivers) }}/2</span>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-tight">Drivers</span>
+                            <span class="font-black text-gray-900">{{ count($assigned_drivers) }}/2</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Availability:</span>
-                            <span class="px-2 py-1 text-xs rounded-full {{ count($assigned_drivers) >= 2 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' }}">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-tight">Status</span>
+                            <span class="px-3 py-1 text-[10px] font-black uppercase rounded-full {{ count($assigned_drivers) >= 2 ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100' }}">
                                 {{ count($assigned_drivers) >= 2 ? 'Full' : 'Available' }}
                             </span>
                         </div>
+                        
                         @if(!empty($assigned_drivers))
-                            <div class="mt-4 space-y-2">
+                            <div class="mt-6 space-y-3">
                                 @foreach($assigned_drivers as $driver)
-                                    <div class="bg-gray-50 p-3 rounded">
-                                        <div class="font-medium">{{ $driver->full_name }}</div>
-                                        <div class="text-sm text-gray-600">{{ $driver->license_number }}</div>
-                                        <div class="text-sm text-gray-600">Contact: {{ $driver->contact_number ?? 'N/A' }}</div>
+                                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 group hover:border-blue-200 transition-colors">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <p class="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors">{{ $driver->full_name }}</p>
+                                            <span class="text-[9px] font-black bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase">Active</span>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                            <p class="text-gray-500 font-medium">TBD-{{ substr($driver->license_number ?? '0000', -4) }} EFF</p>
+                                            <p class="text-gray-500 font-medium text-right">Contact: {{ $driver->contact_number ?? 'N/A' }}</p>
+                                        </div>
                                     </div>
                                 @endforeach
+                            </div>
+                        @else
+                            <div class="mt-12 text-center py-8">
+                                <div class="bg-gray-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i data-lucide="user-x" class="w-6 h-6 text-gray-300"></i>
+                                </div>
+                                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">No Drivers Assigned</p>
                             </div>
                         @endif
                     </div>
@@ -428,6 +442,9 @@
                                                         <span class="text-sm font-medium text-gray-900">{{ $part->part_name }}</span>
                                                         @if($part->quantity > 1)
                                                         <span class="text-xs text-gray-500 ml-1">(x{{ $part->quantity }})</span>
+                                                        @endif
+                                                        @if(!empty($part->supplier))
+                                                        <span class="mx-1 text-gray-300">|</span> <span class="text-[10px] font-bold text-blue-600 uppercase tracking-tight">Supplier: {{ $part->supplier }}</span>
                                                         @endif
                                                     </div>
                                                     <div class="text-sm font-bold text-gray-900">₱{{ number_format($part->total, 2) }}</div>

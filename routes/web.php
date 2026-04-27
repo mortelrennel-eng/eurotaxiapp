@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/units/details', [UnitController::class, 'getDetails'])->name('units.details');
     Route::get('/units/details-html', [UnitController::class, 'getDetailsHtml'])->name('units.detailsHtml');
     Route::post('/units/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');
+    Route::get('/units/quick-stats', [UnitController::class, 'quickStats'])->name('units.quick-stats');
     Route::get('/units/print', [UnitController::class, 'printPdf'])->name('units.print');
     Route::resource('units', UnitController::class);
 
@@ -131,6 +132,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/live-tracking/unit/{id}', [LiveTrackingController::class, 'getUnitLocation'])->name('live-tracking.unit-location');
     Route::get('/live-tracking/units-live', [LiveTrackingController::class, 'getUnitsLive'])->name('live-tracking.units-live');
     Route::get('/live-tracking/unit-mileage/{id}', [LiveTrackingController::class, 'getUnitMileage'])->name('live-tracking.mileage');
+    Route::post('/live-tracking/engine-control', [LiveTrackingController::class, 'engineControl'])->name('live-tracking.engine-control');
 
     // Unit Profitability
     Route::get('/unit-profitability', [UnitProfitabilityController::class, 'index'])->name('unit-profitability.index');
@@ -170,8 +172,17 @@ Route::middleware('auth')->group(function () {
 
     // ─── Spare Parts Management ───────────────────────────
     Route::get('/spare-parts', [SparePartController::class, 'index'])->name('spare-parts.index');
+    Route::get('/spare-parts/archived', [SparePartController::class, 'archived'])->name('spare-parts.archived');
+    Route::get('/spare-parts/history', [SparePartController::class, 'history'])->name('spare-parts.history');
     Route::post('/spare-parts', [SparePartController::class, 'store'])->name('spare-parts.store');
+    Route::post('/spare-parts/restore/{id}', [SparePartController::class, 'restore'])->name('spare-parts.restore');
+    Route::delete('/spare-parts/permanent/{id}', [SparePartController::class, 'forceDelete'])->name('spare-parts.forceDelete');
     Route::delete('/spare-parts/{id}', [SparePartController::class, 'destroy'])->name('spare-parts.destroy');
+
+    // ─── Supplier Management ─────────────────────────────
+    Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+    Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
 });
 
 // ─── Temporary System Sync Route ───────────────────────────
